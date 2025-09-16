@@ -1,0 +1,67 @@
+name: Backend CI
+
+on:
+  push:
+    branches: [main, dev]
+    paths: ['backend/**']
+  pull_request:
+    types: [opened, synchronize, reopened, edited]
+    branches: [main, dev]
+    paths: ['backend/**']
+
+# 같은 브랜치에서 연속 트리거 시 이전 잡 취소 (중복/불필요 비용 절감)
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: true
+
+# 최소 권한 원칙
+permissions:
+  contents: read
+
+jobs:
+  backend-ci:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'gradle'   # Gradle 의존성 캐시
+
+      # Gradle 캐시/빌드 최적화 (권장)
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Grant execute permission to gradlew
+        working-directory: backend
+        run: chmod +x ./gradlew
+
+      # .env 주입 (로그에 값 노출 금지: echo만 파일로 리다이렉트)
+      - name: Load .env from secrets
+        run: |
+          mkdir -p ./backend
+          printf "%s" "${{ secrets.DOT_ENV }}" > ./backend/.env
+
+      - name: Build & Test (backend)
+        working-directory: backend
+        run: |
+          ./gradlew clean test build --no-daemon --warning-mode=all
+
+      # 실패 디버깅용 테스트 리포트/로그 업로드 (항상)
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-test-reports
+          path: |
+            backend/build/reports/tests/test
+            backend/build/test-results/test
+            backend/build/reports/jacoco/**/*
+          if-no-files-found: ignore
