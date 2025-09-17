@@ -1,6 +1,5 @@
 package com.deliveranything.global.entity;
 
-<<<<<<< HEAD
 import jakarta.persistence.Column;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.GeneratedValue;
