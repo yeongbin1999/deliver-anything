@@ -7,6 +7,8 @@ import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -37,6 +39,7 @@ public class Delivery extends BaseEntity {
   private String requested;
 
   @Column(name = "delivery_status", nullable = false)
+  @Enumerated(EnumType.STRING)
   private DeliveryStatus status;
 
   @LastModifiedDate
