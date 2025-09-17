@@ -1,12 +1,16 @@
 package com.deliveranything.domain.user.entity;
 
+import com.deliveranything.domain.user.entity.profile.CustomerProfile;
 import com.deliveranything.domain.user.enums.ProfileType;
 import com.deliveranything.domain.user.enums.SocialProvider;
 import com.deliveranything.global.entity.BaseEntity;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
@@ -64,6 +68,10 @@ public class User extends BaseEntity {
   @Column(name = "last_login_at")
   private LocalDateTime lastLoginAt;
 
+  // 연관관계 매핑
+  @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+  private CustomerProfile customerProfile;
+
   @Builder
   public User(String email, String password, String name, String phoneNumber,
       SocialProvider socialProvider, String socialId) {
@@ -77,4 +85,9 @@ public class User extends BaseEntity {
     this.isEnabled = true;
     this.onboardingCompleted = false;
   }
+
+  public void setDefaultAddress(Long addressId) {
+    this.defaultAddressId = addressId;
+  }
+
 }
