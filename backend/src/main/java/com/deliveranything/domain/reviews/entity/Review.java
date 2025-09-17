@@ -1,6 +1,7 @@
 package com.deliveranything.domain.reviews.entity;
 
 import com.deliveranything.domain.reviews.enums.ReviewTargetType;
+import com.deliveranything.domain.user.entity.User;
 import com.deliveranything.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
@@ -56,12 +57,7 @@ public class Review extends BaseEntity {
 
   //========================생성 메소드===========================
   @Builder
-  public Review(
-      int rating,
-      String comment,
-      ReviewTargetType targetType,
-      Long targetId,
-      User user) {
+  public Review(int rating, String comment, ReviewTargetType targetType, Long targetId, User user) {
     this.rating = rating;
     this.comment = comment;
     this.targetType = targetType;
