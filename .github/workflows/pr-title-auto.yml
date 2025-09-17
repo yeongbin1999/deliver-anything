@@ -64,8 +64,8 @@ jobs:
               return;
             }
 
-            // 5) PR 제목 동기화: "<이슈제목>"
-            const desiredTitle = `${issueTitle}`;
+            // 5) PR 제목 동기화: "<이슈제목> (#번호)"
+            const desiredTitle = `${issueTitle} (#${issueNumber})`;
             if (desiredTitle !== pr.title) {
               await github.rest.pulls.update({
                 owner: context.repo.owner,
