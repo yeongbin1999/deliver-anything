@@ -27,11 +27,10 @@ public class Review {
   @Schema(description = "대상 ID (상점 or 배달원)")
   private Long targetId;
 
-  // 작성자 id
-  // User 객체가 생성될 시 주석 해제
-//    @ManyToOne(fetch = FetchType.LAZY)
-//    @JoinColumn(name = "user_id", nullable = false)
-//    private User user;
+  @Schema(description = "작성자 객체")
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "user_id", nullable = false)
+  private User user;
 
   @Schema(description = "생성 일시")
   @Column(updatable = false)
