@@ -30,7 +30,7 @@ public class OrderItem {
   private Product product;
 
   @Column(precision = 19, scale = 2)
-  private BigDecimal orderPrice;
+  private BigDecimal price;
 
   private int quantity;
 }
