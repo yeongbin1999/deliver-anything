@@ -1,9 +1,12 @@
 package com.deliveranything.domain.order.entity;
 
 import com.deliveranything.domain.delivery.entity.Delivery;
+import com.deliveranything.domain.order.enums.OrderStatus;
 import com.deliveranything.global.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -40,6 +43,7 @@ public class Order extends BaseEntity {
   @OneToMany(mappedBy = "order", fetch = FetchType.LAZY, orphanRemoval = true)
   private List<OrderItem> orderItems = new ArrayList<>();
 
+  @Enumerated(EnumType.STRING)
   private OrderStatus orderStatus;
 
   private UUID merchantId;
@@ -48,10 +52,10 @@ public class Order extends BaseEntity {
   private String riderNote;
   private String storeNote;
 
-  @Column(precision = 9)
+  @Column(precision = 19, scale = 2)
   private BigDecimal totalPrice;
-  @Column(precision = 9)
+  @Column(precision = 19, scale = 2)
   private BigDecimal storePrice;
-  @Column(precision = 9)
+  @Column(precision = 19, scale = 2)
   private BigDecimal deliveryPrice;
 }

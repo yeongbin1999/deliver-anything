@@ -1,4 +1,4 @@
-package com.deliveranything.domain.order.entity;
+package com.deliveranything.domain.order.enums;
 
 public enum OrderStatus {
   PENDING,
