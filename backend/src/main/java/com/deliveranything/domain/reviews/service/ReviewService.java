@@ -4,6 +4,8 @@ import com.deliveranything.domain.reviews.dto.ReviewCreateRequest;
 import com.deliveranything.domain.reviews.dto.ReviewCreateResponse;
 import com.deliveranything.domain.reviews.entity.Review;
 import com.deliveranything.domain.reviews.entity.ReviewPhoto;
+import com.deliveranything.domain.reviews.repository.ReviewPhotoRepository;
+import com.deliveranything.domain.reviews.repository.ReviewRepository;
 import java.util.Arrays;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
