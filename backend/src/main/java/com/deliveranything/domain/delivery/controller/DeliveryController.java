@@ -1,6 +1,7 @@
 package com.deliveranything.domain.delivery.controller;
 
-import com.deliveranything.domain.delivery.dto.RiderStatusRequestDto;
+import com.deliveranything.domain.delivery.dto.RiderToggleStatusRequestDto;
+import com.deliveranything.domain.delivery.service.DeliveryService;
 import com.deliveranything.global.common.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -18,7 +19,7 @@ public class DeliveryController {
 
   @PatchMapping("/status")
   public ResponseEntity<ApiResponse<Void>> updateRiderStatus(
-      @RequestBody RiderStatusRequestDto riderStatusRequestDto
+      @RequestBody RiderToggleStatusRequestDto riderStatusRequestDto
   ) {
     deliveryService.updateRiderStatus(riderStatusRequestDto);
     return ResponseEntity.ok(ApiResponse.success(null));
