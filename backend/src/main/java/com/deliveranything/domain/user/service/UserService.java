@@ -2,13 +2,19 @@ package com.deliveranything.domain.user.service;
 
 import com.deliveranything.domain.user.entity.User;
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 2bfa3fb (feat(be); UserService 구현 중.. 헬퍼 메소드 도입)
 import com.deliveranything.domain.user.enums.ProfileType;
 import com.deliveranything.domain.user.repository.UserRepository;
 import java.util.ArrayList;
 import java.util.List;
+<<<<<<< HEAD
 =======
 import com.deliveranything.domain.user.repository.UserRepository;
 >>>>>>> e60f735 (feat(be): UserService 구현중...User 엔티티 리팩토ë링)
+=======
+>>>>>>> 2bfa3fb (feat(be); UserService 구현 중.. 헬퍼 메소드 도입)
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -343,6 +349,80 @@ public class UserService {
     log.info("사용자 기본 정보 업데이트 완료: userId={}", userId);
   }
 
+<<<<<<< HEAD
 >>>>>>> e60f735 (feat(be): UserService 구현중...User 엔티티 리팩토ë링)
+=======
+  @Transactional
+  public void updatePassword(Long userId, String newPassword) {
+    User user = findById(userId);
+    if (user == null) {
+      log.warn("사용자를 찾을 수 없습니다: userId={}", userId);
+      return;
+    }
+    user.updatePassword(newPassword);
+    userRepository.save(user);
+    log.info("사용자 비밀번호 업데이트 완료: userId={}", userId);
+  }
+
+  // 프로필 관리 Methods
+  @Transactional
+  public boolean switchProfile(Long userId, ProfileType targetProfile) {
+    User user = findById(userId);
+    if (user == null) {
+      log.warn("사용자를 찾을 수 없습니다: userId={}", userId);
+      return false;
+    }
+    if (!user.isOnboardingCompleted()) {
+      log.warn("온보딩이 완료되지 않은 사용자입니다: userId={}", userId);
+      return false;
+    }
+    if (user.getCurrentActiveProfile() == targetProfile) {
+      log.info("이미 활성화된 프로필입니다: userId={}, targetProfile={}", userId, targetProfile);
+      return true;
+    }
+    user.switchProfile(targetProfile);
+    userRepository.save(user);
+
+    log.info("프로필 전환 완료: userId={}, newActiveProfile={}", userId, targetProfile);
+    return true;
+  }
+
+  public List<ProfileType> getAvailableProfiles(Long userId) {
+    User user = findById(userId);
+    if (user == null) {
+      log.warn("사용자를 찾을 수 없습니다: userId={}", userId);
+      return List.of();
+    }
+
+    // Service에서 직접 처리
+    return getAvailableProfilesInternal(user);
+  }
+
+  public boolean canSwitchToProfile(Long userId, ProfileType targetProfile) {
+    User user = findById(userId);
+    if (user == null) {
+      log.warn("사용자를 찾을 수 없습니다: userId={}", userId);
+      return false;
+    }
+    if (!user.isOnboardingCompleted()) {
+      log.warn("온보딩이 완료되지 않은 사용자입니다: userId={}", userId);
+      return false;
+    }
+    List<ProfileType> availableProfiles = getAvailableProfilesInternal(user);
+    return availableProfiles.contains(targetProfile);
+  }
+
+  // 프로필 관리를 위한 Private Helper Methods
+  private List<ProfileType> getAvailableProfilesInternal(User user) {
+    List<ProfileType> profiles = new ArrayList<>();
+
+    if (user.getCustomerProfile() != null) {
+      profiles.add(ProfileType.CONSUMER);
+    }
+    // TODO: SellerProfile, RiderProfile 연관관계 추가 시 로직 확장
+
+    return profiles;
+  }
+>>>>>>> 2bfa3fb (feat(be); UserService 구현 중.. 헬퍼 메소드 도입)
 
 }
