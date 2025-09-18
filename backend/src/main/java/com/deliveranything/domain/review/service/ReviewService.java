@@ -8,6 +8,8 @@ import com.deliveranything.domain.review.repository.ReviewPhotoRepository;
 import com.deliveranything.domain.review.repository.ReviewRepository;
 import com.deliveranything.domain.user.entity.User;
 import com.deliveranything.domain.user.repository.UserRepository;
+import com.deliveranything.global.exception.CustomException;
+import com.deliveranything.global.exception.ErrorCode;
 import java.util.Arrays;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -53,6 +55,15 @@ public class ReviewService {
 
     return new ReviewCreateResponse(review.getId(), review.getRating(), review.getComment(),
         reviewPhotoUrls, review.getTargetType(), review.getTargetId());
+  }
+
+  public void deleteReview(Long userId, Long reviewId) {
+    Review review = reviewRepository.findById(reviewId)
+        .orElseThrow(() -> new CustomException(ErrorCode.REVIEW_NOT_FOUND));
+
+    //Todo: 삭제 권한 확인
+
+    reviewRepository.delete(review);
   }
 
   //=============================편의 메서드====================================
