@@ -1,5 +1,7 @@
 package com.deliveranything.domain.review.entity;
 
+import com.deliveranything.domain.review.dto.ReviewCreateRequest;
+import com.deliveranything.domain.review.dto.ReviewCreateResponse;
 import com.deliveranything.domain.review.enums.ReviewTargetType;
 import com.deliveranything.domain.user.entity.User;
 import com.deliveranything.global.entity.BaseEntity;
@@ -55,5 +57,15 @@ public class Review extends BaseEntity {
     this.targetType = targetType;
     this.targetId = targetId;
     this.user = user;
+  }
+
+  public static Review from(ReviewCreateRequest request, User user) {
+    return Review.builder()
+        .rating(request.rating())
+        .comment(request.comment())
+        .targetType(request.targetType())
+        .targetId(request.targetId())
+        .user(user)
+        .build();
   }
 }

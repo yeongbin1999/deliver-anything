@@ -32,14 +32,7 @@ public class ReviewService {
         .orElseThrow(() -> new IllegalStateException("TODO: UserErrorCode.USER_NOT_FOUND 사용 예정"));
 
     //리뷰 생성
-    Review review = Review.builder()
-        .targetType(request.targetType())
-        .user(user)
-        .comment(request.comment())
-        .rating(request.rating())
-        .targetId(request.targetId())
-        .build();
-
+    Review review = Review.from(request, user);
     reviewRepository.save(review);
 
     //리뷰 사진 객체 생성
@@ -54,8 +47,7 @@ public class ReviewService {
 
     List<String> reviewPhotoUrls = getReviewPhotoUrlList(review);
 
-    return new ReviewCreateResponse(review.getId(), review.getRating(), review.getComment(),
-        reviewPhotoUrls, review.getTargetType(), review.getTargetId());
+    return ReviewCreateResponse.from(review, reviewPhotoUrls);
   }
 
   public void deleteReview(Long userId, Long reviewId) {
@@ -75,17 +67,7 @@ public class ReviewService {
 
     List<String> reviewPhotoUrls = getReviewPhotoUrlList(review);
 
-    return new ReviewResponse(
-        review.getId(),
-        review.getRating(),
-        review.getComment(),
-        reviewPhotoUrls,
-        review.getTargetType(),
-        review.getTargetId(),
-        review.getCreatedAt(),
-        review.getUpdatedAt()
-        //, userResponse
-    );
+    return ReviewResponse.from(review, reviewPhotoUrls);
   }
 
   //=============================편의 메서드====================================
