@@ -2,12 +2,16 @@ package com.deliveranything.domain.review.controller;
 
 import com.deliveranything.domain.review.dto.ReviewCreateRequest;
 import com.deliveranything.domain.review.dto.ReviewCreateResponse;
+import com.deliveranything.domain.review.dto.ReviewResponse;
 import com.deliveranything.domain.review.service.ReviewService;
 import com.deliveranything.global.common.ApiResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -17,12 +21,13 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("api/v1/reviews")
+@Tag(name = "Review", description = "리뷰 관련 API")
 public class ApiV1ReviewController {
 
   private final ReviewService reviewService;
 
-  //리뷰 생성 - 201 Created
   @PostMapping
+  @Operation(summary = "리뷰 생성", description = "새로운 리뷰를 생성합니다.")
   public ResponseEntity<ApiResponse<ReviewCreateResponse>> createReview(
       @RequestBody ReviewCreateRequest request
 //      , @AuthenticationPrincipal SecurityUser user
@@ -34,8 +39,8 @@ public class ApiV1ReviewController {
         .body(ApiResponse.success(response));
   }
 
-  //리뷰 삭제 - 204 No content
   @DeleteMapping("/{reviewId}")
+  @Operation(summary = "리뷰 삭제", description = "리뷰를 삭제합니다.")
   public ResponseEntity<ApiResponse<String>> deleteReview(
 //      @AuthenticationPrincipal SecurityUser user,
       //todo: 인증객체 받아와서 deleteReview에 전달
@@ -44,5 +49,16 @@ public class ApiV1ReviewController {
     Long userId = 1L; //임시 유저 id
     return ResponseEntity.status(HttpStatus.NO_CONTENT)
         .body(ApiResponse.success(null));
+  }
+
+  @GetMapping("/{reviewId}")
+  @Operation(summary = "리뷰 조회", description = "리뷰 id로 리뷰를 조회합니다.")
+  public ResponseEntity<ApiResponse<ReviewResponse>> getReview(
+      @PathVariable Long reviewId
+  ) {
+    ReviewResponse response = reviewService.getReview(reviewId);
+
+    return  ResponseEntity.status(HttpStatus.OK)
+        .body(ApiResponse.success(response));
   }
 }
