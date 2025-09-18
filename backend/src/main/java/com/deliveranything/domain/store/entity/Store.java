@@ -14,13 +14,14 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
 @Table(
-    name = "stores", // 복수형 테이블
+    name = "stores",
     uniqueConstraints = {
         @UniqueConstraint(name = "uk_stores_seller", columnNames = "seller_profile_id")
     },
@@ -64,7 +65,7 @@ public class Store extends BaseEntity {
   private boolean acceptingOrders = true;
 
   @Column(name = "next_change_at")
-  private java.time.Instant nextChangeAt;
+  private LocalDateTime nextChangeAt;
 
   public Store(Long sellerProfileId, StoreCategory storeCategory, String name) {
     this.sellerProfileId = sellerProfileId;
