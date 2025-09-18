@@ -4,9 +4,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.deliveranything.domain.review.dto.ReviewCreateRequest;
 import com.deliveranything.domain.review.dto.ReviewCreateResponse;
+import com.deliveranything.domain.review.dto.ReviewResponse;
+import com.deliveranything.domain.review.entity.Review;
 import com.deliveranything.domain.review.enums.ReviewTargetType;
 import com.deliveranything.domain.review.factory.ReviewFactory;
 import com.deliveranything.domain.review.repository.ReviewRepository;
@@ -139,6 +142,34 @@ public class ApiV1ReviewControllerTest {
     assertEquals(HttpStatus.FORBIDDEN, exception.getHttpStatus());
     assertEquals("REVIEW-403", exception.getCode());
     assertEquals("리뷰를 관리할 권한이 없습니다.", exception.getMessage());
+  }
+
+  @Test
+  @DisplayName("리뷰 단건 조회 - 정상")
+  public void getReview() {
+    User owner = User.builder()
+        .email("owner@example.com")
+        .name("ownerUser")
+        .password("ownerPassword")
+        .phoneNumber("010-0000-0000")
+        .socialProvider(null)
+        .build();
+    userRepository.save(owner);
+
+    ReviewCreateRequest reviewRq = ReviewFactory.createReviews(1).getFirst();
+    ReviewCreateResponse reviewRs = reviewService.createReview(reviewRq, owner.getId());
+
+
+    ReviewResponse response = reviewService.getReview(reviewRs.id());
+
+    assertNotNull(response.id());
+    assertEquals(reviewRs.id(), response.id());
+    assertEquals(reviewRq.rating(), response.rating());
+    assertEquals(reviewRq.comment(), response.comment());
+
+    assertNotNull(response.createdAt(), "생성일이 null이면 안됩니다.");
+    assertTrue(response.createdAt().isBefore(java.time.LocalDateTime.now().plusSeconds(1)),
+        "생성일이 현재 시각보다 늦으면 안됩니다.");
   }
 
 }
