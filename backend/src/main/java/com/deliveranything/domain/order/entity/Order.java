@@ -2,6 +2,7 @@ package com.deliveranything.domain.order.entity;
 
 import com.deliveranything.domain.delivery.entity.Delivery;
 import com.deliveranything.domain.order.enums.OrderStatus;
+import com.deliveranything.domain.user.entity.User;
 import com.deliveranything.global.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -25,16 +26,12 @@ import lombok.NoArgsConstructor;
 public class Order extends BaseEntity {
 
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "store_id")
+  @JoinColumn(name = "store_id", nullable = false)
   private Store store;
 
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "user_id")
+  @JoinColumn(name = "user_id", nullable = false)
   private User consumer;
-
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "settlement_id")
-  private Settlement settlement;
 
   @OneToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "delivery_id", unique = true)
@@ -44,18 +41,22 @@ public class Order extends BaseEntity {
   private List<OrderItem> orderItems = new ArrayList<>();
 
   @Enumerated(EnumType.STRING)
+  @Column(nullable = false)
   private OrderStatus orderStatus;
 
+  @Column(nullable = false)
   private UUID merchantId;
 
+  @Column(nullable = false)
   private String address;
+
   private String riderNote;
   private String storeNote;
 
-  @Column(precision = 19, scale = 2)
+  @Column(nullable = false, precision = 19, scale = 2)
   private BigDecimal totalPrice;
-  @Column(precision = 19, scale = 2)
+  @Column(nullable = false, precision = 19, scale = 2)
   private BigDecimal storePrice;
-  @Column(precision = 19, scale = 2)
+  @Column(nullable = false, precision = 19, scale = 2)
   private BigDecimal deliveryPrice;
 }
