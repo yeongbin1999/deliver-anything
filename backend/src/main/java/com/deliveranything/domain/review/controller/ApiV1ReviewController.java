@@ -5,6 +5,7 @@ import com.deliveranything.domain.review.dto.ReviewCreateResponse;
 import com.deliveranything.domain.review.service.ReviewService;
 import com.deliveranything.global.common.ApiResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -20,7 +21,7 @@ public class ApiV1ReviewController {
 
   private final ReviewService reviewService;
 
-  //리뷰 생성
+  //리뷰 생성 - 201 Created
   @PostMapping
   public ResponseEntity<ApiResponse<ReviewCreateResponse>> createReview(
       @RequestBody ReviewCreateRequest request
@@ -29,10 +30,12 @@ public class ApiV1ReviewController {
   ) {
     Long userId = 1L; //임시 유저 id
     ReviewCreateResponse response = reviewService.createReview(request, userId);
-    return ResponseEntity.ok(ApiResponse.success(response));
+    return ResponseEntity
+        .status(201)
+        .body(ApiResponse.success(response));
   }
 
-  //리뷰 삭제
+  //리뷰 삭제 - 204 No content
   @DeleteMapping("/{reviewId}")
   public ResponseEntity<ApiResponse<String>> deleteReview(
 //      @AuthenticationPrincipal SecurityUser user,
@@ -40,7 +43,7 @@ public class ApiV1ReviewController {
       @PathVariable Long reviewId
   ) {
     Long userId = 1L; //임시 유저 id
-    reviewService.deleteReview(userId, reviewId);
-    return ResponseEntity.ok(ApiResponse.success(null));
+    return ResponseEntity.status(HttpStatus.NO_CONTENT)
+        .body(ApiResponse.success(null));
   }
 }
