@@ -31,10 +31,10 @@ import lombok.NoArgsConstructor;
 public class Product extends BaseEntity {
 
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
-  @JoinColumn(name = "store_id", nullable = false,
-      foreignKey = @ForeignKey(name = "fk_products_store"))
+  @JoinColumn(name = "store_id", nullable = false, foreignKey = @ForeignKey(name = "fk_products_store"))
   private Store store;
 
+//  추후 도입 고민 가게 업종 분류에 따라 물품 카테고리도 달라짐 & 일반 소매점에서 검색 외 카테고리까지 필요한지
 //  @ManyToOne(fetch = FetchType.LAZY)
 //  @JoinColumn(name = "product_category_id",
 //      foreignKey = @ForeignKey(name = "fk_products_product_category"))
@@ -52,8 +52,9 @@ public class Product extends BaseEntity {
   @Column(name = "primary_image_url", nullable = false, length = 512)
   private String primaryImageUrl;
 
-  @Column(name = "popular_score")
-  private Double popularScore;
+  //  popularScore = (최근30일 판매량 × 가중치1) + (최근30일 매출액 × 가중치2) 계획
+  @Column(name = "popular_score", nullable = false, columnDefinition = "DOUBLE DEFAULT 0")
+  private Double popularScore = 0.0;
 
   public Product(Store store, String name, Integer price, String primaryImageUrl) {
     this.store = store;
