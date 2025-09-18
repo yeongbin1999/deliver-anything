@@ -1,5 +1,6 @@
 package com.deliveranything.domain.order.entity;
 
+import com.deliveranything.domain.product.entity.Product;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;

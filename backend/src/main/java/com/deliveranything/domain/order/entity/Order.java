@@ -2,8 +2,10 @@ package com.deliveranything.domain.order.entity;
 
 import com.deliveranything.domain.delivery.entity.Delivery;
 import com.deliveranything.domain.order.enums.OrderStatus;
+import com.deliveranything.domain.store.entity.Store;
 import com.deliveranything.domain.user.entity.User;
 import com.deliveranything.global.entity.BaseEntity;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -31,13 +33,13 @@ public class Order extends BaseEntity {
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "user_id", nullable = false)
-  private User consumer;
+  private User customer;
 
   @OneToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "delivery_id", unique = true)
   private Delivery delivery;
 
-  @OneToMany(mappedBy = "order", fetch = FetchType.LAZY, orphanRemoval = true)
+  @OneToMany(mappedBy = "order", fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
   private List<OrderItem> orderItems = new ArrayList<>();
 
   @Enumerated(EnumType.STRING)
@@ -55,8 +57,10 @@ public class Order extends BaseEntity {
 
   @Column(nullable = false, precision = 19, scale = 2)
   private BigDecimal totalPrice;
+
   @Column(nullable = false, precision = 19, scale = 2)
   private BigDecimal storePrice;
+
   @Column(nullable = false, precision = 19, scale = 2)
   private BigDecimal deliveryPrice;
 }
