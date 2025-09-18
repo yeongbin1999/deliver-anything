@@ -1,5 +1,6 @@
 package com.deliveranything.domain.delivery.service;
 
+import com.deliveranything.domain.delivery.dto.request.DeliveryAreaRequestDto;
 import com.deliveranything.domain.delivery.dto.request.RiderToggleStatusRequestDto;
 import com.deliveranything.domain.user.entity.profile.RiderProfile;
 import com.deliveranything.domain.user.enums.RiderToggleStatus;
@@ -26,4 +27,12 @@ public class DeliveryService {
     riderProfile.setToggleStatus(RiderToggleStatus.fromString(riderStatusRequestDto.riderStatus()));
   }
 
+  public void updateDeliveryArea(DeliveryAreaRequestDto deliveryAreaRequestDto) {
+    // 배달 가능 지역 설정 로직 구현
+    RiderProfile riderProfile = riderProfileRepository.findById(
+            deliveryAreaRequestDto.riderProfileId())
+        .orElseThrow(() -> new CustomException(ErrorCode.RIDER_NOT_FOUND));
+
+    riderProfile.setDeliveryArea(deliveryAreaRequestDto.deliveryArea());
+  }
 }
