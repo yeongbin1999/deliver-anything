@@ -2,6 +2,7 @@ package com.deliveranything.domain.review.service;
 
 import com.deliveranything.domain.review.dto.ReviewCreateRequest;
 import com.deliveranything.domain.review.dto.ReviewCreateResponse;
+import com.deliveranything.domain.review.dto.ReviewResponse;
 import com.deliveranything.domain.review.entity.Review;
 import com.deliveranything.domain.review.entity.ReviewPhoto;
 import com.deliveranything.domain.review.repository.ReviewPhotoRepository;
@@ -66,6 +67,25 @@ public class ReviewService {
     } else {
       throw new CustomException(ErrorCode.REVIEW_NO_PERMISSION);
     }
+  }
+
+  public ReviewResponse getReview(Long reviewId) {
+    Review review = reviewRepository.findById(reviewId)
+        .orElseThrow(() -> new CustomException(ErrorCode.REVIEW_NOT_FOUND));
+
+    List<String> reviewPhotoUrls = getReviewPhotoUrlList(review);
+
+    return new ReviewResponse(
+        review.getId(),
+        review.getRating(),
+        review.getComment(),
+        reviewPhotoUrls,
+        review.getTargetType(),
+        review.getTargetId(),
+        review.getCreatedAt(),
+        review.getUpdatedAt()
+        //, userResponse
+    );
   }
 
   //=============================편의 메서드====================================
