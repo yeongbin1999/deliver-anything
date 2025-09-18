@@ -13,4 +13,10 @@ public enum RiderToggleStatus {
   public String getDescription() {
     return description;
   }
+
+  // String을 RiderToggleStatus로 변환 (enum 이름으로)
+  public static RiderToggleStatus fromString(String status) {
+    return RiderToggleStatus.valueOf(status.toUpperCase());
+    
+  }
 }
