@@ -1,6 +1,5 @@
-package com.deliveranything.domain.reviews.entity;
+package com.deliveranything.domain.review.entity;
 
-import com.deliveranything.domain.reviews.enums.ReviewTargetType;
 import com.deliveranything.global.entity.BaseEntity;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;

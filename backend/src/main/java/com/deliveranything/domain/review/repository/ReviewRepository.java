@@ -1,6 +1,6 @@
-package com.deliveranything.domain.reviews.repository;
+package com.deliveranything.domain.review.repository;
 
-import com.deliveranything.domain.reviews.entity.Review;
+import com.deliveranything.domain.review.entity.Review;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

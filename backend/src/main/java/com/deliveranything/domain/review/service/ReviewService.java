@@ -1,11 +1,11 @@
-package com.deliveranything.domain.reviews.service;
+package com.deliveranything.domain.review.service;
 
-import com.deliveranything.domain.reviews.dto.ReviewCreateRequest;
-import com.deliveranything.domain.reviews.dto.ReviewCreateResponse;
-import com.deliveranything.domain.reviews.entity.Review;
-import com.deliveranything.domain.reviews.entity.ReviewPhoto;
-import com.deliveranything.domain.reviews.repository.ReviewPhotoRepository;
-import com.deliveranything.domain.reviews.repository.ReviewRepository;
+import com.deliveranything.domain.review.dto.ReviewCreateRequest;
+import com.deliveranything.domain.review.dto.ReviewCreateResponse;
+import com.deliveranything.domain.review.entity.Review;
+import com.deliveranything.domain.review.entity.ReviewPhoto;
+import com.deliveranything.domain.review.repository.ReviewPhotoRepository;
+import com.deliveranything.domain.review.repository.ReviewRepository;
 import com.deliveranything.domain.user.entity.User;
 import com.deliveranything.domain.user.repository.UserRepository;
 import java.util.Arrays;
@@ -46,7 +46,6 @@ public class ReviewService {
             .review(review)
             .build())
         .toList();
-
 
     reviewPhotoRepository.saveAll(reviewPhotos);
 

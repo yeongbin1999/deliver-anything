@@ -1,6 +1,6 @@
-package com.deliveranything.domain.reviews.entity;
+package com.deliveranything.domain.review.entity;
 
-import com.deliveranything.domain.reviews.enums.ReviewTargetType;
+import com.deliveranything.domain.review.enums.ReviewTargetType;
 import com.deliveranything.domain.user.entity.User;
 import com.deliveranything.global.entity.BaseEntity;
 import jakarta.persistence.*;
@@ -15,7 +15,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Entity
 @Getter
-@Table(name = "review")
+@Table(name = "reviews")
 @EntityListeners(AuditingEntityListener.class)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Review extends BaseEntity {
