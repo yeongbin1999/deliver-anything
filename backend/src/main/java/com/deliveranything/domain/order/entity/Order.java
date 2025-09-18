@@ -46,7 +46,7 @@ public class Order extends BaseEntity {
   @Column(nullable = false)
   private OrderStatus orderStatus;
 
-  @Column(nullable = false)
+  @Column(nullable = false, unique = true)
   private UUID merchantId;
 
   @Column(nullable = false)
