@@ -103,4 +103,42 @@ public class ApiV1ReviewControllerTest {
     assertEquals("리뷰를 찾을 수 없습니다.", exception.getMessage());
   }
 
+  @Test
+  @DisplayName("리뷰 삭제 - 권한 없는 유저의 요청")
+  public void deleteReview_userWithoutPermission_throwsException() {
+    // 1. 리뷰 작성 유저 생성
+    User owner = User.builder()
+        .email("owner@example.com")
+        .name("ownerUser")
+        .password("ownerPassword")
+        .phoneNumber("010-0000-0000")
+        .socialProvider(null)
+        .build();
+    userRepository.save(owner);
+
+    // 2. 리뷰 생성
+    ReviewCreateRequest request = ReviewFactory.createReviews(1).getFirst();
+    ReviewCreateResponse createdReview = reviewService.createReview(request, owner.getId());
+
+    // 3. 삭제 시도 유저 생성 (권한 없음)
+    User otherUser = User.builder()
+        .email("other@example.com")
+        .name("otherUser")
+        .password("otherPassword")
+        .phoneNumber("010-1111-1111")
+        .socialProvider(null)
+        .build();
+    userRepository.save(otherUser);
+
+    // 4. 권한 없는 유저 삭제 시도
+    CustomException exception = assertThrows(CustomException.class, () -> {
+      reviewService.deleteReview(otherUser.getId(), createdReview.id());
+    });
+
+    // 5. 예외 확인
+    assertEquals(HttpStatus.FORBIDDEN, exception.getHttpStatus());
+    assertEquals("REVIEW-403", exception.getCode());
+    assertEquals("리뷰를 관리할 권한이 없습니다.", exception.getMessage());
+  }
+
 }

@@ -61,7 +61,7 @@ public class ReviewService {
     Review review = reviewRepository.findById(reviewId)
         .orElseThrow(() -> new CustomException(ErrorCode.REVIEW_NOT_FOUND));
 
-    if (verifyReviewAuth(userId, reviewId)) {
+    if (verifyReviewAuth(review, userId)) {
       reviewRepository.delete(review);
     } else {
       throw new CustomException(ErrorCode.REVIEW_NO_PERMISSION);
@@ -78,12 +78,9 @@ public class ReviewService {
 
   //리뷰 수정, 삭제 등 권한 체크용 메서드
   @Transactional(readOnly = true)
-  public boolean verifyReviewAuth(Long reviewId, Long userId) {
+  public boolean verifyReviewAuth(Review review, Long userId) {
     User user = userRepository.findById(userId)
         .orElseThrow(() -> new IllegalStateException("TODO: UserErrorCode.USER_NOT_FOUND 사용 예정"));
-
-    Review review = reviewRepository.findById(reviewId)
-        .orElseThrow(() -> new CustomException(ErrorCode.REVIEW_NOT_FOUND));
 
     return review.getUser().getId().equals(user.getId());
   }
