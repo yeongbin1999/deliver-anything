@@ -443,6 +443,55 @@ public class UserService {
     return user.isOnboardingCompleted();
   }
 
+  // 기타 Methods
+  @Transactional
+  public void updateLastLoginAt(Long userId) {
+    User user = findById(userId);
+    if (user == null) {
+      log.warn("사용자를 찾을 수 없습니다: userId={}", userId);
+      return;
+    }
+
+    user.updateLastLoginAt();
+    userRepository.save(user);
+
+    log.info("사용자 마지막 로그인 시간 업데이트 완료: userId={}", userId);
+  }
+
+  // 기본주소 설정
+  public boolean setDefaultAddress(Long userId, Long addressId) {
+    User user = findById(userId);
+    if (user == null) {
+      log.warn("사용자를 찾을 수 없습니다: userId={}", userId);
+      return false;
+    }
+    // 소비자 프로필 존재 확인
+    if (!hasProfileInternal(user, ProfileType.CONSUMER)) {
+      log.warn("소비자 프로필을 찾을 수 없습니다: userId={}", userId);
+      return false;
+    }
+
+    user.setDefaultAddress(addressId);
+    userRepository.save(user);
+
+    log.info("기본 주소 설정 완료: userId={}, addressId={}", userId, addressId);
+    return true;
+  }
+
+  // 이메일 인증 처리 임시
+  @Transactional
+  public void verifyEmail(Long userId) {
+    User user = findById(userId);
+    if (user == null) {
+      log.warn("사용자를 찾을 수 없습니다: userId={}", userId);
+      return;
+    }
+
+    user.verifyEmail();
+    userRepository.save(user);
+
+    log.info("이메일 인증 완료: userId={}", userId);
+  }
 
   // 프로필 관리를 위한 Private Helper Methods
   private List<ProfileType> getAvailableProfilesInternal(User user) {
@@ -456,6 +505,7 @@ public class UserService {
     return profiles;
   }
 >>>>>>> 2bfa3fb (feat(be); UserService 구현 중.. 헬퍼 메소드 도입)
+
 
   private boolean canSwitchToProfileInternal(User user, ProfileType targetProfile) {
     if (!user.isOnboardingCompleted()) {
