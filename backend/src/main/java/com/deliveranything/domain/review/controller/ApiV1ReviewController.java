@@ -58,7 +58,7 @@ public class ApiV1ReviewController {
   ) {
     ReviewResponse response = reviewService.getReview(reviewId);
 
-    return  ResponseEntity.status(HttpStatus.OK)
+    return ResponseEntity.status(HttpStatus.OK)
         .body(ApiResponse.success(response));
   }
 }
