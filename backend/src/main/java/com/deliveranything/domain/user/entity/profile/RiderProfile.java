@@ -72,4 +72,12 @@ public class RiderProfile extends BaseEntity {
     this.user = user;
   }
 
+  public void setToggleStatus(RiderToggleStatus toggleStatus) {
+    this.toggleStatus = toggleStatus;
+  }
+
+  // String을 받아서 enum으로 변환하는 메서드 추가
+  public void setToggleStatus(String toggleStatus) {
+    this.toggleStatus = RiderToggleStatus.fromString(toggleStatus);
+  }
 }
