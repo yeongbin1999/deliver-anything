@@ -4,9 +4,7 @@ import com.deliveranything.domain.delivery.dto.request.DeliveryAreaRequestDto;
 import com.deliveranything.domain.delivery.dto.request.RiderToggleStatusRequestDto;
 import com.deliveranything.domain.user.entity.profile.RiderProfile;
 import com.deliveranything.domain.user.enums.RiderToggleStatus;
-import com.deliveranything.domain.user.repository.RiderProfileRepository;
-import com.deliveranything.global.exception.CustomException;
-import com.deliveranything.global.exception.ErrorCode;
+import com.deliveranything.domain.user.service.RiderProfileService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -16,22 +14,20 @@ import org.springframework.stereotype.Service;
 @Transactional
 public class DeliveryService {
 
-  private final RiderProfileRepository riderProfileRepository;
+  private final RiderProfileService riderProfileService;
 
   public void updateRiderStatus(RiderToggleStatusRequestDto riderStatusRequestDto) {
     // 라이더 상태 업데이트 로직 구현
-    RiderProfile riderProfile = riderProfileRepository.findById(
-            riderStatusRequestDto.riderProfileId())
-        .orElseThrow(() -> new CustomException(ErrorCode.RIDER_NOT_FOUND));
+    RiderProfile riderProfile = riderProfileService
+        .getRiderProfileById(riderStatusRequestDto.riderProfileId());
 
     riderProfile.setToggleStatus(RiderToggleStatus.fromString(riderStatusRequestDto.riderStatus()));
   }
 
   public void updateDeliveryArea(DeliveryAreaRequestDto deliveryAreaRequestDto) {
     // 배달 가능 지역 설정 로직 구현
-    RiderProfile riderProfile = riderProfileRepository.findById(
-            deliveryAreaRequestDto.riderProfileId())
-        .orElseThrow(() -> new CustomException(ErrorCode.RIDER_NOT_FOUND));
+    RiderProfile riderProfile = riderProfileService
+        .getRiderProfileById(deliveryAreaRequestDto.riderProfileId());
 
     riderProfile.setDeliveryArea(deliveryAreaRequestDto.deliveryArea());
   }
