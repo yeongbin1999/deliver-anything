@@ -61,9 +61,11 @@ public class ReviewService {
     Review review = reviewRepository.findById(reviewId)
         .orElseThrow(() -> new CustomException(ErrorCode.REVIEW_NOT_FOUND));
 
-    //Todo: 삭제 권한 확인
-
-    reviewRepository.delete(review);
+    if (verifyReviewAuth(userId, reviewId)) {
+      reviewRepository.delete(review);
+    } else {
+      throw new CustomException(ErrorCode.REVIEW_NO_PERMISSION);
+    }
   }
 
   //=============================편의 메서드====================================
@@ -72,5 +74,17 @@ public class ReviewService {
     return reviewPhotoRepository.findAllByReview(review).stream()
         .map(ReviewPhoto::getPhotoUrl)
         .toList();
+  }
+
+  //리뷰 수정, 삭제 등 권한 체크용 메서드
+  @Transactional(readOnly = true)
+  public boolean verifyReviewAuth(Long reviewId, Long userId) {
+    User user = userRepository.findById(userId)
+        .orElseThrow(() -> new IllegalStateException("TODO: UserErrorCode.USER_NOT_FOUND 사용 예정"));
+
+    Review review =  reviewRepository.findById(reviewId)
+        .orElseThrow(() -> new CustomException(ErrorCode.REVIEW_NOT_FOUND));
+
+    return review.getUser().getId().equals(user.getId());
   }
 }
