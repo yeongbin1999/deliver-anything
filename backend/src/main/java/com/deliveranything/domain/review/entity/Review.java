@@ -1,6 +1,7 @@
-package com.deliveranything.domain.reviews.entity;
+package com.deliveranything.domain.review.entity;
 
-import com.deliveranything.domain.reviews.enums.ReviewTargetType;
+import com.deliveranything.domain.review.enums.ReviewTargetType;
+import com.deliveranything.domain.user.entity.User;
 import com.deliveranything.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
@@ -14,7 +15,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Entity
 @Getter
-@Table(name = "review")
+@Table(name = "reviews")
 @EntityListeners(AuditingEntityListener.class)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Review extends BaseEntity {
@@ -56,12 +57,7 @@ public class Review extends BaseEntity {
 
   //========================생성 메소드===========================
   @Builder
-  public Review(
-      int rating,
-      String comment,
-      ReviewTargetType targetType,
-      Long targetId,
-      User user) {
+  public Review(int rating, String comment, ReviewTargetType targetType, Long targetId, User user) {
     this.rating = rating;
     this.comment = comment;
     this.targetType = targetType;
