@@ -30,7 +30,10 @@ public class SettlementDetail extends BaseEntity {
   private Long targetId;
 
   @Column(nullable = false, precision = 19, scale = 2)
-  private BigDecimal amount;
+  private BigDecimal targetAmount;
+
+  @Column(nullable = false, precision = 19, scale = 2)
+  private BigDecimal platformFee;
 
   @Enumerated(EnumType.STRING)
   @Column(nullable = false)
