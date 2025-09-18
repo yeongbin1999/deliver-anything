@@ -90,4 +90,30 @@ public class User extends BaseEntity {
     this.defaultAddressId = addressId;
   }
 
+  public void updateBasicInfo(String name, String phoneNumber) {
+    this.name = name;
+    this.phoneNumber = phoneNumber;
+  }
+
+  public void updatePassword(String newPassword) {
+    this.password = newPassword;
+  }
+
+  public void verifyEmail() {
+    this.isEmailVerified = true;
+  }
+
+  public void updateLastLoginAt() {
+    this.lastLoginAt = LocalDateTime.now();
+  }
+
+  public void completeOnboarding(ProfileType selectedProfile) {
+    this.currentActiveProfile = selectedProfile;
+    this.onboardingCompleted = true;
+  }
+
+  public void switchProfile(ProfileType targetProfile) {
+    this.currentActiveProfile = targetProfile;
+  }
+
 }
