@@ -30,8 +30,7 @@ public class ApiV1ReviewController {
   ) {
     Long userId = 1L; //임시 유저 id
     ReviewCreateResponse response = reviewService.createReview(request, userId);
-    return ResponseEntity
-        .status(201)
+    return ResponseEntity.status(HttpStatus.CREATED)
         .body(ApiResponse.success(response));
   }
 
