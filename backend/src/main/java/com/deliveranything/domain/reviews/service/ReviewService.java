@@ -6,23 +6,32 @@ import com.deliveranything.domain.reviews.entity.Review;
 import com.deliveranything.domain.reviews.entity.ReviewPhoto;
 import com.deliveranything.domain.reviews.repository.ReviewPhotoRepository;
 import com.deliveranything.domain.reviews.repository.ReviewRepository;
+import com.deliveranything.domain.user.entity.User;
+import com.deliveranything.domain.user.repository.UserRepository;
 import java.util.Arrays;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class ReviewService {
+
   private final ReviewRepository reviewRepository;
   private final ReviewPhotoRepository reviewPhotoRepository;
+  private final UserRepository userRepository;
 
+  //============================메인 API 메서드==================================
+  public ReviewCreateResponse createReview(ReviewCreateRequest request, Long userId) {
+    User user = userRepository.findById(userId)
+        .orElseThrow(() -> new IllegalStateException("TODO: UserErrorCode.USER_NOT_FOUND 사용 예정"));
 
-  public ReviewCreateResponse createReview(ReviewCreateRequest request) {
     //리뷰 생성
     Review review = Review.builder()
         .targetType(request.targetType())
-        .user() //파라미터로 유저 받아오기
+        .user(user)
         .comment(request.comment())
         .rating(request.rating())
         .targetId(request.targetId())
@@ -38,7 +47,20 @@ public class ReviewService {
             .build())
         .toList();
 
+
     reviewPhotoRepository.saveAll(reviewPhotos);
-    }
+
+    List<String> reviewPhotoUrls = getReviewPhotoUrlList(review);
+
+    return new ReviewCreateResponse(review.getId(), review.getRating(), review.getComment(),
+        reviewPhotoUrls, review.getTargetType(), review.getTargetId());
+  }
+
+  //=============================편의 메서드====================================
+  @Transactional(readOnly = true)
+  public List<String> getReviewPhotoUrlList(Review review) {
+    return reviewPhotoRepository.findAllByReview(review).stream()
+        .map(ReviewPhoto::getPhotoUrl)
+        .toList();
   }
 }

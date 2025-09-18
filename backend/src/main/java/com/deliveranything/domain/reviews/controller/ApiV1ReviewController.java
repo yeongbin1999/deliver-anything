@@ -20,13 +20,12 @@ public class ApiV1ReviewController {
 
   //리뷰 생성
   @PostMapping
-  public ApiResponse<ReviewCreateResponse> review(@RequestBody ReviewCreateRequest request,
-      @AuthenticationPrincipal User user
-      //아직 미구현?
+  public ApiResponse<ReviewCreateResponse> createReview(@RequestBody ReviewCreateRequest request
+//      , @AuthenticationPrincipal SecurityUser user
+      //todo: 인증객체 받아와서 createReview에 전달
   ) {
-    ReviewCreateResponse response = reviewService.createReview(request
-        //, userId (인증 객체 받아온 후 주석 해제)
-        );
+    Long userId = 1L; //임시 유저 id
+    ReviewCreateResponse response = reviewService.createReview(request, userId);
     return ApiResponse.success(response);
   }
 }
