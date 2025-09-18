@@ -32,10 +32,6 @@ public class ReviewPhoto extends BaseEntity {
   @Column(name = "updated_at")
   private LocalDateTime updatedAt;
 
-  @Schema(description = "삭제 여부")
-  @Column(name = "is_deleted")
-  private boolean isDeleted = false;
-
   //========================생성 메소드===========================
   @Builder
   public ReviewPhoto(

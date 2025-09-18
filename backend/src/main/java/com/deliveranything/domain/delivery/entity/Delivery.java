@@ -2,7 +2,7 @@ package com.deliveranything.domain.delivery.entity;
 
 
 import com.deliveranything.domain.delivery.enums.DeliveryStatus;
-import com.deliveranything.domain.reviews.entity.Review;
+import com.deliveranything.domain.review.entity.Review;
 import com.deliveranything.domain.store.entity.Store;
 import com.deliveranything.domain.user.entity.profile.CustomerProfile;
 import com.deliveranything.domain.user.entity.profile.RiderProfile;

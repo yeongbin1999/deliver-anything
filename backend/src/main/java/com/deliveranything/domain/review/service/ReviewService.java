@@ -8,6 +8,8 @@ import com.deliveranything.domain.review.repository.ReviewPhotoRepository;
 import com.deliveranything.domain.review.repository.ReviewRepository;
 import com.deliveranything.domain.user.entity.User;
 import com.deliveranything.domain.user.repository.UserRepository;
+import com.deliveranything.global.exception.CustomException;
+import com.deliveranything.global.exception.ErrorCode;
 import java.util.Arrays;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -55,11 +57,31 @@ public class ReviewService {
         reviewPhotoUrls, review.getTargetType(), review.getTargetId());
   }
 
+  public void deleteReview(Long userId, Long reviewId) {
+    Review review = reviewRepository.findById(reviewId)
+        .orElseThrow(() -> new CustomException(ErrorCode.REVIEW_NOT_FOUND));
+
+    if (verifyReviewAuth(review, userId)) {
+      reviewRepository.delete(review);
+    } else {
+      throw new CustomException(ErrorCode.REVIEW_NO_PERMISSION);
+    }
+  }
+
   //=============================편의 메서드====================================
   @Transactional(readOnly = true)
   public List<String> getReviewPhotoUrlList(Review review) {
     return reviewPhotoRepository.findAllByReview(review).stream()
         .map(ReviewPhoto::getPhotoUrl)
         .toList();
+  }
+
+  //리뷰 수정, 삭제 등 권한 체크용 메서드
+  @Transactional(readOnly = true)
+  public boolean verifyReviewAuth(Review review, Long userId) {
+    User user = userRepository.findById(userId)
+        .orElseThrow(() -> new IllegalStateException("TODO: UserErrorCode.USER_NOT_FOUND 사용 예정"));
+
+    return review.getUser().getId().equals(user.getId());
   }
 }

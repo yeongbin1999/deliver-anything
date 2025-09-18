@@ -47,14 +47,6 @@ public class Review extends BaseEntity {
   @Column(name = "updated_at")
   private LocalDateTime updatedAt;
 
-  @Schema(description = "삭제 일시")
-  @Column(name = "deleted_at")
-  private LocalDateTime deletedAt;
-
-  @Schema(description = "삭제 상태")
-  @Column(name = "is_deleted")
-  private boolean isDeleted = false;
-
   //========================생성 메소드===========================
   @Builder
   public Review(int rating, String comment, ReviewTargetType targetType, Long targetId, User user) {
