@@ -18,6 +18,7 @@ public class DeliveryService {
 
   public void updateRiderStatus(RiderToggleStatusRequestDto riderStatusRequestDto) {
     // 라이더 상태 업데이트 로직 구현
+    // 추후 JWT에서 사용자 정보-Profile ID가 넘어오면 파라미터 변경 예정
     RiderProfile riderProfile = riderProfileService
         .getRiderProfileById(riderStatusRequestDto.riderProfileId());
 
@@ -26,6 +27,7 @@ public class DeliveryService {
 
   public void updateDeliveryArea(DeliveryAreaRequestDto deliveryAreaRequestDto) {
     // 배달 가능 지역 설정 로직 구현
+    // 추후 JWT에서 사용자 정보-Profile ID가 넘어오면 파라마터 변경 예정
     RiderProfile riderProfile = riderProfileService
         .getRiderProfileById(deliveryAreaRequestDto.riderProfileId());
 
