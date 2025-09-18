@@ -169,4 +169,18 @@ public class ApiV1ReviewControllerTest {
     //Todo: jwtConfig/SecurityConfig 생성 후 생성일 관련 검증 추가
   }
 
+  @Test
+  @DisplayName("리뷰 조회 - 존재하지 않는 리뷰")
+  public void getReview_nonExistentReview_throwsException() {
+    // 조회 시도
+    CustomException exception = assertThrows(CustomException.class, () -> {
+      reviewService.getReview(1L);
+    });
+
+    // 오류 메세지 확인
+    assertEquals(HttpStatus.NOT_FOUND, exception.getHttpStatus());
+    assertEquals("REVIEW-404", exception.getCode());
+    assertEquals("리뷰를 찾을 수 없습니다.", exception.getMessage());
+  }
+
 }
