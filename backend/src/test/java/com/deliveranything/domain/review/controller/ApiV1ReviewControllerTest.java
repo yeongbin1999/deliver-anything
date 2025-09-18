@@ -37,8 +37,6 @@ public class ApiV1ReviewControllerTest {
   @Test
   @DisplayName("리뷰 등록 - 정상")
   public void createReview() {
-    Long userId = 1L; //임시
-
     User user = User.builder()
         .email("test@example.com")
         .name("testUser")
@@ -54,7 +52,7 @@ public class ApiV1ReviewControllerTest {
     reviewService.createReview(request, user.getId());
 
     // 리뷰 등록 호출
-    ReviewCreateResponse response = reviewService.createReview(request, userId);
+    ReviewCreateResponse response = reviewService.createReview(request, user.getId());
 
     // 검증
     assertNotNull(response.id());

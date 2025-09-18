@@ -22,7 +22,8 @@ public class ApiV1ReviewController {
 
   //리뷰 생성
   @PostMapping
-  public ResponseEntity<ApiResponse<ReviewCreateResponse>> createReview(@RequestBody ReviewCreateRequest request
+  public ResponseEntity<ApiResponse<ReviewCreateResponse>> createReview(
+      @RequestBody ReviewCreateRequest request
 //      , @AuthenticationPrincipal SecurityUser user
       //todo: 인증객체 받아와서 createReview에 전달
   ) {

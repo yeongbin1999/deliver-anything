@@ -82,7 +82,7 @@ public class ReviewService {
     User user = userRepository.findById(userId)
         .orElseThrow(() -> new IllegalStateException("TODO: UserErrorCode.USER_NOT_FOUND 사용 예정"));
 
-    Review review =  reviewRepository.findById(reviewId)
+    Review review = reviewRepository.findById(reviewId)
         .orElseThrow(() -> new CustomException(ErrorCode.REVIEW_NOT_FOUND));
 
     return review.getUser().getId().equals(user.getId());
