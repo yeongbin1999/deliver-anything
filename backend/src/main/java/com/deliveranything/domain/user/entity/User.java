@@ -115,5 +115,4 @@ public class User extends BaseEntity {
   public void switchProfile(ProfileType targetProfile) {
     this.currentActiveProfile = targetProfile;
   }
-
 }
