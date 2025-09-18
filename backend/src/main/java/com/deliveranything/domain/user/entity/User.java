@@ -115,4 +115,12 @@ public class User extends BaseEntity {
   public void switchProfile(ProfileType targetProfile) {
     this.currentActiveProfile = targetProfile;
   }
+
+  public void enable() {
+    this.isEnabled = true;
+  }
+
+  public void disable() {
+    this.isEnabled = false;
+  }
 }

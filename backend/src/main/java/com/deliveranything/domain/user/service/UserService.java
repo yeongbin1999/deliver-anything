@@ -41,26 +41,6 @@ public class UserService {
     return userRepository.existsByPhoneNumber(phoneNumber);
   }
 
-  // 기본 정보 수정 Methods
-  @Transactional
-  public void updateBasicInfo(Long userId, String name, String phoneNumber) {
-    User user = findById(userId);
-    if (user == null) {
-      log.warn("사용자를 찾을 수 없습니다: userId={}", userId);
-      return;
-    }
-    // 핸드폰 번호 중복 체크 (본인 제외)
-    if (!user.getPhoneNumber().equals(phoneNumber) &&
-        existsByPhoneNumber(phoneNumber)) {
-      log.warn("이미 사용 중인 전화번호입니다: phoneNumber={}", phoneNumber);
-      return;
-    }
-
-    user.updateBasicInfo(name, phoneNumber);
-    userRepository.save(user);
-
-    log.info("사용자 기본 정보 업데이트 완료: userId={}", userId);
-  }
 
   @Transactional
   public void updatePassword(Long userId, String newPassword) {
@@ -201,6 +181,109 @@ public class UserService {
     userRepository.save(user);
 
     log.info("이메일 인증 완료: userId={}", userId);
+  }
+
+  // 회원 가입 - 임시 (추후 이메일 인증, SocialProvider, SocialId 등 추가 고려)
+  public User signup(String email, String password, String name, String phoneNumber) {
+    // 중복 체크
+    if (existsByEmail(email)) {
+      log.warn("이미 존재하는 이메일: {}", email);
+      return null;
+    }
+
+    if (existsByPhoneNumber(phoneNumber)) {
+      log.warn("이미 존재하는 전화번호: {}", phoneNumber);
+      return null;
+    }
+
+    User newUser = User.builder()
+        .email(email)
+        .password(password)
+        .name(name)
+        .phoneNumber(phoneNumber)
+        .build();
+
+    userRepository.save(newUser);
+    log.info("신규 사용자 가입 완료: userId={}", newUser.getId());
+    return newUser;
+  }
+
+  // 계정 활성화/비활성화 ( Spring Security의 UserDetailsService 연동 대비)
+  @Transactional
+  public void enableUser(Long userId) {
+    User user = findById(userId);
+    if (user == null) {
+      log.warn("사용자를 찾을 수 없습니다: userId={}", userId);
+      return;
+    }
+
+    user.enable();
+    userRepository.save(user);
+    log.info("계정 활성화: userId={}", userId);
+  }
+
+  @Transactional
+  public void disableUser(Long userId) {
+    User user = findById(userId);
+    if (user == null) {
+      log.warn("사용자를 찾을 수 없습니다: userId={}", userId);
+      return;
+    }
+
+    user.disable();
+    userRepository.save(user);
+    log.info("계정 비활성화: userId={}", userId);
+  }
+
+  public boolean isUserEnabled(Long userId) {
+    User user = findById(userId);
+    if (user == null) {
+      return false;
+    }
+    return user.isEnabled();
+  }
+
+  // 회원탈퇴 (일단 논리적 삭제)
+  @Transactional
+  public boolean deleteUser(Long userId) {
+    User user = findById(userId);
+    if (user == null) {
+      log.warn("사용자를 찾을 수 없습니다: userId={}", userId);
+      return false;
+    }
+
+    // 계정 비활성화 (논리적 삭제)
+    user.disable();
+    userRepository.save(user);
+
+    log.info("회원 탈퇴 처리 완료: userId={}", userId);
+    return true;
+  }
+
+  // 로그인 기능 (임시 - Spring Security 도입 전)
+  public User login(String email, String password) {
+    User user = findByEmail(email);
+    if (user == null) {
+      log.warn("존재하지 않는 이메일: {}", email);
+      return null;
+    }
+
+    if (!user.isEnabled()) {
+      log.warn("비활성화된 계정 로그인 시도: email={}", email);
+      return null;
+    }
+
+    // TODO: Spring Security 도입 후 PasswordEncoder로 암호화된 비밀번호 비교
+    if (!user.getPassword().equals(password)) {
+      log.warn("잘못된 비밀번호 로그인 시도: email={}", email);
+      return null;
+    }
+
+    // 로그인 성공 - 마지막 로그인 시간 업데이트
+    updateLastLoginAt(user.getId());
+
+    log.info("로그인 성공: userId={}, email={}", user.getId(), email);
+    return user;
   }
 
   // 프로필 관리를 위한 Private Helper Methods
