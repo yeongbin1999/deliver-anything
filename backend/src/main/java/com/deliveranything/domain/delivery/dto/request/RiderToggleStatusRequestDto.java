@@ -4,6 +4,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 
 public record RiderToggleStatusRequestDto(
+    // 추후 JWT에서 사용자 정보-Profile ID가 넘어오면 변경 예정
     @NotNull
     Long riderProfileId,
 
