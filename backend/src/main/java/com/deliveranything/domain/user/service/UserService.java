@@ -401,16 +401,48 @@ public class UserService {
   public boolean canSwitchToProfile(Long userId, ProfileType targetProfile) {
     User user = findById(userId);
     if (user == null) {
+      return false;
+    }
+    return canSwitchToProfileInternal(user, targetProfile);
+  }
+
+  // 온보딩 관련 Methods
+  @Transactional
+  public boolean completeOnboarding(Long userId, ProfileType selectedProfile) {
+    User user = findById(userId);
+    if (user == null) {
       log.warn("사용자를 찾을 수 없습니다: userId={}", userId);
       return false;
     }
-    if (!user.isOnboardingCompleted()) {
-      log.warn("온보딩이 완료되지 않은 사용자입니다: userId={}", userId);
+
+    // 이미 온보딩 완료된 경우
+    if (user.isOnboardingCompleted()) {
+      log.warn("이미 온보딩이 완료되었습니다: userId={}", userId);
       return false;
     }
-    List<ProfileType> availableProfiles = getAvailableProfilesInternal(user);
-    return availableProfiles.contains(targetProfile);
+
+    // 선택한 프로필이 존재하는지 확인 (Service에서 직접 처리)
+    if (!hasProfileInternal(user, selectedProfile)) {
+      log.warn("해당 프로필을 찾을 수 없습니다: userId={}, selectedProfile={}", userId, selectedProfile);
+      return false;
+    }
+
+    // 단순 상태 변경
+    user.completeOnboarding(selectedProfile);
+    userRepository.save(user);
+
+    log.info("온보딩 완료: userId={}, selectedProfile={}", userId, selectedProfile);
+    return true;
   }
+
+  public boolean isOnboardingCompleted(Long userId) {
+    User user = findById(userId);
+    if (user == null) {
+      return false;
+    }
+    return user.isOnboardingCompleted();
+  }
+
 
   // 프로필 관리를 위한 Private Helper Methods
   private List<ProfileType> getAvailableProfilesInternal(User user) {
@@ -424,5 +456,25 @@ public class UserService {
     return profiles;
   }
 >>>>>>> 2bfa3fb (feat(be); UserService 구현 중.. 헬퍼 메소드 도입)
+
+  private boolean canSwitchToProfileInternal(User user, ProfileType targetProfile) {
+    if (!user.isOnboardingCompleted()) {
+      return false;
+    }
+
+    return switch (targetProfile) {
+      case CONSUMER -> user.getCustomerProfile() != null;
+      case SELLER -> false; // TODO: 나중에 SellerProfile 연관관계 추가 시 수정
+      case RIDER -> false;  // TODO: 나중에 RiderProfile 연관관계 추가 시 수정
+    };
+  }
+
+  private boolean hasProfileInternal(User user, ProfileType profileType) {
+    return switch (profileType) {
+      case CONSUMER -> user.getCustomerProfile() != null;
+      case SELLER -> false; // TODO: 나중에 수정
+      case RIDER -> false;  // TODO: 나중에 수정
+    };
+  }
 
 }
