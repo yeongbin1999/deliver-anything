@@ -16,7 +16,7 @@ public enum ErrorCode {
     RIDER_NOT_FOUND(HttpStatus.NOT_FOUND, "RIDER-404", "라이더를 찾을 수 없습니다"),
 
     //리뷰 관련 오류
-    REVIEW_NOT_FOUND(HttpStatus.NOT_FOUND, "REVIEW-404", "리뷰를 찾을 수 없습니다."),;
+    REVIEW_NOT_FOUND(HttpStatus.NOT_FOUND, "REVIEW-404", "리뷰를 찾을 수 없습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;
