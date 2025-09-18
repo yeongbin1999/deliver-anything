@@ -1,4 +1,4 @@
-package com.deliveranything.domain.reviews.enums;
+package com.deliveranything.domain.review.enums;
 
 public enum ReviewTargetType {
   STORE,
