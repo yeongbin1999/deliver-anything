@@ -1,6 +1,6 @@
 package com.deliveranything.domain.delivery.service;
 
-import com.deliveranything.domain.delivery.dto.RiderToggleStatusRequestDto;
+import com.deliveranything.domain.delivery.dto.request.RiderToggleStatusRequestDto;
 import com.deliveranything.domain.user.entity.profile.RiderProfile;
 import com.deliveranything.domain.user.enums.RiderToggleStatus;
 import com.deliveranything.domain.user.repository.RiderProfileRepository;
@@ -25,4 +25,5 @@ public class DeliveryService {
 
     riderProfile.setToggleStatus(RiderToggleStatus.fromString(riderStatusRequestDto.riderStatus()));
   }
+
 }

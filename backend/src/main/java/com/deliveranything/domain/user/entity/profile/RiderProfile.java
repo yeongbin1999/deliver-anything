@@ -13,6 +13,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.AccessLevel;
@@ -34,7 +35,7 @@ public class RiderProfile extends BaseEntity {
   private RiderToggleStatus toggleStatus;
 
   @Column(name = "rider_area")
-  private String area;     // 추후 Enum으로 변경 고려
+  private String area;     // 추후 Enum, List로 변경 고려
 
   @Column(name = "rider_license_number", nullable = false, unique = true)
   private String licenseNumber;
@@ -79,5 +80,9 @@ public class RiderProfile extends BaseEntity {
   // String을 받아서 enum으로 변환하는 메서드 추가
   public void setToggleStatus(String toggleStatus) {
     this.toggleStatus = RiderToggleStatus.fromString(toggleStatus);
+  }
+
+  public void setDeliveryArea(@NotNull String area) {
+    this.area = area;
   }
 }
