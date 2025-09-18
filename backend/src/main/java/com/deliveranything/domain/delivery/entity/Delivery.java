@@ -3,7 +3,9 @@ package com.deliveranything.domain.delivery.entity;
 
 import com.deliveranything.domain.delivery.enums.DeliveryStatus;
 import com.deliveranything.domain.reviews.entity.Review;
+import com.deliveranything.domain.store.entity.Store;
 import com.deliveranything.domain.user.entity.profile.CustomerProfile;
+import com.deliveranything.domain.user.entity.profile.RiderProfile;
 import com.deliveranything.global.entity.BaseEntity;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -26,7 +28,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Entity
 @Getter
-@Table(name = "delivery")
+@Table(name = "deliveries")
 @EntityListeners(AuditingEntityListener.class)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Delivery extends BaseEntity {
@@ -51,17 +53,17 @@ public class Delivery extends BaseEntity {
   @Column(name = "delivery_charge")
   private Integer charge;
 
-//  @ManyToOne(fetch = FetchType.LAZY)
-//  @JoinColumn(name = "store_id")
-//  private Store store;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "store_id")
+  private Store store;
 
   @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
   @JoinColumn(name = "review_id")
   private Review review;
 
-//  @ManyToOne(fetch = FetchType.LAZY)
-//  @JoinColumn(name = "rider_profile_id")
-//  private RiderProfile rider;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "rider_profile_id")
+  private RiderProfile rider;
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "customer_profile_id")

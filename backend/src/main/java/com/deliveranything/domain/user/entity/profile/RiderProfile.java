@@ -22,7 +22,7 @@ import lombok.NoArgsConstructor;
 
 @Entity
 @Getter
-@Table(name = "rider_priofile")
+@Table(name = "rider_profiles")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class RiderProfile extends BaseEntity {
 
