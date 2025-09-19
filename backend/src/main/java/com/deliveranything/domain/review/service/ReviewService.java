@@ -8,6 +8,7 @@ import com.deliveranything.domain.review.entity.ReviewPhoto;
 import com.deliveranything.domain.review.repository.ReviewPhotoRepository;
 import com.deliveranything.domain.review.repository.ReviewRepository;
 import com.deliveranything.domain.user.entity.User;
+import com.deliveranything.domain.user.entity.profile.CustomerProfile;
 import com.deliveranything.domain.user.repository.UserRepository;
 import com.deliveranything.global.exception.CustomException;
 import com.deliveranything.global.exception.ErrorCode;
@@ -25,14 +26,19 @@ public class ReviewService {
   private final ReviewRepository reviewRepository;
   private final ReviewPhotoRepository reviewPhotoRepository;
   private final UserRepository userRepository;
+  private final CustomerProfileRepository customerProfileRepository;
 
   //============================메인 API 메서드==================================
   public ReviewCreateResponse createReview(ReviewCreateRequest request, Long userId) {
     User user = userRepository.findById(userId)
-        .orElseThrow(() -> new IllegalStateException("TODO: UserErrorCode.USER_NOT_FOUND 사용 예정"));
+        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+    CustomerProfile customerProfile = customerProfileRepository.findByUserId(userId)
+        .orElseThrow(() -> new CustomException(ErrorCode.CUSTOMER_NOT_FOUND));
+
 
     //리뷰 생성
-    Review review = Review.from(request, user);
+    Review review = Review.from(request, customerProfile);
     reviewRepository.save(review);
 
     //리뷰 사진 객체 생성
@@ -81,9 +87,9 @@ public class ReviewService {
   //리뷰 수정, 삭제 등 권한 체크용 메서드
   @Transactional(readOnly = true)
   public boolean verifyReviewAuth(Review review, Long userId) {
-    User user = userRepository.findById(userId)
-        .orElseThrow(() -> new IllegalStateException("TODO: UserErrorCode.USER_NOT_FOUND 사용 예정"));
+    CustomerProfile customerProfile = customerProfileRepository.findByUserId(userId)
+        .orElseThrow(() -> new CustomException(ErrorCode.CUSTOMER_NOT_FOUND));
 
-    return review.getUser().getId().equals(user.getId());
+    return review.getCustomerProfile().getId().equals(user.getId());
   }
 }
