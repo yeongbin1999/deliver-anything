@@ -63,7 +63,7 @@ public class Delivery extends BaseEntity {
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "rider_profile_id")
-  private RiderProfile rider;
+  private RiderProfile riderProfile;
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "customer_profile_id")
