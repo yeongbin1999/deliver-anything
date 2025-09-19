@@ -1,10 +1,6 @@
 package com.deliveranything.domain.review.controller;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 import com.deliveranything.domain.review.dto.ReviewCreateRequest;
 import com.deliveranything.domain.review.dto.ReviewCreateResponse;
@@ -36,9 +32,13 @@ public class ApiV1ReviewControllerTest {
   @Autowired
   private ReviewRepository reviewRepository;
 
+  /**
+   * 리뷰 등록 성공 테스트
+   */
   @Test
   @DisplayName("리뷰 등록 - 정상")
   public void createReview() {
+    // given : 유저 생성 및 저장
     User user = User.builder()
         .email("test@example.com")
         .name("testUser")
@@ -46,34 +46,30 @@ public class ApiV1ReviewControllerTest {
         .phoneNumber("testPhoneNumber")
         .socialProvider(null)
         .build();
-
     CustomerProfile profile = CustomerProfile.builder()
         .user(user)
         .nickname("testUser")
         .build();
-
     user.setCustomerProfile(profile);
-
     userRepository.save(user);
 
+    // when : 리뷰 등록 요청
     ReviewCreateRequest request = ReviewFactory.createReviews(1).getFirst();
-
-    reviewService.createReview(request, user.getId());
-
-    // 리뷰 등록 호출
     ReviewCreateResponse response = reviewService.createReview(request, user.getId());
 
-    // 검증
+    // then : 등록된 리뷰 검증
     assertNotNull(response.id());
     assertEquals(1, response.rating());
     assertEquals("test comment1", response.comment());
   }
 
+  /**
+   * 리뷰 삭제 성공 테스트
+   */
   @Test
   @DisplayName("리뷰 삭제 - 정상")
   public void deleteReview() {
-    Long userId = 1L; // 임시
-
+    // given : 유저 및 리뷰 생성
     User user = User.builder()
         .email("test@example.com")
         .name("testUser")
@@ -81,69 +77,66 @@ public class ApiV1ReviewControllerTest {
         .phoneNumber("testPhoneNumber")
         .socialProvider(null)
         .build();
-
     CustomerProfile profile = CustomerProfile.builder()
         .user(user)
         .nickname("testUser")
         .build();
-
     user.setCustomerProfile(profile);
-
     userRepository.save(user);
 
     ReviewCreateRequest request = ReviewFactory.createReviews(1).get(0);
+    ReviewCreateResponse response = reviewService.createReview(request, user.getId());
 
-    ReviewCreateResponse response = reviewService.createReview(request, userId);
+    // when : 리뷰 삭제
+    reviewService.deleteReview(user.getId(), response.id());
 
-    // 삭제
-    reviewService.deleteReview(userId, response.id());
-
-    // 삭제 여부 확인
+    // then : 삭제 여부 검증
     boolean exists = reviewRepository.findById(response.id()).isPresent();
     assertFalse(exists, "리뷰가 삭제되어야 합니다");
   }
 
+  /**
+   * 존재하지 않는 리뷰 삭제 시도 → 예외 발생
+   */
   @Test
   @DisplayName("리뷰 삭제 - 존재하지 않는 리뷰")
   public void deleteReview_nonExistentReview_throwsException() {
-    Long userId = 1L; // 임시
-
-    // 삭제 시도
+    // when & then
     CustomException exception = assertThrows(CustomException.class, () -> {
-      reviewService.deleteReview(userId, 1L);
+      reviewService.deleteReview(1L, 1L);
     });
 
-    // 오류 메세지 확인
     assertEquals(HttpStatus.NOT_FOUND, exception.getHttpStatus());
     assertEquals("REVIEW-404", exception.getCode());
     assertEquals("리뷰를 찾을 수 없습니다.", exception.getMessage());
   }
 
+  /**
+   * 다른 유저가 작성한 리뷰 삭제 시도 → 권한 없음 예외 발생
+   */
   @Test
   @DisplayName("리뷰 삭제 - 권한 없는 유저의 요청")
   public void deleteReview_userWithoutPermission_throwsException() {
-    // 1. 리뷰 작성 유저 생성
-    User user = User.builder()
+    // given : 리뷰 작성 유저 생성
+    User owner = User.builder()
         .email("owner@example.com")
         .name("ownerUser")
         .password("ownerPassword")
         .phoneNumber("010-0000-0000")
         .socialProvider(null)
         .build();
-
     CustomerProfile profile = CustomerProfile.builder()
-        .user(user)
+        .user(owner)
         .nickname("testUser")
         .build();
+    owner.setCustomerProfile(profile);
+    userRepository.save(owner);
 
-    user.setCustomerProfile(profile);
-    userRepository.save(user);
-
-    // 2. 리뷰 생성
+    // 리뷰 생성
     ReviewCreateRequest request = ReviewFactory.createReviews(1).getFirst();
-    ReviewCreateResponse createdReview = reviewService.createReview(request, user.getId());
+    ReviewCreateResponse createdReview = reviewService.createReview(request, owner.getId());
 
-    // 3. 삭제 시도 유저 생성 (권한 없음)
+    // 다른 유저 생성
     User otherUser = User.builder()
         .email("other@example.com")
         .name("otherUser")
@@ -151,77 +144,45 @@ public class ApiV1ReviewControllerTest {
         .phoneNumber("010-1111-1111")
         .socialProvider(null)
         .build();
-
     CustomerProfile otherProfile = CustomerProfile.builder()
         .user(otherUser)
         .nickname("testUser2")
         .build();
-
     otherUser.setCustomerProfile(otherProfile);
     userRepository.save(otherUser);
 
-    // 4. 권한 없는 유저 삭제 시도
+    // when & then : 권한 없는 유저가 삭제 시도
     CustomException exception = assertThrows(CustomException.class, () -> {
       reviewService.deleteReview(otherUser.getId(), createdReview.id());
     });
 
-    // 5. 예외 확인
     assertEquals(HttpStatus.FORBIDDEN, exception.getHttpStatus());
     assertEquals("REVIEW-403", exception.getCode());
     assertEquals("리뷰를 관리할 권한이 없습니다.", exception.getMessage());
   }
 
-//  @Test
-//  @DisplayName("리뷰 단건 조회 - 정상")
-//  public void getReview() {
-//    User user = User.builder()
-//        .email("owner@example.com")
-//        .name("ownerUser")
-//        .password("ownerPassword")
-//        .phoneNumber("010-0000-0000")
-//        .socialProvider(null)
-//        .build();
-//
-//    CustomerProfile profile = CustomerProfile.builder()
-//        .user(user)
-//        .nickname("testUser")
-//        .build();
-//
-//    user.setCustomerProfile(profile);
-//
-//    userRepository.save(user);
-//
-//    ReviewCreateRequest reviewRq = ReviewFactory.createReviews(1).getFirst();
-//    ReviewCreateResponse reviewRs = reviewService.createReview(reviewRq, user.getId());
-//
-//    ReviewResponse response = reviewService.getReview(reviewRs.id());
-//
-//    assertNotNull(response.id());
-//    assertEquals(reviewRs.id(), response.id());
-//    assertEquals(reviewRq.rating(), response.rating());
-//    assertEquals(reviewRq.comment(), response.comment());
-//
-//    //Todo: jwtConfig/SecurityConfig 생성 후 생성일 관련 검증 추가
-//  }
-
+  /**
+   * 존재하지 않는 리뷰 조회 시도 → 예외 발생
+   */
   @Test
   @DisplayName("리뷰 조회 - 존재하지 않는 리뷰")
   public void getReview_nonExistentReview_throwsException() {
-    // 조회 시도
     CustomException exception = assertThrows(CustomException.class, () -> {
       reviewService.getReview(1L);
     });
 
-    // 오류 메세지 확인
     assertEquals(HttpStatus.NOT_FOUND, exception.getHttpStatus());
     assertEquals("REVIEW-404", exception.getCode());
     assertEquals("리뷰를 찾을 수 없습니다.", exception.getMessage());
   }
 
-
+  /**
+   * 리뷰 단건 조회 성공 테스트
+   */
   @Test
   @DisplayName("리뷰 단건 조회 - 정상")
   public void getReview() {
+    // given : 유저 및 리뷰 생성
     User user = User.builder()
         .email("owner@example.com")
         .name("ownerUser")
@@ -229,26 +190,25 @@ public class ApiV1ReviewControllerTest {
         .phoneNumber("010-0000-0000")
         .socialProvider(null)
         .build();
-
     CustomerProfile profile = CustomerProfile.builder()
         .user(user)
         .nickname("testUser")
         .build();
-
     user.setCustomerProfile(profile);
-
     userRepository.save(user);
 
     ReviewCreateRequest reviewRq = ReviewFactory.createReviews(1).getFirst();
     ReviewCreateResponse reviewRs = reviewService.createReview(reviewRq, user.getId());
 
+    // when : 리뷰 단건 조회
     ReviewResponse response = reviewService.getReview(reviewRs.id());
 
+    // then : 조회 결과 검증
     assertNotNull(response.id());
     assertEquals(reviewRs.id(), response.id());
     assertEquals(reviewRq.rating(), response.rating());
     assertEquals(reviewRq.comment(), response.comment());
 
-    //Todo: jwtConfig/SecurityConfig 생성 후 생성일 관련 검증 추가
+    // TODO: jwtConfig/SecurityConfig 적용 후 생성일/작성자 검증 추가
   }
 }
