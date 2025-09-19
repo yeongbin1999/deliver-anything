@@ -1,6 +1,5 @@
 package com.deliveranything.domain.store.entity;
 
-import com.deliveranything.domain.store.category.entity.StoreCategory;
 import com.deliveranything.domain.store.enums.StoreStatus;
 import com.deliveranything.global.entity.BaseEntity;
 import jakarta.persistence.Column;

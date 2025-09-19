@@ -1,4 +1,4 @@
-package com.deliveranything.domain.store.category.entity;
+package com.deliveranything.domain.store.entity;
 
 import com.deliveranything.global.entity.BaseEntity;
 import jakarta.persistence.Column;

@@ -1,6 +1,5 @@
-package com.deliveranything.domain.store.ban.entity;
+package com.deliveranything.domain.store.entity;
 
-import com.deliveranything.domain.store.entity.Store;
 import com.deliveranything.domain.user.entity.profile.CustomerProfile;
 import com.deliveranything.global.entity.BaseEntity;
 import jakarta.persistence.Entity;
@@ -26,14 +25,13 @@ import lombok.NoArgsConstructor;
     indexes = @Index(name = "idx_sbc_store", columnList = "store_id")
 )
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class StoreBlockedConsumer extends BaseEntity {
+public class Blocklist extends BaseEntity {
 
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(name = "store_id", nullable = false, foreignKey = @ForeignKey(name = "fk_sbc_store"))
   private Store store;
 
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
-  @JoinColumn(name = "consumer_profile_id", nullable = false, foreignKey = @ForeignKey(name = "fk_sbc_profile"))
-//  private UserProfile consumerProfile;
-  private CustomerProfile consumerProfile;
+  @JoinColumn(name = "customer_profile_id", nullable = false, foreignKey = @ForeignKey(name = "fk_sbc_profile"))
+  private CustomerProfile customerProfile;
 }
