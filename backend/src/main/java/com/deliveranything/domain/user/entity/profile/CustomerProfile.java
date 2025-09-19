@@ -1,7 +1,6 @@
 package com.deliveranything.domain.user.entity.profile;
 
 import com.deliveranything.domain.user.entity.User;
-import com.deliveranything.global.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -17,7 +16,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "customer_profiles")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class CustomerProfile extends BaseEntity {
+public class CustomerProfile extends BaseProfile {
 
   @OneToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "user_id", nullable = false)
@@ -31,8 +30,8 @@ public class CustomerProfile extends BaseEntity {
 
   @Builder
   public CustomerProfile(User user, String nickname, String customerProfileImageUrl) {
+    super(nickname);
     this.user = user;
-    this.nickname = nickname;
     this.customerProfileImageUrl = customerProfileImageUrl;
   }
 
@@ -41,7 +40,7 @@ public class CustomerProfile extends BaseEntity {
   }
 
   public void updateProfile(String nickname, String customerProfileImageUrl) {
-    this.nickname = nickname;
+    super.updateNickname(nickname);
     this.customerProfileImageUrl = customerProfileImageUrl;
   }
 }

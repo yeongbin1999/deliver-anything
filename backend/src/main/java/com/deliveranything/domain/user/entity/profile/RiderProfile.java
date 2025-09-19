@@ -3,7 +3,6 @@ package com.deliveranything.domain.user.entity.profile;
 import com.deliveranything.domain.delivery.entity.Delivery;
 import com.deliveranything.domain.user.entity.User;
 import com.deliveranything.domain.user.enums.RiderToggleStatus;
-import com.deliveranything.global.entity.BaseEntity;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -25,7 +24,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @Table(name = "rider_profiles")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class RiderProfile extends BaseEntity {
+public class RiderProfile extends BaseProfile {
 
   @Column(name = "rider_nickname", nullable = false)
   private String nickname;
@@ -62,7 +61,7 @@ public class RiderProfile extends BaseEntity {
   public RiderProfile(String nickname, RiderToggleStatus toggleStatus, String area,
       String licenseNumber, String profileImageUrl, String bankName,
       String bankAccountNumber, String bankAccountHolderName, User user) {
-    this.nickname = nickname;
+    super(nickname); // 부모 클래스 생성자 호출
     this.toggleStatus = toggleStatus;
     this.area = area;
     this.licenseNumber = licenseNumber;
