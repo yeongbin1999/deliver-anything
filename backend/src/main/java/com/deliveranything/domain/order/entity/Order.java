@@ -20,8 +20,11 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import lombok.Builder;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+@Getter
 @NoArgsConstructor
 @Entity
 @Table(name = "orders")
@@ -63,4 +66,24 @@ public class Order extends BaseEntity {
 
   @Column(nullable = false, precision = 19, scale = 2)
   private BigDecimal deliveryPrice;
+
+  @Builder
+  public Order(User customer, Store store, String address, String riderNote, String storeNote,
+      BigDecimal totalPrice, BigDecimal storePrice, BigDecimal deliveryPrice) {
+    this.customer = customer;
+    this.store = store;
+    this.address = address;
+    this.riderNote = riderNote;
+    this.storeNote = storeNote;
+    this.totalPrice = totalPrice;
+    this.storePrice = storePrice;
+    this.deliveryPrice = deliveryPrice;
+    this.orderStatus = OrderStatus.PENDING;
+    this.merchantId = UUID.randomUUID();
+  }
+
+  public void addOrderItem(OrderItem orderItem) {
+    this.orderItems.add(orderItem);
+    orderItem.setOrder(this);
+  }
 }
