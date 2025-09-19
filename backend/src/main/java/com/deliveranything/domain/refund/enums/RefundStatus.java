@@ -1,4 +1,4 @@
-package com.deliveranything.refund.enums;
+package com.deliveranything.domain.refund.enums;
 
 public enum RefundStatus {
   REQUESTED,

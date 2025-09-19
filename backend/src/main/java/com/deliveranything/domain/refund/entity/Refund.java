@@ -1,8 +1,8 @@
-package com.deliveranything.refund.entity;
+package com.deliveranything.domain.refund.entity;
 
 import com.deliveranything.domain.payment.entitiy.Payment;
+import com.deliveranything.domain.refund.enums.RefundStatus;
 import com.deliveranything.global.entity.BaseEntity;
-import com.deliveranything.refund.enums.RefundStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
