@@ -3,7 +3,7 @@ package com.deliveranything.domain.user.entity.profile;
 import com.deliveranything.domain.delivery.entity.Delivery;
 import com.deliveranything.domain.user.entity.User;
 import com.deliveranything.domain.user.enums.RiderToggleStatus;
-import com.deliveranything.global.entity.BaseEntity;
+import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -25,10 +25,8 @@ import lombok.NoArgsConstructor;
 @Getter
 @Table(name = "rider_profiles")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class RiderProfile extends BaseEntity {
-
-  @Column(name = "rider_nickname", nullable = false)
-  private String nickname;
+@AttributeOverride(name = "profileImageUrl", column = @Column(name = "rider_profile_image_url", columnDefinition = "TEXT"))
+public class RiderProfile extends BaseProfile {
 
   @Column(name = "rider_toggle_status", nullable = false)
   @Enumerated(EnumType.STRING)
@@ -39,9 +37,6 @@ public class RiderProfile extends BaseEntity {
 
   @Column(name = "rider_license_number", nullable = false, unique = true)
   private String licenseNumber;
-
-  @Column(name = "rider_profile_image_url")
-  private String profileImageUrl;
 
   @Column(name = "rider_bank_name")
   private String bankName;
@@ -62,11 +57,10 @@ public class RiderProfile extends BaseEntity {
   public RiderProfile(String nickname, RiderToggleStatus toggleStatus, String area,
       String licenseNumber, String profileImageUrl, String bankName,
       String bankAccountNumber, String bankAccountHolderName, User user) {
-    this.nickname = nickname;
+    super(nickname, profileImageUrl); // 부모 클래스 생성자 호출
     this.toggleStatus = toggleStatus;
     this.area = area;
     this.licenseNumber = licenseNumber;
-    this.profileImageUrl = profileImageUrl;
     this.bankName = bankName;
     this.bankAccountNumber = bankAccountNumber;
     this.bankAccountHolderName = bankAccountHolderName;
@@ -85,4 +79,11 @@ public class RiderProfile extends BaseEntity {
   public void setDeliveryArea(@NotNull String area) {
     this.area = area;
   }
+
+  // 상속받은 요소는 이렇게 업데이트!! 주석처리만 해둘게요
+//  public void updateProfile(String nickname, String profileImageUrl) {
+//    super.updateNickname(nickname);
+//    super.updateProfileImageUrl(profileImageUrl);
+//  }
+
 }
