@@ -12,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -49,6 +50,20 @@ public class ApiV1ReviewController {
     Long userId = 1L; //임시 유저 id
     return ResponseEntity.status(HttpStatus.NO_CONTENT)
         .body(ApiResponse.success(null));
+  }
+
+  @PatchMapping("/{reviewId}")
+  @Operation(summary = "리뷰 수정", description = "리뷰를 수정합니다.")
+  public ResponseEntity<ApiResponse<ReviewResponse>> updateReview(
+//      @AuthenticationPrincipal SecurityUser user,
+      //todo: 인증객체 받아와서 deleteReview에 전달
+      @PathVariable Long reviewId
+  ) {
+    Long userId = 1L; //임시 유저 id
+    ReviewResponse response = reviewService.updateReview(reviewId, userId);
+
+    return ResponseEntity.status(HttpStatus.OK)
+        .body(ApiResponse.success(response));
   }
 
   @GetMapping("/{reviewId}")
