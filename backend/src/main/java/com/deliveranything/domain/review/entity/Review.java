@@ -1,10 +1,15 @@
 package com.deliveranything.domain.review.entity;
 
+import com.deliveranything.domain.review.dto.ReviewCreateRequest;
+import com.deliveranything.domain.review.dto.ReviewCreateResponse;
 import com.deliveranything.domain.review.enums.ReviewTargetType;
 import com.deliveranything.domain.user.entity.User;
+import com.deliveranything.domain.user.entity.profile.CustomerProfile;
 import com.deliveranything.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -39,8 +44,12 @@ public class Review extends BaseEntity {
 
   @Schema(description = "작성자 객체")
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "user_id", nullable = false)
-  private User user;
+  @JoinColumn(name = "customer_profile_id", nullable = false)
+  private CustomerProfile customerProfile;
+
+  @Schema(description = "리뷰 사진")
+  @OneToMany(mappedBy = "review", cascade = CascadeType.ALL, orphanRemoval = true)
+  private List<ReviewPhoto> reviewPhotos = new ArrayList<>();
 
   @LastModifiedDate
   @Schema(description = "수정 일시")
@@ -49,11 +58,30 @@ public class Review extends BaseEntity {
 
   //========================생성 메소드===========================
   @Builder
-  public Review(int rating, String comment, ReviewTargetType targetType, Long targetId, User user) {
+  public Review(int rating, String comment, ReviewTargetType targetType, Long targetId, CustomerProfile customerProfile) {
     this.rating = rating;
     this.comment = comment;
     this.targetType = targetType;
     this.targetId = targetId;
-    this.user = user;
+    this.customerProfile = customerProfile;
+  }
+
+  public static Review from(ReviewCreateRequest request, CustomerProfile customerProfile) {
+    return Review.builder()
+        .rating(request.rating())
+        .comment(request.comment())
+        .targetType(request.targetType())
+        .targetId(request.targetId())
+        .customerProfile(customerProfile)
+        .build();
+  }
+
+  //===========================편의 메소드=======================
+  public void addReviewPhoto(String photoUrl) {
+    ReviewPhoto reviewPhoto = ReviewPhoto.builder()
+        .review(this)
+        .photoUrl(photoUrl)
+        .build();
+    this.reviewPhotos.add(reviewPhoto);
   }
 }
