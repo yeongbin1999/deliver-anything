@@ -74,5 +74,20 @@ public class CustomerProfileService {
     }
     return user.getCustomerProfile() != null;
   }
+
+  // 고객 프로필 수정
+  @Transactional
+  public boolean updateProfile(Long userId, String nickname, String profileImageUrl) {
+    CustomerProfile profile = getProfile(userId);
+    if (profile == null) {
+      return false;
+    }
+
+    profile.updateProfile(nickname, profileImageUrl);
+    customerProfileRepository.save(profile);
+
+    log.info("고객 프로필 수정 완료: userId={}, nickname={}", userId, nickname);
+    return true;
+  }
   
 }
