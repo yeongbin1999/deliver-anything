@@ -9,7 +9,10 @@ import com.deliveranything.domain.review.repository.ReviewPhotoRepository;
 import com.deliveranything.domain.review.repository.ReviewRepository;
 import com.deliveranything.domain.user.entity.User;
 import com.deliveranything.domain.user.entity.profile.CustomerProfile;
+import com.deliveranything.domain.user.enums.ProfileType;
+import com.deliveranything.domain.user.repository.CustomerProfileRepository;
 import com.deliveranything.domain.user.repository.UserRepository;
+import com.deliveranything.domain.user.service.UserService;
 import com.deliveranything.global.exception.CustomException;
 import com.deliveranything.global.exception.ErrorCode;
 import java.util.Arrays;
@@ -26,6 +29,7 @@ public class ReviewService {
   private final ReviewRepository reviewRepository;
   private final ReviewPhotoRepository reviewPhotoRepository;
   private final UserRepository userRepository;
+  private final UserService userService;
   private final CustomerProfileRepository customerProfileRepository;
 
   //============================메인 API 메서드==================================
@@ -33,11 +37,10 @@ public class ReviewService {
   public ReviewCreateResponse createReview(ReviewCreateRequest request, Long userId) {
     //유저 존재 여부 확인
     User user = userRepository.findById(userId)
-        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+//        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND)); 관련 ERROR CODE 생길 시 대체
+        .orElseThrow(() -> new CustomException(ErrorCode.DEV_NOT_FOUND));
 
-    //고객 프로필 존재 여부 확인
-    CustomerProfile customerProfile = customerProfileRepository.findByUserId(userId)
-        .orElseThrow(() -> new CustomException(ErrorCode.CUSTOMER_NOT_FOUND));
+    CustomerProfile customerProfile = user.getCustomerProfile();
 
     //리뷰 생성 및 저장
     Review review = Review.from(request, customerProfile);
@@ -83,7 +86,7 @@ public class ReviewService {
   //=============================편의 메서드====================================
   /* 리뷰 사진 URL 리스트 반환 */
   @Transactional(readOnly = true)
-  private List<String> getReviewPhotoUrlList(Review review) {
+  public List<String> getReviewPhotoUrlList(Review review) {
     return reviewPhotoRepository.findAllByReview(review).stream()
         .map(ReviewPhoto::getPhotoUrl)
         .toList();
@@ -91,9 +94,11 @@ public class ReviewService {
 
   //리뷰 권한 확인 (작성자 확인)
   @Transactional(readOnly = true)
-  private boolean verifyReviewAuth(Review review, Long userId) {
-    CustomerProfile customerProfile = customerProfileRepository.findByUserId(userId)
-        .orElseThrow(() -> new CustomException(ErrorCode.CUSTOMER_NOT_FOUND));
+  public boolean verifyReviewAuth(Review review, Long userId) {
+    User user = userRepository.findById(userId)
+//        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND)); 관련 ERROR CODE 생길 시 대체
+        .orElseThrow(() -> new CustomException(ErrorCode.DEV_NOT_FOUND));
+    CustomerProfile customerProfile =  user.getCustomerProfile();
 
     return review.getCustomerProfile().getId().equals(customerProfile.getId());
   }
