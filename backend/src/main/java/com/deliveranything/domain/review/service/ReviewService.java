@@ -29,33 +29,36 @@ public class ReviewService {
   private final CustomerProfileRepository customerProfileRepository;
 
   //============================메인 API 메서드==================================
+  /* 리뷰 생성 */
   public ReviewCreateResponse createReview(ReviewCreateRequest request, Long userId) {
+    //유저 존재 여부 확인
     User user = userRepository.findById(userId)
         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
+    //고객 프로필 존재 여부 확인
     CustomerProfile customerProfile = customerProfileRepository.findByUserId(userId)
         .orElseThrow(() -> new CustomException(ErrorCode.CUSTOMER_NOT_FOUND));
 
-
-    //리뷰 생성
+    //리뷰 생성 및 저장
     Review review = Review.from(request, customerProfile);
     reviewRepository.save(review);
 
-    //리뷰 사진 객체 생성
+    //리뷰 사진 생성 및 저장
     List<ReviewPhoto> reviewPhotos = Arrays.stream(request.photoUrls())
         .map(url -> ReviewPhoto.builder()
             .photoUrl(url)
             .review(review)
             .build())
         .toList();
-
     reviewPhotoRepository.saveAll(reviewPhotos);
 
+    //사진 URL 리스트 반환
     List<String> reviewPhotoUrls = getReviewPhotoUrlList(review);
 
     return ReviewCreateResponse.from(review, reviewPhotoUrls);
   }
 
+  /* 리뷰 삭제 */
   public void deleteReview(Long userId, Long reviewId) {
     Review review = reviewRepository.findById(reviewId)
         .orElseThrow(() -> new CustomException(ErrorCode.REVIEW_NOT_FOUND));
@@ -67,6 +70,7 @@ public class ReviewService {
     }
   }
 
+  /* 단일 리뷰 조회 */
   public ReviewResponse getReview(Long reviewId) {
     Review review = reviewRepository.findById(reviewId)
         .orElseThrow(() -> new CustomException(ErrorCode.REVIEW_NOT_FOUND));
@@ -77,19 +81,20 @@ public class ReviewService {
   }
 
   //=============================편의 메서드====================================
+  /* 리뷰 사진 URL 리스트 반환 */
   @Transactional(readOnly = true)
-  public List<String> getReviewPhotoUrlList(Review review) {
+  private List<String> getReviewPhotoUrlList(Review review) {
     return reviewPhotoRepository.findAllByReview(review).stream()
         .map(ReviewPhoto::getPhotoUrl)
         .toList();
   }
 
-  //리뷰 수정, 삭제 등 권한 체크용 메서드
+  //리뷰 권한 확인 (작성자 확인)
   @Transactional(readOnly = true)
-  public boolean verifyReviewAuth(Review review, Long userId) {
+  private boolean verifyReviewAuth(Review review, Long userId) {
     CustomerProfile customerProfile = customerProfileRepository.findByUserId(userId)
         .orElseThrow(() -> new CustomException(ErrorCode.CUSTOMER_NOT_FOUND));
 
-    return review.getCustomerProfile().getId().equals(user.getId());
+    return review.getCustomerProfile().getId().equals(customerProfile.getId());
   }
 }
