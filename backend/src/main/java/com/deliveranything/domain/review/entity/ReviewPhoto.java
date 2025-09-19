@@ -13,7 +13,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Entity
 @Getter
-@Table(name = "review")
+@Table(name = "review_photos")
 @EntityListeners(AuditingEntityListener.class)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ReviewPhoto extends BaseEntity {
@@ -24,7 +24,7 @@ public class ReviewPhoto extends BaseEntity {
   private Review review;
 
   @Schema(description = "사진 URL")
-  @Column(name = "photo_url", nullable = false)
+  @Column(name = "photo_url")
   private String photoUrl;
 
   @LastModifiedDate

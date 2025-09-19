@@ -8,6 +8,8 @@ import com.deliveranything.domain.user.entity.profile.CustomerProfile;
 import com.deliveranything.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -45,6 +47,10 @@ public class Review extends BaseEntity {
   @JoinColumn(name = "customer_profile_id", nullable = false)
   private CustomerProfile customerProfile;
 
+  @Schema(description = "리뷰 사진")
+  @OneToMany(mappedBy = "review", cascade = CascadeType.ALL, orphanRemoval = true)
+  private List<ReviewPhoto> reviewPhotos = new ArrayList<>();
+
   @LastModifiedDate
   @Schema(description = "수정 일시")
   @Column(name = "updated_at")
@@ -68,5 +74,14 @@ public class Review extends BaseEntity {
         .targetId(request.targetId())
         .customerProfile(customerProfile)
         .build();
+  }
+
+  //===========================편의 메소드=======================
+  public void addReviewPhoto(String photoUrl) {
+    ReviewPhoto reviewPhoto = ReviewPhoto.builder()
+        .review(this)
+        .photoUrl(photoUrl)
+        .build();
+    this.reviewPhotos.add(reviewPhoto);
   }
 }
