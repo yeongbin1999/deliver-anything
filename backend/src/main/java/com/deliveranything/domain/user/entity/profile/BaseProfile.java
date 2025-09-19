@@ -16,12 +16,20 @@ public abstract class BaseProfile extends BaseEntity {
   @Column(name = "nickname", nullable = false)
   private String nickname;
 
-  public BaseProfile(String nickname) {
+  private String profileImageUrl;
+
+
+  public BaseProfile(String nickname, String profileImageUrl) {
     this.nickname = nickname;
+    this.profileImageUrl = profileImageUrl;
   }
 
   // 기타 공통 메서드
   public void updateNickname(String nickname) {
     this.nickname = nickname;
   }
+
+  public void updateProfileImageUrl(String profileImageUrl) {
+  }
+  
 }

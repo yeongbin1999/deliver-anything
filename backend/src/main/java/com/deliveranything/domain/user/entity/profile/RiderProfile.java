@@ -26,9 +26,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class RiderProfile extends BaseProfile {
 
-  @Column(name = "rider_nickname", nullable = false)
-  private String nickname;
-
   @Column(name = "rider_toggle_status", nullable = false)
   @Enumerated(EnumType.STRING)
   private RiderToggleStatus toggleStatus;
@@ -38,9 +35,6 @@ public class RiderProfile extends BaseProfile {
 
   @Column(name = "rider_license_number", nullable = false, unique = true)
   private String licenseNumber;
-
-  @Column(name = "rider_profile_image_url")
-  private String profileImageUrl;
 
   @Column(name = "rider_bank_name")
   private String bankName;
@@ -61,11 +55,10 @@ public class RiderProfile extends BaseProfile {
   public RiderProfile(String nickname, RiderToggleStatus toggleStatus, String area,
       String licenseNumber, String profileImageUrl, String bankName,
       String bankAccountNumber, String bankAccountHolderName, User user) {
-    super(nickname); // 부모 클래스 생성자 호출
+    super(nickname, profileImageUrl); // 부모 클래스 생성자 호출
     this.toggleStatus = toggleStatus;
     this.area = area;
     this.licenseNumber = licenseNumber;
-    this.profileImageUrl = profileImageUrl;
     this.bankName = bankName;
     this.bankAccountNumber = bankAccountNumber;
     this.bankAccountHolderName = bankAccountHolderName;
@@ -84,4 +77,11 @@ public class RiderProfile extends BaseProfile {
   public void setDeliveryArea(@NotNull String area) {
     this.area = area;
   }
+
+  // 상속받은 요소는 이렇게 업데이트!! 주석처리만 해둘게요
+//  public void updateProfile(String nickname, String profileImageUrl) {
+//    super.updateNickname(nickname);
+//    super.updateProfileImageUrl(profileImageUrl);
+//  }
+
 }
