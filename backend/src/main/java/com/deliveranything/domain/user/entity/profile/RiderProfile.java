@@ -3,6 +3,7 @@ package com.deliveranything.domain.user.entity.profile;
 import com.deliveranything.domain.delivery.entity.Delivery;
 import com.deliveranything.domain.user.entity.User;
 import com.deliveranything.domain.user.enums.RiderToggleStatus;
+import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -24,6 +25,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @Table(name = "rider_profiles")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AttributeOverride(name = "profileImageUrl", column = @Column(name = "rider_profile_image_url", columnDefinition = "TEXT"))
 public class RiderProfile extends BaseProfile {
 
   @Column(name = "rider_toggle_status", nullable = false)
