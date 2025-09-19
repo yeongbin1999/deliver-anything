@@ -156,7 +156,7 @@ public class UserService {
       return false;
     }
     // 소비자 프로필 존재 확인
-    if (!hasProfileInternal(user, ProfileType.CONSUMER)) {
+    if (!hasProfileInternal(user, ProfileType.CUSTOMER)) {
       log.warn("소비자 프로필을 찾을 수 없습니다: userId={}", userId);
       return false;
     }
@@ -291,7 +291,7 @@ public class UserService {
     List<ProfileType> profiles = new ArrayList<>();
 
     if (user.getCustomerProfile() != null) {
-      profiles.add(ProfileType.CONSUMER);
+      profiles.add(ProfileType.CUSTOMER);
     }
     // TODO: SellerProfile, RiderProfile 연관관계 추가 시 로직 확장
 
@@ -305,7 +305,7 @@ public class UserService {
     }
 
     return switch (targetProfile) {
-      case CONSUMER -> user.getCustomerProfile() != null;
+      case CUSTOMER -> user.getCustomerProfile() != null;
       case SELLER -> false; // TODO: 나중에 SellerProfile 연관관계 추가 시 수정
       case RIDER -> false;  // TODO: 나중에 RiderProfile 연관관계 추가 시 수정
     };
@@ -313,7 +313,7 @@ public class UserService {
 
   private boolean hasProfileInternal(User user, ProfileType profileType) {
     return switch (profileType) {
-      case CONSUMER -> user.getCustomerProfile() != null;
+      case CUSTOMER -> user.getCustomerProfile() != null;
       case SELLER -> false; // TODO: 나중에 수정
       case RIDER -> false;  // TODO: 나중에 수정
     };
