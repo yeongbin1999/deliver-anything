@@ -2,14 +2,11 @@ package com.deliveranything.domain.payment.entitiy;
 
 import com.deliveranything.domain.payment.enums.PaymentMethod;
 import com.deliveranything.domain.payment.enums.PaymentStatus;
-import com.deliveranything.domain.refund.entity.Refund;
 import com.deliveranything.global.entity.BaseEntity;
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
 import java.util.UUID;
@@ -36,7 +33,4 @@ public class Payment extends BaseEntity {
   @Enumerated(EnumType.STRING)
   @Column(nullable = false)
   private PaymentMethod paymentMethod;
-
-  @OneToOne(mappedBy = "payment", cascade = CascadeType.PERSIST)
-  private Refund refund;
 }
