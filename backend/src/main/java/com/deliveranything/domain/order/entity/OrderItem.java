@@ -11,6 +11,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
+import lombok.Builder;
 import lombok.NoArgsConstructor;
 
 @Entity
@@ -35,4 +36,15 @@ public class OrderItem {
 
   @Column(nullable = false)
   private int quantity;
+
+  @Builder
+  public OrderItem(Product product, BigDecimal price, int quantity) {
+    this.product = product;
+    this.price = price;
+    this.quantity = quantity;
+  }
+
+  protected void setOrder(Order order) {
+    this.order = order;
+  }
 }

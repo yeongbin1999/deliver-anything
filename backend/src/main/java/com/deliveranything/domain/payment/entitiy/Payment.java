@@ -2,8 +2,8 @@ package com.deliveranything.domain.payment.entitiy;
 
 import com.deliveranything.domain.payment.enums.PaymentMethod;
 import com.deliveranything.domain.payment.enums.PaymentStatus;
+import com.deliveranything.domain.refund.entity.Refund;
 import com.deliveranything.global.entity.BaseEntity;
-import com.deliveranything.refund.entity.Refund;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
