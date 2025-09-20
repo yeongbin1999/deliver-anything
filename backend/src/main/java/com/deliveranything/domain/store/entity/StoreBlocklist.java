@@ -16,16 +16,16 @@ import lombok.NoArgsConstructor;
 
 @Entity
 @Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(
-    name = "store_blocked_consumers",
+    name = "store_blocklists",
     uniqueConstraints = @UniqueConstraint(
-        name = "uk_sbc_store_consumer",
-        columnNames = {"store_id","consumer_profile_id"}
+        name = "uk_store_customer_profile",
+        columnNames = {"store_id", "customer_profile_id"}
     ),
     indexes = @Index(name = "idx_sbc_store", columnList = "store_id")
 )
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Blocklist extends BaseEntity {
+public class StoreBlocklist extends BaseEntity {
 
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(name = "store_id", nullable = false, foreignKey = @ForeignKey(name = "fk_sbc_store"))

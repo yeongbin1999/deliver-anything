@@ -1,5 +1,6 @@
 package com.deliveranything.domain.review.dto;
 
+import com.deliveranything.domain.review.entity.Review;
 import com.deliveranything.domain.review.enums.ReviewTargetType;
 import java.util.List;
 
@@ -14,5 +15,17 @@ public record ReviewCreateResponse(
     ReviewTargetType targetType,
     Long targetId
 ) {
+
+  public static ReviewCreateResponse from(Review review, List<String> reviewPhotoUrls) {
+    return new ReviewCreateResponse(
+        review.getId(),
+        review.getRating(),
+        review.getComment(),
+        reviewPhotoUrls,
+        //userResponse,
+        review.getTargetType(),
+        review.getTargetId()
+    );
+  }
 
 }

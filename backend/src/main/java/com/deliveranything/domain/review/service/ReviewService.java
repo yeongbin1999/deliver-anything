@@ -8,7 +8,11 @@ import com.deliveranything.domain.review.entity.ReviewPhoto;
 import com.deliveranything.domain.review.repository.ReviewPhotoRepository;
 import com.deliveranything.domain.review.repository.ReviewRepository;
 import com.deliveranything.domain.user.entity.User;
+import com.deliveranything.domain.user.entity.profile.CustomerProfile;
+import com.deliveranything.domain.user.enums.ProfileType;
+import com.deliveranything.domain.user.repository.CustomerProfileRepository;
 import com.deliveranything.domain.user.repository.UserRepository;
+import com.deliveranything.domain.user.service.UserService;
 import com.deliveranything.global.exception.CustomException;
 import com.deliveranything.global.exception.ErrorCode;
 import java.util.Arrays;
@@ -25,39 +29,39 @@ public class ReviewService {
   private final ReviewRepository reviewRepository;
   private final ReviewPhotoRepository reviewPhotoRepository;
   private final UserRepository userRepository;
+  private final UserService userService;
+  private final CustomerProfileRepository customerProfileRepository;
 
   //============================메인 API 메서드==================================
+  /* 리뷰 생성 */
   public ReviewCreateResponse createReview(ReviewCreateRequest request, Long userId) {
+    //유저 존재 여부 확인
     User user = userRepository.findById(userId)
-        .orElseThrow(() -> new IllegalStateException("TODO: UserErrorCode.USER_NOT_FOUND 사용 예정"));
+//        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND)); 관련 ERROR CODE 생길 시 대체
+        .orElseThrow(() -> new CustomException(ErrorCode.DEV_NOT_FOUND));
 
-    //리뷰 생성
-    Review review = Review.builder()
-        .targetType(request.targetType())
-        .user(user)
-        .comment(request.comment())
-        .rating(request.rating())
-        .targetId(request.targetId())
-        .build();
+    CustomerProfile customerProfile = user.getCustomerProfile();
 
+    //리뷰 생성 및 저장
+    Review review = Review.from(request, customerProfile);
     reviewRepository.save(review);
 
-    //리뷰 사진 객체 생성
+    //리뷰 사진 생성 및 저장
     List<ReviewPhoto> reviewPhotos = Arrays.stream(request.photoUrls())
         .map(url -> ReviewPhoto.builder()
             .photoUrl(url)
             .review(review)
             .build())
         .toList();
-
     reviewPhotoRepository.saveAll(reviewPhotos);
 
+    //사진 URL 리스트 반환
     List<String> reviewPhotoUrls = getReviewPhotoUrlList(review);
 
-    return new ReviewCreateResponse(review.getId(), review.getRating(), review.getComment(),
-        reviewPhotoUrls, review.getTargetType(), review.getTargetId());
+    return ReviewCreateResponse.from(review, reviewPhotoUrls);
   }
 
+  /* 리뷰 삭제 */
   public void deleteReview(Long userId, Long reviewId) {
     Review review = reviewRepository.findById(reviewId)
         .orElseThrow(() -> new CustomException(ErrorCode.REVIEW_NOT_FOUND));
@@ -69,26 +73,18 @@ public class ReviewService {
     }
   }
 
+  /* 단일 리뷰 조회 */
   public ReviewResponse getReview(Long reviewId) {
     Review review = reviewRepository.findById(reviewId)
         .orElseThrow(() -> new CustomException(ErrorCode.REVIEW_NOT_FOUND));
 
     List<String> reviewPhotoUrls = getReviewPhotoUrlList(review);
 
-    return new ReviewResponse(
-        review.getId(),
-        review.getRating(),
-        review.getComment(),
-        reviewPhotoUrls,
-        review.getTargetType(),
-        review.getTargetId(),
-        review.getCreatedAt(),
-        review.getUpdatedAt()
-        //, userResponse
-    );
+    return ReviewResponse.from(review, reviewPhotoUrls);
   }
 
   //=============================편의 메서드====================================
+  /* 리뷰 사진 URL 리스트 반환 */
   @Transactional(readOnly = true)
   public List<String> getReviewPhotoUrlList(Review review) {
     return reviewPhotoRepository.findAllByReview(review).stream()
@@ -96,12 +92,14 @@ public class ReviewService {
         .toList();
   }
 
-  //리뷰 수정, 삭제 등 권한 체크용 메서드
+  //리뷰 권한 확인 (작성자 확인)
   @Transactional(readOnly = true)
   public boolean verifyReviewAuth(Review review, Long userId) {
     User user = userRepository.findById(userId)
-        .orElseThrow(() -> new IllegalStateException("TODO: UserErrorCode.USER_NOT_FOUND 사용 예정"));
+//        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND)); 관련 ERROR CODE 생길 시 대체
+        .orElseThrow(() -> new CustomException(ErrorCode.DEV_NOT_FOUND));
+    CustomerProfile customerProfile =  user.getCustomerProfile();
 
-    return review.getUser().getId().equals(user.getId());
+    return review.getCustomerProfile().getId().equals(customerProfile.getId());
   }
 }

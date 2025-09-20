@@ -14,7 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Component
 @RequiredArgsConstructor
-public class CategorySeeder implements ApplicationRunner {
+public class StoreCategorySeeder implements ApplicationRunner {
 
   private final StoreCategoryRepository repo;
 

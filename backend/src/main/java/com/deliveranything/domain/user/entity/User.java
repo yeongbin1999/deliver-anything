@@ -129,4 +129,9 @@ public class User extends BaseEntity {
   public void disable() {
     this.isEnabled = false;
   }
+
+  //테스트용 임시 세터 메서드.
+  public void setCustomerProfile(CustomerProfile customerProfile) {
+    this.customerProfile = customerProfile;
+  }
 }
