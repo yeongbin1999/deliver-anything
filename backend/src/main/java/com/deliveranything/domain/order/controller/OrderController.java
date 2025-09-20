@@ -8,8 +8,10 @@ import com.deliveranything.domain.order.service.OrderService;
 import com.deliveranything.global.common.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -27,7 +29,14 @@ public class OrderController {
   public ResponseEntity<ApiResponse<OrderResponse>> create(
       @Valid @RequestBody OrderCreateRequest orderCreateRequest
   ) {
-    return ResponseEntity.status(CREATED)
-        .body(ApiResponse.success(orderService.createOrder(orderCreateRequest)));
+    return ResponseEntity.status(CREATED).body(ApiResponse.success(
+        orderService.createOrder(인증 객체의 소비자 ID , orderCreateRequest)));
+  }
+
+  @GetMapping
+  @Operation(summary = "소비자 주문 전체 조회", description = "소비자가 전체 주문 내역을 요청한 경우")
+  public ResponseEntity<ApiResponse<List<OrderResponse>>> getAll() {
+    return ResponseEntity.ok().body(ApiResponse.success(
+        "소비자 전체 주문 내역 조회 성공", orderService.getCustomerOrders(인증 객체의 소비자 ID)));
   }
 }

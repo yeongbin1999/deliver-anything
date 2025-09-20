@@ -7,6 +7,7 @@ import com.deliveranything.domain.order.entity.Order;
 import com.deliveranything.domain.order.entity.OrderItem;
 import com.deliveranything.domain.order.repository.OrderRepository;
 import com.deliveranything.domain.user.service.UserService;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,9 +23,9 @@ public class OrderService {
   private final OrderRepository orderRepository;
 
   @Transactional
-  public OrderResponse createOrder(OrderCreateRequest orderCreateRequest) {
+  public OrderResponse createOrder(Long customerId, OrderCreateRequest orderCreateRequest) {
     Order order = Order.builder()
-        .customer(userService.findById(미래에 있을 JWT의 사용자 id))
+        .customer(userService.findById(customerId))
         .store(storeService.getStore(orderCreateRequest.storeId()))
         .address(orderCreateRequest.address())
         .riderNote(orderCreateRequest.riderNote())
@@ -34,7 +35,7 @@ public class OrderService {
         .deliveryPrice(orderCreateRequest.deliveryPrice())
         .build();
 
-    for(OrderItemRequest orderItemRequest: orderCreateRequest.orderItemRequests()){
+    for (OrderItemRequest orderItemRequest : orderCreateRequest.orderItemRequests()) {
       OrderItem orderItem = OrderItem.builder()
           .product(productService.getProduct(orderItemRequest.productId()))
           .price(orderItemRequest.price())
@@ -45,5 +46,13 @@ public class OrderService {
     }
 
     return OrderResponse.from(orderRepository.save(order));
+  }
+
+  @Transactional(readOnly = true)
+  public List<OrderResponse> getCustomerOrders(Long customerId) {
+    return orderRepository.findAllByCustomerId(customerId)
+        .stream()
+        .map(OrderResponse::from)
+        .toList();
   }
 }
