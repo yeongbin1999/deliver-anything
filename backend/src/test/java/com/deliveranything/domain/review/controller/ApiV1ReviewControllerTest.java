@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import com.deliveranything.domain.review.dto.ReviewCreateRequest;
 import com.deliveranything.domain.review.dto.ReviewCreateResponse;
 import com.deliveranything.domain.review.dto.ReviewResponse;
+import com.deliveranything.domain.review.dto.ReviewUpdateRequest;
+import com.deliveranything.domain.review.entity.Review;
 import com.deliveranything.domain.review.factory.ReviewFactory;
 import com.deliveranything.domain.review.repository.ReviewRepository;
 import com.deliveranything.domain.review.service.ReviewService;
@@ -211,4 +213,53 @@ public class ApiV1ReviewControllerTest {
 
     // TODO: jwtConfig/SecurityConfig 적용 후 생성일/작성자 검증 추가
   }
+
+  /**
+   * 리뷰 수정 성공 테스트
+   */
+  @Test
+  @DisplayName("리뷰 수정 - 정상")
+  public void updateReview_success() {
+    // given : 리뷰 작성 유저 생성
+    User user = User.builder()
+        .email("owner@example.com")
+        .name("ownerUser")
+        .password("ownerPassword")
+        .phoneNumber("010-0000-0000")
+        .socialProvider(null)
+        .build();
+    CustomerProfile profile = CustomerProfile.builder()
+        .user(user)
+        .nickname("testUser")
+        .build();
+    user.setCustomerProfile(profile);
+    userRepository.save(user);
+
+    // 리뷰 생성
+    ReviewCreateRequest createRequest = ReviewFactory.createReviews(1).getFirst();
+    ReviewCreateResponse createdReview = reviewService.createReview(createRequest, user.getId());
+
+    // 수정 요청 DTO
+    ReviewUpdateRequest updateRequest = new ReviewUpdateRequest(
+        5, // rating 수정
+        "수정된 댓글", // comment 수정
+        new String[]{"new_photo1.jpg", "new_photo2.jpg"} // 사진 수정
+    );
+
+    // when : 리뷰 수정
+    ReviewResponse updatedReview = reviewService.updateReview(
+        updateRequest,
+        user.getId(),
+        createdReview.id()
+    );
+
+    // then : 수정 결과 검증
+    assertNotNull(updatedReview.id());
+    assertEquals(5, updatedReview.rating());
+    assertEquals("수정된 댓글", updatedReview.comment());
+    assertEquals(2, updatedReview.photoUrls().size());
+    assertTrue(updatedReview.photoUrls().contains("new_photo1.jpg"));
+    assertTrue(updatedReview.photoUrls().contains("new_photo2.jpg"));
+  }
+
 }

@@ -10,6 +10,7 @@ import com.deliveranything.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -91,10 +92,8 @@ public class Review extends BaseEntity {
 
   public void updateReviewPhoto(String[] photoUrls) {
     if (photoUrls != null) {
-      // 기존 사진 모두 제거
       this.getReviewPhotos().clear();
 
-      // 새 사진 리스트 추가
       for (String url : photoUrls) {
         ReviewPhoto photo = ReviewPhoto.builder()
             .review(this)

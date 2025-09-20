@@ -111,7 +111,7 @@ public class ReviewService {
   /* 리뷰 사진 URL 리스트 반환 */
   @Transactional(readOnly = true)
   public List<String> getReviewPhotoUrlList(Review review) {
-    return reviewPhotoRepository.findAllByReview(review).stream()
+    return review.getReviewPhotos().stream()
         .map(ReviewPhoto::getPhotoUrl)
         .toList();
   }
