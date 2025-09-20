@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import com.deliveranything.domain.review.dto.ReviewCreateRequest;
 import com.deliveranything.domain.review.dto.ReviewCreateResponse;
 import com.deliveranything.domain.review.dto.ReviewResponse;
+import com.deliveranything.domain.review.dto.ReviewUpdateRequest;
+import com.deliveranything.domain.review.entity.Review;
 import com.deliveranything.domain.review.factory.ReviewFactory;
 import com.deliveranything.domain.review.repository.ReviewRepository;
 import com.deliveranything.domain.review.service.ReviewService;
@@ -211,4 +213,109 @@ public class ApiV1ReviewControllerTest {
 
     // TODO: jwtConfig/SecurityConfig 적용 후 생성일/작성자 검증 추가
   }
+
+  /**
+   * 리뷰 수정 성공 테스트
+   */
+  @Test
+  @DisplayName("리뷰 수정 - 정상")
+  public void updateReview_success() {
+    // given : 리뷰 작성 유저 생성
+    User user = User.builder()
+        .email("owner@example.com")
+        .name("ownerUser")
+        .password("ownerPassword")
+        .phoneNumber("010-0000-0000")
+        .socialProvider(null)
+        .build();
+    CustomerProfile profile = CustomerProfile.builder()
+        .user(user)
+        .nickname("testUser")
+        .build();
+    user.setCustomerProfile(profile);
+    userRepository.save(user);
+
+    // 리뷰 생성
+    ReviewCreateRequest createRequest = ReviewFactory.createReviews(1).getFirst();
+    ReviewCreateResponse createdReview = reviewService.createReview(createRequest, user.getId());
+
+    // 수정 요청 DTO
+    ReviewUpdateRequest updateRequest = new ReviewUpdateRequest(
+        5, // rating 수정
+        "수정된 댓글", // comment 수정
+        new String[]{"new_photo1.jpg", "new_photo2.jpg"} // 사진 수정
+    );
+
+    // when : 리뷰 수정
+    ReviewResponse updatedReview = reviewService.updateReview(
+        updateRequest,
+        user.getId(),
+        createdReview.id()
+    );
+
+    // then : 수정 결과 검증
+    assertNotNull(updatedReview.id());
+    assertEquals(5, updatedReview.rating());
+    assertEquals("수정된 댓글", updatedReview.comment());
+    assertEquals(2, updatedReview.photoUrls().size());
+    assertTrue(updatedReview.photoUrls().contains("new_photo1.jpg"));
+    assertTrue(updatedReview.photoUrls().contains("new_photo2.jpg"));
+  }
+
+  /**
+   * 다른 유저가 작성한 리뷰 수정 시도 → 권한 없음 예외 발생
+   */
+  @Test
+  @DisplayName("리뷰 삭제 - 권한 없는 유저의 요청")
+  public void updateReview_userWithoutPermission_throwsException() {
+    // given : 리뷰 작성 유저 생성
+    User owner = User.builder()
+        .email("owner@example.com")
+        .name("ownerUser")
+        .password("ownerPassword")
+        .phoneNumber("010-0000-0000")
+        .socialProvider(null)
+        .build();
+    CustomerProfile profile = CustomerProfile.builder()
+        .user(owner)
+        .nickname("testUser")
+        .build();
+    owner.setCustomerProfile(profile);
+    userRepository.save(owner);
+
+    // 리뷰 생성
+    ReviewCreateRequest request = ReviewFactory.createReviews(1).getFirst();
+    ReviewCreateResponse createdReview = reviewService.createReview(request, owner.getId());
+
+    // 다른 유저 생성
+    User otherUser = User.builder()
+        .email("other@example.com")
+        .name("otherUser")
+        .password("otherPassword")
+        .phoneNumber("010-1111-1111")
+        .socialProvider(null)
+        .build();
+    CustomerProfile otherProfile = CustomerProfile.builder()
+        .user(otherUser)
+        .nickname("testUser2")
+        .build();
+    otherUser.setCustomerProfile(otherProfile);
+    userRepository.save(otherUser);
+
+    ReviewUpdateRequest updateRequest = new ReviewUpdateRequest(
+        5, // rating 수정
+        "수정된 댓글", // comment 수정
+        new String[]{"new_photo1.jpg", "new_photo2.jpg"} // 사진 수정
+    );
+
+    // when & then : 권한 없는 유저가 삭제 시도
+    CustomException exception = assertThrows(CustomException.class, () -> {
+      reviewService.updateReview(updateRequest, otherUser.getId(), createdReview.id());
+    });
+
+    assertEquals(HttpStatus.FORBIDDEN, exception.getHttpStatus());
+    assertEquals("REVIEW-403", exception.getCode());
+    assertEquals("리뷰를 관리할 권한이 없습니다.", exception.getMessage());
+  }
+
 }

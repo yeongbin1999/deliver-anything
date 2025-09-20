@@ -6,7 +6,7 @@ import java.util.List;
 
 public record ReviewCreateResponse(
     Long id,
-    int rating,
+    Integer rating,
     String comment,
     List<String> photoUrl,
     //유저 dto. id, 닉네임, 프로필이미지 포함

@@ -3,6 +3,7 @@ package com.deliveranything.domain.review.service;
 import com.deliveranything.domain.review.dto.ReviewCreateRequest;
 import com.deliveranything.domain.review.dto.ReviewCreateResponse;
 import com.deliveranything.domain.review.dto.ReviewResponse;
+import com.deliveranything.domain.review.dto.ReviewUpdateRequest;
 import com.deliveranything.domain.review.entity.Review;
 import com.deliveranything.domain.review.entity.ReviewPhoto;
 import com.deliveranything.domain.review.repository.ReviewPhotoRepository;
@@ -73,6 +74,29 @@ public class ReviewService {
     }
   }
 
+  /* 리뷰 수정 */
+  public ReviewResponse updateReview(ReviewUpdateRequest request, Long userId, Long reviewId) {
+    //유저 존재 여부 확인
+    User user = userRepository.findById(userId)
+//        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND)); 관련 ERROR CODE 생길 시 대체
+        .orElseThrow(() -> new CustomException(ErrorCode.DEV_NOT_FOUND));
+
+    Review review = reviewRepository.findById(reviewId)
+        .orElseThrow(() -> new CustomException(ErrorCode.REVIEW_NOT_FOUND));
+
+    //유저 권한 체크
+    if (!verifyReviewAuth(review, userId)) {
+      throw new CustomException(ErrorCode.REVIEW_NO_PERMISSION);
+    }
+
+    //리뷰 업데이트
+    review.update(request);
+    review.updateReviewPhoto(request.photoUrls());
+    reviewRepository.save(review);
+
+    return ReviewResponse.from(review, getReviewPhotoUrlList(review));
+  }
+
   /* 단일 리뷰 조회 */
   public ReviewResponse getReview(Long reviewId) {
     Review review = reviewRepository.findById(reviewId)
@@ -87,7 +111,7 @@ public class ReviewService {
   /* 리뷰 사진 URL 리스트 반환 */
   @Transactional(readOnly = true)
   public List<String> getReviewPhotoUrlList(Review review) {
-    return reviewPhotoRepository.findAllByReview(review).stream()
+    return review.getReviewPhotos().stream()
         .map(ReviewPhoto::getPhotoUrl)
         .toList();
   }

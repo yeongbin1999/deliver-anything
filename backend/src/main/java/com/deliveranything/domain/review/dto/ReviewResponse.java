@@ -7,7 +7,7 @@ import java.util.List;
 
 public record ReviewResponse(
     Long id,
-    int rating,
+    Integer rating,
     String comment,
     List<String> photoUrls,
     ReviewTargetType targetType,

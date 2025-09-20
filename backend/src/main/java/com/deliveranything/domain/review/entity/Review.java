@@ -2,6 +2,7 @@ package com.deliveranything.domain.review.entity;
 
 import com.deliveranything.domain.review.dto.ReviewCreateRequest;
 import com.deliveranything.domain.review.dto.ReviewCreateResponse;
+import com.deliveranything.domain.review.dto.ReviewUpdateRequest;
 import com.deliveranything.domain.review.enums.ReviewTargetType;
 import com.deliveranything.domain.user.entity.User;
 import com.deliveranything.domain.user.entity.profile.CustomerProfile;
@@ -9,6 +10,7 @@ import com.deliveranything.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -27,7 +29,7 @@ public class Review extends BaseEntity {
 
   @Schema(description = "별점")
   @Column(nullable = false)
-  private int rating;
+  private Integer rating;
 
   @Schema(description = "리뷰 코멘트")
   @Column(length = 1000)
@@ -58,7 +60,8 @@ public class Review extends BaseEntity {
 
   //========================생성 메소드===========================
   @Builder
-  public Review(int rating, String comment, ReviewTargetType targetType, Long targetId, CustomerProfile customerProfile) {
+  public Review(int rating, String comment, ReviewTargetType targetType, Long targetId,
+      CustomerProfile customerProfile) {
     this.rating = rating;
     this.comment = comment;
     this.targetType = targetType;
@@ -77,11 +80,27 @@ public class Review extends BaseEntity {
   }
 
   //===========================편의 메소드=======================
-  public void addReviewPhoto(String photoUrl) {
-    ReviewPhoto reviewPhoto = ReviewPhoto.builder()
-        .review(this)
-        .photoUrl(photoUrl)
-        .build();
-    this.reviewPhotos.add(reviewPhoto);
+  public void update(ReviewUpdateRequest request) {
+    if (request.rating() != null) {
+      this.rating = request.rating();
+    }
+
+    if (request.comment() != null) {
+      this.comment = request.comment();
+    }
+  }
+
+  public void updateReviewPhoto(String[] photoUrls) {
+    if (photoUrls != null) {
+      this.getReviewPhotos().clear();
+
+      for (String url : photoUrls) {
+        ReviewPhoto photo = ReviewPhoto.builder()
+            .review(this)
+            .photoUrl(url)
+            .build();
+        this.getReviewPhotos().add(photo);
+      }
+    }
   }
 }
