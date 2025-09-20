@@ -1,24 +1,19 @@
 package com.deliveranything.domain.store.store.entity;
 
-import com.deliveranything.domain.store.categoty.entity.StoreCategory;
+import com.deliveranything.domain.store.store.enums.StoreCategoryType;
 import com.deliveranything.domain.store.store.enums.StoreStatus;
 import com.deliveranything.global.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.ForeignKey;
 import jakarta.persistence.Index;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
 import org.locationtech.jts.geom.Point;
 
 @Entity
@@ -40,10 +35,8 @@ public class Store extends BaseEntity {
   @Column(name = "seller_profile_id", nullable = false)
   private Long sellerProfileId;
 
-  @ManyToOne(fetch = FetchType.LAZY, optional = false)
-  @JoinColumn(name = "store_category_id", nullable = false,
-      foreignKey = @ForeignKey(name = "fk_stores_store_category"))
-  private StoreCategory storeCategory;
+  @Column(name = "store_category", nullable = false)
+  private StoreCategoryType storeCategory;
 
   @Column(nullable = false, length = 120)
   private String name;
@@ -69,10 +62,4 @@ public class Store extends BaseEntity {
 
   @Column(name = "next_change_at")
   private LocalDateTime nextChangeAt;
-
-  public Store(Long sellerProfileId, StoreCategory storeCategory, String name) {
-    this.sellerProfileId = sellerProfileId;
-    this.storeCategory = storeCategory;
-    this.name = name;
-  }
 }

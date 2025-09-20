@@ -12,7 +12,7 @@ public class StoreDistanceResponse {
     private final StoreStatus status;
     private final boolean isOpenNow;
     private final boolean acceptingOrders;
-    private final Double distance; // in meters
+    private final Double distance;
     private final int deliveryFee;
 
     public StoreDistanceResponse(Store store, Double distance, int deliveryFee) {
