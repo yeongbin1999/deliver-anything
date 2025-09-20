@@ -7,7 +7,11 @@ import com.deliveranything.domain.order.entity.Order;
 import com.deliveranything.domain.order.entity.OrderItem;
 import com.deliveranything.domain.order.repository.OrderRepository;
 import com.deliveranything.domain.user.service.UserService;
+import com.deliveranything.global.exception.CustomException;
+import com.deliveranything.global.exception.ErrorCode;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.crossstore.ChangeSetPersister.NotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -45,5 +49,11 @@ public class OrderService {
     }
 
     return OrderResponse.from(orderRepository.save(order));
+  }
+
+  @Transactional(readOnly = true)
+  public OrderResponse getCustomerOrder(Long orderId, Long customerId) {
+    return OrderResponse.from(orderRepository.findByIdAndCustomerId(orderId, customerId)
+        .orElseThrow(() -> new CustomException(ErrorCode.CUSTOMER_ORDER_NOT_FOUND)));
   }
 }
