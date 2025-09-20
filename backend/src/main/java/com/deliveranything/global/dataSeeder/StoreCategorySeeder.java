@@ -1,7 +1,7 @@
 package com.deliveranything.global.dataSeeder;
 
-import com.deliveranything.domain.store.entity.StoreCategory;
-import com.deliveranything.domain.store.repository.StoreCategoryRepository;
+import com.deliveranything.domain.store.categoty.entity.StoreCategory;
+import com.deliveranything.domain.store.categoty.repository.StoreCategoryRepository;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;

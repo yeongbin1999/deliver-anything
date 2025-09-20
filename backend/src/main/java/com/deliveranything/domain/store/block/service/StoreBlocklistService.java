@@ -1,6 +1,6 @@
-package com.deliveranything.domain.store.service;
+package com.deliveranything.domain.store.block.service;
 
-import com.deliveranything.domain.store.repository.StoreBlocklistRepository;
+import com.deliveranything.domain.store.block.repository.StoreBlocklistRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

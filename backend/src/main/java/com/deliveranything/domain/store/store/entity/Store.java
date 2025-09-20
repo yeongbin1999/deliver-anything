@@ -1,6 +1,7 @@
-package com.deliveranything.domain.store.entity;
+package com.deliveranything.domain.store.store.entity;
 
-import com.deliveranything.domain.store.enums.StoreStatus;
+import com.deliveranything.domain.store.categoty.entity.StoreCategory;
+import com.deliveranything.domain.store.store.enums.StoreStatus;
 import com.deliveranything.global.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -18,6 +19,8 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import org.locationtech.jts.geom.Point;
+
 @Entity
 @Table(
     name = "stores",
@@ -26,7 +29,8 @@ import lombok.NoArgsConstructor;
     },
     indexes = {
         @Index(name = "idx_stores_category", columnList = "store_category_id"),
-        @Index(name = "idx_stores_status", columnList = "status")
+        @Index(name = "idx_stores_status", columnList = "status"),
+        @Index(name = "idx_stores_location", columnList = "location") // 공간 인덱스를 위한 일반 인덱스 추가
     }
 )
 @Getter
@@ -47,8 +51,8 @@ public class Store extends BaseEntity {
   @Column(name = "road_addr", length = 255)
   private String roadAddr;
 
-  @Column private Double lat;
-  @Column private Double lng;
+  @Column(columnDefinition = "POINT SRID 4326")
+  private Point location;
 
   @Enumerated(EnumType.STRING)
   @Column(nullable = false, length = 12)
