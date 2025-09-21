@@ -12,18 +12,21 @@ import org.springframework.http.HttpStatus;
 @AllArgsConstructor
 public enum ErrorCode {
 
-  // 커스텀 처리할 오류
-  DEV_NOT_FOUND(HttpStatus.NOT_FOUND, "USER-404", "사용자를 찾을 수 없습니다(커스텀 예외 처리)"),
+  // 유저 관련 오류
+  USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER-404", "사용자를 찾을 수 없습니다."),
 
   // 배달/라이더 관련 오류
-  RIDER_NOT_FOUND(HttpStatus.NOT_FOUND, "RIDER-404", "라이더를 찾을 수 없습니다"),
+  RIDER_NOT_FOUND(HttpStatus.NOT_FOUND, "RIDER-404", "라이더를 찾을 수 없습니다."),
 
   // 리뷰 관련 오류
-  REVIEW_NO_PERMISSION(HttpStatus.FORBIDDEN, "REVIEW-403", "리뷰를 관리할 권한이 없습니다"),
-  REVIEW_NOT_FOUND(HttpStatus.NOT_FOUND, "REVIEW-404", "리뷰를 찾을 수 없습니다"),
+  REVIEW_NO_PERMISSION(HttpStatus.FORBIDDEN, "REVIEW-403", "리뷰를 관리할 권한이 없습니다."),
+  REVIEW_NOT_FOUND(HttpStatus.NOT_FOUND, "REVIEW-404", "리뷰를 찾을 수 없습니다."),
 
   // 주문 관련 오류
-  CUSTOMER_ORDER_NOT_FOUND(HttpStatus.NOT_FOUND, "ORDER-CUSTOMER-404", "소비자의 주문을 찾을 수 없습니다");
+  CUSTOMER_ORDER_NOT_FOUND(HttpStatus.NOT_FOUND, "ORDER-CUSTOMER-404", "소비자의 주문을 찾을 수 없습니다."),
+
+  //상점 관련 오류
+  STORE_NOT_FOUND(HttpStatus.NOT_FOUND, "STORE-404", "상점을 찾을 수 없습니다.");
 
   private final HttpStatus httpStatus;
   private final String code;
