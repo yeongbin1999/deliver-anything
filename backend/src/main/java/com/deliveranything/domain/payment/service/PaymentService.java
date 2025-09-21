@@ -12,7 +12,7 @@ public class PaymentService {
 
   private final PaymentRepository paymentRepository;
 
-  public void createPayment(Long orderId, BigDecimal amount) {
-    paymentRepository.save(new Payment(orderId, amount));
+  public Long createPayment(Long orderId, BigDecimal amount) {
+    return paymentRepository.save(new Payment(orderId, amount)).getId();
   }
 }
