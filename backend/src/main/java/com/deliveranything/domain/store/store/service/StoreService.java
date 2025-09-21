@@ -79,7 +79,7 @@ public class StoreService {
         int queryLimit = limit + 1;
         List<Tuple> results = storeRepository.searchByDistance(
             request.lat(), request.lng(), categoryType,
-            request.name(), queryLimit, cursor, cursorId
+            request.keyword(), queryLimit, cursor, cursorId
         );
 
         // 4. Map to DTO and calculate delivery fee

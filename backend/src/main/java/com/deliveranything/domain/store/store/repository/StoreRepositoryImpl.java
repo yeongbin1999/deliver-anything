@@ -57,7 +57,7 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
     }
 
     @Override
-    public List<Tuple> searchByDistance(Double lat, Double lng, com.deliveranything.domain.store.store.enums.StoreCategoryType categoryType, String name, int limit, Double cursorDistance, Long cursorId) {
+    public List<Tuple> searchByDistance(Double lat, Double lng, com.deliveranything.domain.store.store.enums.StoreCategoryType categoryType, String keyword, int limit, Double cursorDistance, Long cursorId) {
         if (lat == null || lng == null) {
             return Collections.emptyList();
         }
@@ -75,7 +75,7 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
                 distanceExpression.loe(MAX_DISTANCE_METERS),
                 cursorCondition(distanceExpression, cursorDistance, cursorId),
                 categoryIdEq(categoryType),
-                storeNameContains(name)
+                keywordContains(keyword)
             )
             .orderBy(distanceExpression.asc(), store.id.desc())
             .limit(limit)
@@ -94,8 +94,8 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
         return categoryType != null ? store.storeCategory.eq(categoryType) : null;
     }
 
-    private BooleanExpression storeNameContains(String name) {
-        return StringUtils.hasText(name) ? store.name.containsIgnoreCase(name) : null;
+    private BooleanExpression keywordContains(String keyword) {
+        return StringUtils.hasText(keyword) ? store.name.containsIgnoreCase(keyword) : null;
     }
 
     private BooleanExpression nameContains(String name) {

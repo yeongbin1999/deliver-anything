@@ -13,5 +13,5 @@ import com.deliveranything.domain.store.store.enums.StoreCategoryType;
 public interface StoreRepositoryCustom {
     Page<Store> search(StoreSearchCondition condition, Pageable pageable);
 
-    List<Tuple> searchByDistance(Double lat, Double lng, StoreCategoryType categoryType, String name, int limit, Double cursorDistance, Long cursorId);
+    List<Tuple> searchByDistance(Double lat, Double lng, StoreCategoryType categoryType, String keyword, int limit, Double cursorDistance, Long cursorId);
 }

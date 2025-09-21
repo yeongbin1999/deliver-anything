@@ -4,7 +4,7 @@ public record StoreSearchRequest(
     Double lat,
     Double lng,
     Long categoryId,
-    String name,
+    String keyword,
     Integer limit,
     String nextPageToken
 ) {
