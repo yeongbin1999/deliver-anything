@@ -28,7 +28,7 @@ public class StoreService {
     @Transactional
     public Long createStore(StoreCreateRequest request) {
         Store store = Store.builder()
-            .sellerProfileId(request.sellerProfileId())
+//            .sellerProfileId() 추후 인증 인가 추가시 반영
             .storeCategory(request.storeCategory())
             .name(request.name())
             .roadAddr(request.roadAddr())

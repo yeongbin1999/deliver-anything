@@ -42,9 +42,9 @@ public class StoreController {
   }
 
   @DeleteMapping("/{storeId}")
-  public ResponseEntity<Void> deleteStore(@PathVariable Long storeId) {
+  public ResponseEntity<ApiResponse<Void>> deleteStore(@PathVariable Long storeId) {
     storeService.deleteStore(storeId);
-    return ResponseEntity.noContent().build();
+    return ResponseEntity.status(204).body(ApiResponse.success());
   }
 
   @GetMapping

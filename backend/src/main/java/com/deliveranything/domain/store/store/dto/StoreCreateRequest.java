@@ -6,14 +6,12 @@ import jakarta.validation.constraints.NotNull;
 
 public record StoreCreateRequest(
     @NotNull
-    Long sellerProfileId,
-
-    @NotNull
     StoreCategoryType storeCategory,
 
     @NotBlank
     String name,
 
+    @NotBlank
     String roadAddr,
 
     @NotNull
