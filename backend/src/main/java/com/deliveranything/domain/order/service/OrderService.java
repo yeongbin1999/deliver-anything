@@ -7,6 +7,7 @@ import com.deliveranything.domain.order.entity.Order;
 import com.deliveranything.domain.order.entity.OrderItem;
 import com.deliveranything.domain.order.repository.OrderRepository;
 import com.deliveranything.domain.order.repository.OrderRepositoryCustom;
+import com.deliveranything.domain.store.store.service.StoreService;
 import com.deliveranything.domain.user.service.UserService;
 import com.deliveranything.global.common.CursorPageResponse;
 import com.deliveranything.global.exception.CustomException;
@@ -59,13 +60,19 @@ public class OrderService {
       Long cursor,
       int size
   ) {
-    List<OrderResponse> orderResponses = orderRepositoryCustom
-        .findCustomerOrders(customerId, cursor, size)
-        .stream()
+    List<Order> orders = orderRepositoryCustom.findCustomerOrders(customerId, cursor, size + 1);
+    List<OrderResponse> orderResponses = orders.stream()
+        .limit(size)
         .map(OrderResponse::from)
         .toList();
 
-    return new CursorPageResponse<>(orderResponses, orderResponses.getLast().orderId());
+    boolean hasNext = orders.size() > size;
+
+    return new CursorPageResponse<>(
+        orderResponses,
+        hasNext ? orderResponses.getLast().orderId().toString() : null,
+        hasNext
+    );
   }
 
   @Transactional(readOnly = true)

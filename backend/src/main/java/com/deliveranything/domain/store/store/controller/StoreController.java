@@ -6,7 +6,7 @@ import com.deliveranything.domain.store.store.dto.StoreSearchRequest;
 import com.deliveranything.domain.store.store.dto.StoreUpdateRequest;
 import com.deliveranything.domain.store.store.service.StoreService;
 import com.deliveranything.global.common.ApiResponse;
-import com.deliveranything.global.common.SliceResponse;
+import com.deliveranything.global.common.CursorPageResponse;
 import jakarta.validation.Valid;
 import java.net.URI;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +29,8 @@ public class StoreController {
   private final StoreService storeService;
 
   @PostMapping
-  public ResponseEntity<ApiResponse<Long>> createStore(@Valid @RequestBody StoreCreateRequest request) {
+  public ResponseEntity<ApiResponse<Long>> createStore(
+      @Valid @RequestBody StoreCreateRequest request) {
     Long storeId = storeService.createStore(request);
     return ResponseEntity.created(URI.create("/api/v1/stores/" + storeId))
         .body(ApiResponse.success(storeId));
@@ -48,7 +49,7 @@ public class StoreController {
   }
 
   @GetMapping
-  public ResponseEntity<ApiResponse<SliceResponse<StoreResponse>>> searchStores(
+  public ResponseEntity<ApiResponse<CursorPageResponse<StoreResponse>>> searchStores(
       @ModelAttribute StoreSearchRequest request) {
     return ResponseEntity.ok(ApiResponse.success(storeService.search(request)));
   }
