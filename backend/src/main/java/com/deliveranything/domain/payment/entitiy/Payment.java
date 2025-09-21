@@ -17,9 +17,6 @@ import lombok.NoArgsConstructor;
 @Table(name = "payments")
 public class Payment extends BaseEntity {
 
-  @Column(nullable = false, unique = true)
-  private UUID pgUid;
-
   @Column(nullable = false)
   private Long orderId;
 
@@ -30,7 +27,15 @@ public class Payment extends BaseEntity {
   @Column(nullable = false)
   private PaymentStatus status;
 
+  @Column(unique = true)
+  private UUID pgUid;
+
   @Enumerated(EnumType.STRING)
-  @Column(nullable = false)
   private PaymentMethod paymentMethod;
+
+  public Payment(Long orderId, BigDecimal amount) {
+    this.orderId = orderId;
+    this.amount = amount;
+    this.status = PaymentStatus.READY;
+  }
 }

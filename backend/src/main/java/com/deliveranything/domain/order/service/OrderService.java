@@ -7,6 +7,7 @@ import com.deliveranything.domain.order.entity.Order;
 import com.deliveranything.domain.order.entity.OrderItem;
 import com.deliveranything.domain.order.repository.OrderRepository;
 import com.deliveranything.domain.order.repository.OrderRepositoryCustom;
+import com.deliveranything.domain.payment.service.PaymentService;
 import com.deliveranything.domain.store.store.service.StoreService;
 import com.deliveranything.domain.user.service.UserService;
 import com.deliveranything.global.common.CursorPageResponse;
@@ -21,8 +22,9 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class OrderService {
 
-  private final UserService userService;
   private final StoreService storeService;
+  private final UserService userService;
+  private final PaymentService paymentService;
   private final ProductService productService;
 
   private final OrderRepository orderRepository;
@@ -51,7 +53,10 @@ public class OrderService {
       order.addOrderItem(orderItem);
     }
 
-    return OrderResponse.from(orderRepository.save(order));
+    Order savedOrder = orderRepository.save(order);
+    paymentService.createPayment(savedOrder.getId(), orderCreateRequest.totalPrice());
+
+    return OrderResponse.from(savedOrder);
   }
 
   @Transactional(readOnly = true)
