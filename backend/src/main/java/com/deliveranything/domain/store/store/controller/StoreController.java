@@ -1,11 +1,12 @@
 package com.deliveranything.domain.store.store.controller;
 
 import com.deliveranything.domain.store.store.dto.StoreCreateRequest;
+import com.deliveranything.domain.store.store.dto.StoreResponse;
 import com.deliveranything.domain.store.store.dto.StoreSearchRequest;
-import com.deliveranything.domain.store.store.dto.StoreSliceResponse;
 import com.deliveranything.domain.store.store.dto.StoreUpdateRequest;
 import com.deliveranything.domain.store.store.service.StoreService;
 import com.deliveranything.global.common.ApiResponse;
+import com.deliveranything.global.common.SliceResponse;
 import jakarta.validation.Valid;
 import java.net.URI;
 import lombok.RequiredArgsConstructor;
@@ -47,7 +48,7 @@ public class StoreController {
   }
 
   @GetMapping
-  public ResponseEntity<ApiResponse<StoreSliceResponse>> searchStores(
+  public ResponseEntity<ApiResponse<SliceResponse<StoreResponse>>> searchStores(
       @ModelAttribute StoreSearchRequest request) {
     return ResponseEntity.ok(ApiResponse.success(storeService.search(request)));
   }

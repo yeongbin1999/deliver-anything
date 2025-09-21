@@ -1,9 +1,9 @@
 package com.deliveranything.domain.store.store.service;
 
+import com.deliveranything.global.common.SliceResponse;
 import com.deliveranything.domain.store.store.dto.StoreCreateRequest;
 import com.deliveranything.domain.store.store.dto.StoreResponse;
 import com.deliveranything.domain.store.store.dto.StoreSearchRequest;
-import com.deliveranything.domain.store.store.dto.StoreSliceResponse;
 import com.deliveranything.domain.store.store.dto.StoreUpdateRequest;
 import com.deliveranything.domain.store.store.entity.Store;
 import com.deliveranything.domain.store.store.repository.StoreRepository;
@@ -51,11 +51,11 @@ public class StoreService {
         storeRepository.deleteById(storeId);
     }
 
-    public StoreSliceResponse search(StoreSearchRequest request) {
+    public SliceResponse<StoreResponse> search(StoreSearchRequest request) {
         // 1. Decode cursor using generic utility
         Double cursor = null;
         Long cursorId = null;
-        String[] decodedParts = CursorUtil.decode(request.cursor());
+        String[] decodedParts = CursorUtil.decode(request.nextPageToken());
 
         if (decodedParts != null && decodedParts.length == 2) {
             try {
@@ -93,13 +93,13 @@ public class StoreService {
             stores.remove(stores.size() - 1);
         }
 
-        String nextCursor = null;
+        String nextPageToken = null;
         if (!stores.isEmpty()) {
             StoreResponse lastStore = stores.get(stores.size() - 1);
-            nextCursor = CursorUtil.encode(lastStore.distance(), lastStore.id());
+            nextPageToken = CursorUtil.encode(lastStore.distance(), lastStore.id());
         }
 
-        return new StoreSliceResponse(stores, nextCursor, hasNext);
+        return new SliceResponse<>(stores, nextPageToken, hasNext);
     }
 
     private StoreResponse mapToStoreDistanceResponse(Tuple tuple) {

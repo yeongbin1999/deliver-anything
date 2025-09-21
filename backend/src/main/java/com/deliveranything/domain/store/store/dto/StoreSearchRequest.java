@@ -6,7 +6,7 @@ public record StoreSearchRequest(
     Long categoryId,
     String name,
     Integer limit,
-    String cursor
+    String nextPageToken
 ) {
 
 }
