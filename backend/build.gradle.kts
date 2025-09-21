@@ -70,8 +70,26 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter:5.12.2")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.12.2")
     testImplementation("org.springframework.security:spring-security-test")
+
+    // --- QueryDSL ---
+    implementation("com.querydsl:querydsl-jpa:5.1.0:jakarta")
+    annotationProcessor("com.querydsl:querydsl-apt:5.1.0:jakarta")
+    annotationProcessor("jakarta.annotation:jakarta.annotation-api")
+    annotationProcessor("jakarta.persistence:jakarta.persistence-api")
 }
 
 tasks.withType<Test> {
     useJUnitPlatform()
+}
+
+// Q타입 생성 경로 지정
+tasks.withType<JavaCompile>().configureEach {
+    options.generatedSourceOutputDirectory.set(file("$projectDir/src/main/generated"))
+}
+
+// generated 디렉토리 소스 등록
+sourceSets {
+    main {
+        java { srcDirs("src/main/java", "src/main/generated") }
+    }
 }
