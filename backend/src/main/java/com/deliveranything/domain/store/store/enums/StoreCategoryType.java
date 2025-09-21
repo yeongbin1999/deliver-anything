@@ -19,6 +19,15 @@ public enum StoreCategoryType {
   CAR_TOOLS(110, "자동차/공구"),
   TOOLS_HARDWARE(120, "공구/철물");
 
-  private final int order;
+  private final int id;
   private final String displayName;
+
+  public static StoreCategoryType fromId(long categoryId) {
+    for (StoreCategoryType type : values()) {
+      if (type.getId() == categoryId) {
+        return type;
+      }
+    }
+    return null;
+  }
 }

@@ -14,8 +14,8 @@ public class StoreCategoryService {
 
   public List<StoreCategoryResponse> getAllCategories() {
     return Arrays.stream(StoreCategoryType.values())
-        .sorted(Comparator.comparingInt(StoreCategoryType::getOrder))
-        .map(c -> new StoreCategoryResponse(c.name(), c.getDisplayName(), c.getOrder()))
+        .sorted(Comparator.comparingInt(StoreCategoryType::getId))
+        .map(c -> new StoreCategoryResponse(c.name(), c.getDisplayName(), c.getId()))
         .toList();
   }
 }

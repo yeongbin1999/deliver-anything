@@ -1,14 +1,12 @@
 package com.deliveranything.domain.store.store.dto;
 
-import lombok.Data;
+public record StoreSearchRequest(
+    Double lat,
+    Double lng,
+    Long categoryId,
+    String name,
+    Integer limit,
+    String cursor
+) {
 
-@Data
-public class StoreSearchRequest {
-    private Double lat;
-    private Double lng;
-    private Long categoryId;
-    private String name;
-    private int limit = 10;
-    private Double cursorDistance;
-    private Long cursorId;
 }

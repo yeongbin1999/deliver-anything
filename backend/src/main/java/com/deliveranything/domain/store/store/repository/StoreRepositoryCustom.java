@@ -8,8 +8,10 @@ import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import com.deliveranything.domain.store.store.enums.StoreCategoryType;
+
 public interface StoreRepositoryCustom {
     Page<Store> search(StoreSearchCondition condition, Pageable pageable);
 
-    List<Tuple> searchByDistance(StoreSearchRequest request);
+    List<Tuple> searchByDistance(Double lat, Double lng, StoreCategoryType categoryType, String name, int limit, Double cursorDistance, Long cursorId);
 }

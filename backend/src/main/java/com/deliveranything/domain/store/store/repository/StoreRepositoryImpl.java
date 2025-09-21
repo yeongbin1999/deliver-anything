@@ -3,7 +3,6 @@ package com.deliveranything.domain.store.store.repository;
 import static com.deliveranything.domain.store.store.entity.QStore.store;
 
 import com.deliveranything.domain.store.store.dto.StoreSearchCondition;
-import com.deliveranything.domain.store.store.dto.StoreSearchRequest;
 import com.deliveranything.domain.store.store.entity.Store;
 import com.deliveranything.domain.store.store.enums.StoreStatus;
 import com.querydsl.core.Tuple;
@@ -38,8 +37,8 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
         List<Store> content = queryFactory
             .selectFrom(store)
             .where(
-                nameContains(condition.getName()),
-                statusEq(condition.getStatus())
+                nameContains(condition.name()),
+                statusEq(condition.status())
             )
             .offset(pageable.getOffset())
             .limit(pageable.getPageSize())
@@ -49,8 +48,8 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
             .select(store.count())
             .from(store)
             .where(
-                nameContains(condition.getName()),
-                statusEq(condition.getStatus())
+                nameContains(condition.name()),
+                statusEq(condition.status())
             )
             .fetchOne();
 
@@ -58,12 +57,12 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
     }
 
     @Override
-    public List<Tuple> searchByDistance(StoreSearchRequest request) {
-        if (request.getLat() == null || request.getLng() == null) {
+    public List<Tuple> searchByDistance(Double lat, Double lng, com.deliveranything.domain.store.store.enums.StoreCategoryType categoryType, String name, int limit, Double cursorDistance, Long cursorId) {
+        if (lat == null || lng == null) {
             return Collections.emptyList();
         }
 
-        Point userLocation = geometryFactory.createPoint(new Coordinate(request.getLng(), request.getLat()));
+        Point userLocation = geometryFactory.createPoint(new Coordinate(lng, lat));
 
         // ST_Distance_Sphere returns distance in meters.
         NumberExpression<Double> distanceExpression = Expressions.numberTemplate(Double.class,
@@ -74,12 +73,12 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
             .from(store)
             .where(
                 distanceExpression.loe(MAX_DISTANCE_METERS),
-                cursorCondition(distanceExpression, request.getCursorDistance(), request.getCursorId()),
-                categoryIdEq(request.getCategoryId()),
-                storeNameContains(request.getName())
+                cursorCondition(distanceExpression, cursorDistance, cursorId),
+                categoryIdEq(categoryType),
+                storeNameContains(name)
             )
             .orderBy(distanceExpression.asc(), store.id.desc())
-            .limit(request.getLimit())
+            .limit(limit)
             .fetch();
     }
 
@@ -91,8 +90,8 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
             .or(distance.eq(cursorDistance).and(store.id.lt(cursorId)));
     }
 
-    private BooleanExpression categoryIdEq(Long categoryId) {
-        return categoryId != null ? store.storeCategory.id.eq(categoryId) : null;
+    private BooleanExpression categoryIdEq(com.deliveranything.domain.store.store.enums.StoreCategoryType categoryType) {
+        return categoryType != null ? store.storeCategory.eq(categoryType) : null;
     }
 
     private BooleanExpression storeNameContains(String name) {

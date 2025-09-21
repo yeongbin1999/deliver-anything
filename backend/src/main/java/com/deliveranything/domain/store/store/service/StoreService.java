@@ -1,18 +1,20 @@
 package com.deliveranything.domain.store.store.service;
 
-import com.deliveranything.domain.store.store.dto.Cursor;
-import com.deliveranything.domain.store.store.dto.StoreDistanceResponse;
+import com.deliveranything.domain.store.store.dto.StoreCreateRequest;
+import com.deliveranything.domain.store.store.dto.StoreResponse;
 import com.deliveranything.domain.store.store.dto.StoreSearchRequest;
 import com.deliveranything.domain.store.store.dto.StoreSliceResponse;
-import com.deliveranything.domain.store.store.dto.StoreSearchCondition;
+import com.deliveranything.domain.store.store.dto.StoreUpdateRequest;
 import com.deliveranything.domain.store.store.entity.Store;
 import com.deliveranything.domain.store.store.repository.StoreRepository;
+import com.deliveranything.global.exception.CustomException;
+import com.deliveranything.global.exception.ErrorCode;
+import com.deliveranything.global.util.CursorUtil;
+import com.deliveranything.global.util.PointUtil;
 import com.querydsl.core.Tuple;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,58 +23,103 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class StoreService {
 
-  private final StoreRepository storeRepository;
+    private final StoreRepository storeRepository;
 
-  // This is the old offset-based search, can be removed if not needed.
-  public Page<Store> searchStores(StoreSearchCondition condition, Pageable pageable) {
-    return storeRepository.search(condition, pageable);
-  }
-
-  public StoreSliceResponse searchByDistance(StoreSearchRequest request) {
-    // To check for hasNext, fetch one more item than the requested limit
-    int queryLimit = request.getLimit() + 1;
-    request.setLimit(queryLimit);
-
-    List<Tuple> results = storeRepository.searchByDistance(request);
-
-    List<StoreDistanceResponse> stores = results.stream()
-        .map(this::mapToStoreDistanceResponse)
-        .collect(Collectors.toList());
-
-    boolean hasNext = stores.size() == queryLimit;
-    if (hasNext) {
-      // Remove the extra item used for the hasNext check
-      stores.remove(stores.size() - 1);
+    @Transactional
+    public Long createStore(StoreCreateRequest request) {
+        Store store = Store.builder()
+            .sellerProfileId(request.sellerProfileId())
+            .storeCategory(request.storeCategory())
+            .name(request.name())
+            .roadAddr(request.roadAddr())
+            .location(PointUtil.createPoint(request.lat(), request.lng()))
+            .openHoursJson(request.openHoursJson())
+            .build();
+        return storeRepository.save(store).getId();
     }
 
-    Cursor nextCursor = null;
-    if (!stores.isEmpty()) {
-      StoreDistanceResponse lastStore = stores.get(stores.size() - 1);
-      // The cursor is based on the last item of the *actual* page
-      nextCursor = new Cursor(lastStore.getDistance(), lastStore.getId());
+    @Transactional
+    public Long updateStore(Long storeId, StoreUpdateRequest request) {
+        Store store = storeRepository.findById(storeId)
+            .orElseThrow(() -> new CustomException(ErrorCode.STORE_NOT_FOUND));
+        store.update(request);
+        return store.getId();
     }
 
-    return new StoreSliceResponse(stores, nextCursor, hasNext);
-  }
+    @Transactional
+    public void deleteStore(Long storeId) {
+        storeRepository.deleteById(storeId);
+    }
 
-  private StoreDistanceResponse mapToStoreDistanceResponse(Tuple tuple) {
-    Store store = tuple.get(0, Store.class);
-    Double distance = tuple.get(1, Double.class);
-    int deliveryFee = calculateDeliveryFee(distance);
-    return new StoreDistanceResponse(store, distance, deliveryFee);
-  }
+    public StoreSliceResponse search(StoreSearchRequest request) {
+        // 1. Decode cursor using generic utility
+        Double cursor = null;
+        Long cursorId = null;
+        String[] decodedParts = CursorUtil.decode(request.cursor());
 
-  private int calculateDeliveryFee(Double distanceInMeters) {
-    if (distanceInMeters == null) {
-      return 99999; // Or some default error value
+        if (decodedParts != null && decodedParts.length == 2) {
+            try {
+                cursor = Double.parseDouble(decodedParts[0]);
+                cursorId = Long.parseLong(decodedParts[1]);
+            } catch (NumberFormatException e) {
+                // Invalid cursor format, treat as first page
+                cursor = null;
+                cursorId = null;
+            }
+        }
+
+        // 2. Convert categoryId to Enum
+        com.deliveranything.domain.store.store.enums.StoreCategoryType categoryType = null;
+        if (request.categoryId() != null) {
+            categoryType = com.deliveranything.domain.store.store.enums.StoreCategoryType.fromId(request.categoryId());
+        }
+
+        // 3. Call repository with decoded values (+1 limit for hasNext check)
+        int limit = (request.limit() == null || request.limit() == 0) ? 10 : request.limit();
+        int queryLimit = limit + 1;
+        List<Tuple> results = storeRepository.searchByDistance(
+            request.lat(), request.lng(), categoryType,
+            request.name(), queryLimit, cursor, cursorId
+        );
+
+        // 4. Map to DTO and calculate delivery fee
+        List<StoreResponse> stores = results.stream()
+            .map(this::mapToStoreDistanceResponse)
+            .collect(Collectors.toList());
+
+        // 5. Slice and create next cursor
+        boolean hasNext = stores.size() == queryLimit;
+        if (hasNext) {
+            stores.remove(stores.size() - 1);
+        }
+
+        String nextCursor = null;
+        if (!stores.isEmpty()) {
+            StoreResponse lastStore = stores.get(stores.size() - 1);
+            nextCursor = CursorUtil.encode(lastStore.distance(), lastStore.id());
+        }
+
+        return new StoreSliceResponse(stores, nextCursor, hasNext);
     }
-    if (distanceInMeters <= 2000) { // ~2km
-      return 3000;
+
+    private StoreResponse mapToStoreDistanceResponse(Tuple tuple) {
+        Store store = tuple.get(0, Store.class);
+        Double distance = tuple.get(1, Double.class);
+        int deliveryFee = calculateDeliveryFee(distance);
+        return new StoreResponse(store, distance, deliveryFee);
     }
-    if (distanceInMeters <= 5000) { // ~5km
-      return 5000;
+
+    private int calculateDeliveryFee(Double distanceInMeters) {
+        if (distanceInMeters == null) {
+            return 99999; // Or some default error value
+        }
+        if (distanceInMeters <= 2000) { // ~2km
+            return 3000;
+        }
+        if (distanceInMeters <= 5000) { // ~5km
+            return 5000;
+        }
+        // up to 10km (max search radius)
+        return 7000;
     }
-    // up to 10km (max search radius)
-    return 7000;
-  }
 }
