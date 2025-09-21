@@ -6,10 +6,12 @@ import com.deliveranything.domain.order.dto.OrderResponse;
 import com.deliveranything.domain.order.entity.Order;
 import com.deliveranything.domain.order.entity.OrderItem;
 import com.deliveranything.domain.order.repository.OrderRepository;
+import com.deliveranything.domain.order.repository.OrderRepositoryCustom;
 import com.deliveranything.domain.user.service.UserService;
-import java.util.List;
+import com.deliveranything.global.common.CursorPageResponse;
 import com.deliveranything.global.exception.CustomException;
 import com.deliveranything.global.exception.ErrorCode;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +25,7 @@ public class OrderService {
   private final ProductService productService;
 
   private final OrderRepository orderRepository;
+  private final OrderRepositoryCustom orderRepositoryCustom;
 
   @Transactional
   public OrderResponse createOrder(Long customerId, OrderCreateRequest orderCreateRequest) {
@@ -51,11 +54,18 @@ public class OrderService {
   }
 
   @Transactional(readOnly = true)
-  public List<OrderResponse> getCustomerOrders(Long customerId) {
-    return orderRepository.findAllByCustomerId(customerId)
+  public CursorPageResponse<OrderResponse> getCustomerOrders(
+      Long customerId,
+      Long cursor,
+      int size
+  ) {
+    List<OrderResponse> orderResponses = orderRepositoryCustom
+        .findCustomerOrders(customerId, cursor, size)
         .stream()
         .map(OrderResponse::from)
         .toList();
+
+    return new CursorPageResponse<>(orderResponses, orderResponses.getLast().orderId());
   }
 
   @Transactional(readOnly = true)
