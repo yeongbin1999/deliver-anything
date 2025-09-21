@@ -1,6 +1,6 @@
 package com.deliveranything.domain.product.entity;
 
-import com.deliveranything.domain.store.entity.Store;
+import com.deliveranything.domain.store.store.entity.Store;
 import com.deliveranything.global.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

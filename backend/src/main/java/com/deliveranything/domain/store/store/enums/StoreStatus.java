@@ -1,4 +1,4 @@
-package com.deliveranything.domain.store.enums;
+package com.deliveranything.domain.store.store.enums;
 
 public enum StoreStatus{
   DRAFT,

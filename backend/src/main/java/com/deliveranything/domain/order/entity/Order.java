@@ -2,7 +2,7 @@ package com.deliveranything.domain.order.entity;
 
 import com.deliveranything.domain.delivery.entity.Delivery;
 import com.deliveranything.domain.order.enums.OrderStatus;
-import com.deliveranything.domain.store.entity.Store;
+import com.deliveranything.domain.store.store.entity.Store;
 import com.deliveranything.domain.user.entity.User;
 import com.deliveranything.global.entity.BaseEntity;
 import jakarta.persistence.CascadeType;
