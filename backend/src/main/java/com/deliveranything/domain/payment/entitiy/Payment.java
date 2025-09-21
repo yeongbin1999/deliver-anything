@@ -3,6 +3,8 @@ package com.deliveranything.domain.payment.entitiy;
 import com.deliveranything.domain.payment.enums.PaymentMethod;
 import com.deliveranything.domain.payment.enums.PaymentStatus;
 import com.deliveranything.global.entity.BaseEntity;
+import com.deliveranything.global.exception.CustomException;
+import com.deliveranything.global.exception.ErrorCode;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -37,5 +39,13 @@ public class Payment extends BaseEntity {
     this.orderId = orderId;
     this.amount = amount;
     this.status = PaymentStatus.READY;
+  }
+
+  public void cancel() {
+    if (this.status != PaymentStatus.READY) {
+      throw new CustomException(ErrorCode.PAYMENT_INVALID_STATUS);
+    }
+
+    this.status = PaymentStatus.CANCELED;
   }
 }

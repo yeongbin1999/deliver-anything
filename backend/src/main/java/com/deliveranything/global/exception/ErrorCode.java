@@ -25,8 +25,13 @@ public enum ErrorCode {
   // 주문 관련 오류
   CUSTOMER_ORDER_NOT_FOUND(HttpStatus.NOT_FOUND, "ORDER-CUSTOMER-404", "소비자의 주문을 찾을 수 없습니다."),
 
+  // 결제 관련 오류
+  PAYMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "PAYMENT-404", "결제 이력을 찾을 수 없습니다."),
+  PAYMENT_INVALID_STATUS(HttpStatus.CONFLICT, "PAYMENT-409", "결제 상태를 변경할 수 없습니다."),
+
   //상점 관련 오류
   STORE_NOT_FOUND(HttpStatus.NOT_FOUND, "STORE-404", "상점을 찾을 수 없습니다.");
+
 
   private final HttpStatus httpStatus;
   private final String code;
