@@ -6,10 +6,13 @@ import com.deliveranything.domain.order.dto.OrderResponse;
 import com.deliveranything.domain.order.entity.Order;
 import com.deliveranything.domain.order.entity.OrderItem;
 import com.deliveranything.domain.order.repository.OrderRepository;
+import com.deliveranything.domain.order.repository.OrderRepositoryCustom;
+import com.deliveranything.domain.store.store.service.StoreService;
 import com.deliveranything.domain.user.service.UserService;
-import java.util.List;
+import com.deliveranything.global.common.CursorPageResponse;
 import com.deliveranything.global.exception.CustomException;
 import com.deliveranything.global.exception.ErrorCode;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +26,7 @@ public class OrderService {
   private final ProductService productService;
 
   private final OrderRepository orderRepository;
+  private final OrderRepositoryCustom orderRepositoryCustom;
 
   @Transactional
   public OrderResponse createOrder(Long customerId, OrderCreateRequest orderCreateRequest) {
@@ -51,11 +55,24 @@ public class OrderService {
   }
 
   @Transactional(readOnly = true)
-  public List<OrderResponse> getCustomerOrders(Long customerId) {
-    return orderRepository.findAllByCustomerId(customerId)
-        .stream()
+  public CursorPageResponse<OrderResponse> getCustomerOrders(
+      Long customerId,
+      Long cursor,
+      int size
+  ) {
+    List<Order> orders = orderRepositoryCustom.findCustomerOrders(customerId, cursor, size + 1);
+    List<OrderResponse> orderResponses = orders.stream()
+        .limit(size)
         .map(OrderResponse::from)
         .toList();
+
+    boolean hasNext = orders.size() > size;
+
+    return new CursorPageResponse<>(
+        orderResponses,
+        hasNext ? orderResponses.getLast().orderId().toString() : null,
+        hasNext
+    );
   }
 
   @Transactional(readOnly = true)

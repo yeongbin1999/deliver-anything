@@ -83,17 +83,3 @@ dependencies {
 tasks.withType<Test> {
     useJUnitPlatform()
 }
-
-val querydslDir = layout.buildDirectory.dir("generated/querydsl")
-
-tasks.withType<JavaCompile> {
-    options.generatedSourceOutputDirectory.set(querydslDir.get().asFile)
-}
-
-sourceSets {
-    main {
-        java {
-            srcDir(querydslDir)
-        }
-    }
-}
