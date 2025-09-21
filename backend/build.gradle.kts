@@ -66,8 +66,6 @@ dependencies {
     // --- QueryDSL ---
     implementation("io.github.openfeign.querydsl:querydsl-jpa:7.0")
     annotationProcessor("io.github.openfeign.querydsl:querydsl-apt:7.0:jakarta")
-    annotationProcessor("jakarta.annotation:jakarta.annotation-api")
-    annotationProcessor("jakarta.persistence:jakarta.persistence-api")
 
     // --- Spatial (for Geolocation) ---
     implementation("org.hibernate.orm:hibernate-spatial:6.5.2.Final")
