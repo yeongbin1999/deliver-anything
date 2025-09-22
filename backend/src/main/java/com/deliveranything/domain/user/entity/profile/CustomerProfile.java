@@ -34,12 +34,13 @@ public class CustomerProfile extends BaseProfile {
     this.user = user;
   }
 
-  public void setDefaultAddress(Long addressId) {
-    this.setDefaultAddress(addressId);
-  }
-
   public void updateProfile(String nickname, String profileImageUrl) {
     super.updateNickname(nickname);
     super.updateProfileImageUrl(profileImageUrl);
   }
+
+  public void updateDefaultAddressId(Long addressId) {
+    this.defaultAddressId = addressId;
+  }
+
 }

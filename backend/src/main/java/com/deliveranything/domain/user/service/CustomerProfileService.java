@@ -151,7 +151,7 @@ public class CustomerProfileService {
 
     // 첫 번째 주소는 자동으로 기본 설정
     if (profile.getDefaultAddressId() == null) {
-      profile.setDefaultAddress(customerAddress.getId());
+      profile.updateDefaultAddressId(customerAddress.getId());
       customerProfileRepository.save(profile);
     }
 
@@ -205,16 +205,28 @@ public class CustomerProfileService {
   // 기본 배송지 설정
   @Transactional
   public boolean setDefaultAddress(Long userId, Long addressId) {
+    CustomerProfile profile = getProfile(userId);
+    // 해당 주소가 이 사용자 소유인지 확인
     CustomerAddress customerAddress = getAddress(userId, addressId);
     if (customerAddress == null) {
       return false;
     }
 
     // CustomerProfile 엔티티의 기본 주소 ID 업데이트
-    customerAddress.setAsDefault();
+    profile.updateDefaultAddressId(addressId);
 
     log.info("기본 배송지 설정 완료: userId={}, addressId={}", userId, addressId);
     return true;
+  }
+
+  // 현재 기본 배송지 조회
+  public CustomerAddress getCurrentAddress(Long userId) {
+    CustomerProfile profile = getProfile(userId);
+    if (profile == null || profile.getDefaultAddressId() == null) {
+      return null;
+    }
+
+    return customerAddressRepository.findById(profile.getDefaultAddressId()).orElse(null);
   }
 
 }

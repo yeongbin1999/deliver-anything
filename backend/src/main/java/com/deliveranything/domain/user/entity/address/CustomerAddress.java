@@ -48,12 +48,8 @@ public class CustomerAddress extends BaseEntity {
 
   // 비즈니스 메서드
   public boolean isDefault() {
-    return customerProfile.getUser().getDefaultAddressId() != null &&
-        customerProfile.getUser().getDefaultAddressId().equals(this.getId());
-  }
-
-  public void setAsDefault() {
-    customerProfile.setDefaultAddress(this.getId());
+    return customerProfile.getDefaultAddressId() != null &&
+        customerProfile.getDefaultAddressId().equals(this.getId());
   }
 
   public void updateAddress(String addressName, String address,
