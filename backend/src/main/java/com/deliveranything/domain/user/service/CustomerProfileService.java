@@ -229,4 +229,31 @@ public class CustomerProfileService {
     return customerAddressRepository.findById(profile.getDefaultAddressId()).orElse(null);
   }
 
+  // 사용자의 기본 배송지 ID 조회
+  public Long getDefaultAddressId(Long userId) {
+    CustomerProfile profile = getProfile(userId);
+    if (profile == null) {
+      return null;
+    }
+    return profile.getDefaultAddressId();
+  }
+
+  // 배송지 개수 조회
+  public long countAddresses(Long userId) {
+    CustomerProfile profile = getProfile(userId);
+    if (profile == null) {
+      return 0;
+    }
+    return customerAddressRepository.countByCustomerProfile(profile);
+  }
+
+  // 배송지가 기본 배송지인지 확인
+  public boolean isDefaultAddress(Long userId, Long addressId) {
+    CustomerProfile profile = getProfile(userId);
+    if (profile == null || profile.getDefaultAddressId() == null) {
+      return false;
+    }
+    return profile.getDefaultAddressId().equals(addressId);
+  }
+
 }

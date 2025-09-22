@@ -11,4 +11,6 @@ public interface CustomerAddressRepository extends JpaRepository<CustomerAddress
 
   @Query("SELECT ca FROM CustomerAddress ca WHERE ca.customerProfile = :profile ORDER BY ca.id ASC")
   List<CustomerAddress> findAddressesByProfile(@Param("profile") CustomerProfile profile);
+
+  long countByCustomerProfile(CustomerProfile profile);
 }
