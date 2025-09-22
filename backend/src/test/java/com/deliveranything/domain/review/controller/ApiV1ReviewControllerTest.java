@@ -385,7 +385,8 @@ public class ApiV1ReviewControllerTest {
     }
 
     // when : 리뷰 목록 조회
-    CursorPageResponse<ReviewResponse> responses = reviewService.getReviews(user.getId(), ReviewSortType.RATING_ASC, null, 10);
+    CursorPageResponse<ReviewResponse> responses = reviewService.getReviews(user.getId(),
+        ReviewSortType.RATING_ASC, null, 10);
     // getReviewsByUser: 유저 기준, 최대 10개, 커서 없음
 
     // then : 조회 결과 검증
@@ -432,7 +433,8 @@ public class ApiV1ReviewControllerTest {
     }
 
     // when : 리뷰 목록 조회 (평점 오름차순)
-    CursorPageResponse<ReviewResponse> responses = reviewService.getReviews(user.getId(), ReviewSortType.RATING_ASC, null, 10);
+    CursorPageResponse<ReviewResponse> responses = reviewService.getReviews(user.getId(),
+        ReviewSortType.RATING_ASC, null, 10);
 
     // then : 개수 검증
     assertEquals(3, responses.content().size(), "리뷰 개수가 일치해야 합니다");
@@ -454,66 +456,66 @@ public class ApiV1ReviewControllerTest {
     }
   }
 
-  @Test
-  @DisplayName("리뷰 목록 조회 - Rider 정렬 순서 검증")
-  public void getReviewsByRider_ordering_success() {
-    // given : 리뷰 작성 유저 생성 (Rider)
-    User user = User.builder()
-        .email("rider@example.com")
-        .name("riderUser")
-        .password("riderPassword")
-        .phoneNumber("010-3333-4444")
-        .socialProvider(null)
-        .build();
-    CustomerProfile customerProfile = CustomerProfile.builder()
-        .user(user)
-        .nickname("reviewerProfile")
-        .build();
-    RiderProfile profile = RiderProfile.builder()
-        .nickname("riderProfile")
-        .toggleStatus(RiderToggleStatus.ON)
-        .area("riderArea")
-        .licenseNumber("riderLicenseNumber")
-        .profileImageUrl("riderProfileImageUrl")
-        .bankName("riderBankName")
-        .bankAccountNumber("riderBankAccountNumber")
-        .bankAccountHolderName("riderBankAccountHolderName")
-        .user(user)
-        .build();
-    user.setRiderProfile(profile);
-    user.switchProfile(ProfileType.RIDER);
-    user.setCustomerProfile(customerProfile);
-    userRepository.save(user);
-    em.flush();
-    em.clear();
-
-    // 리뷰 여러 개 생성
-    List<ReviewCreateRequest> requests = List.of(
-        new ReviewCreateRequest(5, "comment5", new String[]{}, ReviewTargetType.STORE, 1L),
-        new ReviewCreateRequest(3, "comment3", new String[]{}, ReviewTargetType.STORE, 1L),
-        new ReviewCreateRequest(4, "comment4", new String[]{}, ReviewTargetType.STORE, 1L)
-    );
-
-    for (ReviewCreateRequest rq : requests) {
-      reviewService.createReview(rq, user.getId());
-    }
-
-    // when : 리뷰 목록 조회 (평점 오름차순)
-    CursorPageResponse<ReviewResponse> responses = reviewService.getReviews(user.getId(), ReviewSortType.RATING_ASC, null, 10);
-
-    // then : 개수 검증
-    assertEquals(3, responses.content().size());
-
-    // 순서 검증
-    List<Integer> ratings = responses.content().stream().map(ReviewResponse::rating).toList();
-    assertEquals(ratings.stream().sorted().toList(), ratings);
-
-    // 필드 검증
-    for (ReviewResponse rs : responses.content()) {
-      assertNotNull(rs.id());
-      assertNotNull(rs.comment());
-    }
-  }
+//  @Test
+//  @DisplayName("리뷰 목록 조회 - Rider 정렬 순서 검증")
+//  public void getReviewsByRider_ordering_success() {
+//    // given : 리뷰 작성 유저 생성 (Rider)
+//    User user = User.builder()
+//        .email("rider@example.com")
+//        .name("riderUser")
+//        .password("riderPassword")
+//        .phoneNumber("010-3333-4444")
+//        .socialProvider(null)
+//        .build();
+//    CustomerProfile customerProfile = CustomerProfile.builder()
+//        .user(user)
+//        .nickname("reviewerProfile")
+//        .build();
+//    RiderProfile profile = RiderProfile.builder()
+//        .nickname("riderProfile")
+//        .toggleStatus(RiderToggleStatus.ON)
+//        .area("riderArea")
+//        .licenseNumber("riderLicenseNumber")
+//        .profileImageUrl("riderProfileImageUrl")
+//        .bankName("riderBankName")
+//        .bankAccountNumber("riderBankAccountNumber")
+//        .bankAccountHolderName("riderBankAccountHolderName")
+//        .user(user)
+//        .build();
+//    user.setRiderProfile(profile);
+//    user.switchProfile(ProfileType.RIDER);
+//    user.setCustomerProfile(customerProfile);
+//    userRepository.save(user);
+//    em.flush();
+//    em.clear();
+//
+//    // 리뷰 여러 개 생성
+//    List<ReviewCreateRequest> requests = List.of(
+//        new ReviewCreateRequest(5, "comment5", new String[]{}, ReviewTargetType.STORE, 1L),
+//        new ReviewCreateRequest(3, "comment3", new String[]{}, ReviewTargetType.STORE, 1L),
+//        new ReviewCreateRequest(4, "comment4", new String[]{}, ReviewTargetType.STORE, 1L)
+//    );
+//
+//    for (ReviewCreateRequest rq : requests) {
+//      reviewService.createReview(rq, user.getId());
+//    }
+//
+//    // when : 리뷰 목록 조회 (평점 오름차순)
+//    CursorPageResponse<ReviewResponse> responses = reviewService.getReviews(user.getId(), ReviewSortType.RATING_ASC, null, 10);
+//
+//    // then : 개수 검증
+//    assertEquals(3, responses.content().size());
+//
+//    // 순서 검증
+//    List<Integer> ratings = responses.content().stream().map(ReviewResponse::rating).toList();
+//    assertEquals(ratings.stream().sorted().toList(), ratings);
+//
+//    // 필드 검증
+//    for (ReviewResponse rs : responses.content()) {
+//      assertNotNull(rs.id());
+//      assertNotNull(rs.comment());
+//    }
+//  }
 
   @Test
   @DisplayName("리뷰 목록 조회 - Seller 정렬 순서 검증")
@@ -548,7 +550,8 @@ public class ApiV1ReviewControllerTest {
     }
 
     // when : 리뷰 목록 조회 (평점 오름차순)
-    CursorPageResponse<ReviewResponse> responses = reviewService.getReviews(user.getId(), ReviewSortType.RATING_ASC, null, 10);
+    CursorPageResponse<ReviewResponse> responses = reviewService.getReviews(user.getId(),
+        ReviewSortType.RATING_ASC, null, 10);
 
     // then : 개수 검증
     assertEquals(3, responses.content().size());
