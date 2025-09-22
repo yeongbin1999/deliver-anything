@@ -61,5 +61,21 @@ public class SellerProfile extends BaseProfile {
     this.accountNumber = accountNumber;
     this.accountHolder = accountHolder;
   }
-  
+
+  public void updateProfile(String nickname, String profileImageUrl) {
+    super.updateNickname(nickname);
+    super.updateProfileImageUrl(profileImageUrl);
+  }
+
+  public void updateBusinessInfo(String businessName, String businessPhoneNumber) {
+    this.businessName = businessName;
+    this.businessPhoneNumber = businessPhoneNumber;
+  }
+
+  public void updateBankInfo(String bankName, String accountNumber, String accountHolder) {
+    this.bankName = bankName;
+    this.accountNumber = accountNumber;
+    this.accountHolder = accountHolder;
+  }
+
 }
