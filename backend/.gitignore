@@ -42,3 +42,6 @@ dev.trace.db
 
 ### QClass ###
 src/main/generated
+
+###
+.env
