@@ -1,13 +1,16 @@
 package com.deliveranything.domain.review.repository;
 
+import com.deliveranything.domain.review.entity.QReview;
 import com.deliveranything.domain.review.entity.Review;
 import com.deliveranything.domain.review.enums.ReviewSortType;
-import com.deliveranything.domain.review.repository.ReviewRepositoryCustom;
+import com.deliveranything.domain.store.store.entity.QStore;
 import com.deliveranything.domain.user.entity.User;
+import com.deliveranything.domain.user.entity.profile.QRiderProfile;
 import com.deliveranything.domain.user.enums.ProfileType;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 
@@ -17,33 +20,43 @@ public class ReviewRepositoryImpl implements ReviewRepositoryCustom {
   private final JPAQueryFactory queryFactory;
 
   @Override
-  public List<Review> findReviewsByProfile(User user, ProfileType profileType, ReviewSortType sort, Long cursor, int pageSize) {
+  public List<Review> findReviewsByProfile(User user, ProfileType profileType, ReviewSortType sort,
+      String[] cursor, int pageSize) {
     QReview review = QReview.review;
+    QRiderProfile riderProfile = QRiderProfile.riderProfile;
+    QStore store = QStore.store;
 
+    // profileType에 따른 조건
     BooleanExpression profileCondition = switch (profileType) {
-      case CUSTOMER -> review.customer.eq(user);
-      case SELLER -> review.seller.eq(user);
-      case RIDER -> review.rider.eq(user);
+      case CUSTOMER -> review.customerProfile.eq(user.getCustomerProfile());
+      case SELLER -> review.targetId.eq(store.id);
+      case RIDER -> review.targetId.eq(riderProfile.id);
     };
 
+    // 커서 조건
     BooleanExpression cursorCondition = null;
-    if (cursor != null) {
+    if (cursor != null && cursor.length > 0) {
       cursorCondition = switch (sort) {
-        case LATEST -> review.id.lt(cursor);   // 최신순
-        case OLDEST -> review.id.gt(cursor);   // 오래된순
+        case LATEST -> review.createdAt.lt(LocalDateTime.parse(cursor[0]));
+        case OLDEST -> review.createdAt.gt(LocalDateTime.parse(cursor[0]));
+        case RATING_DESC -> review.rating.lt(Integer.parseInt(cursor[0]));
+        case RATING_ASC -> review.rating.gt(Integer.parseInt(cursor[0]));
       };
     }
 
+    // 정렬
     OrderSpecifier<?> orderSpecifier = switch (sort) {
       case LATEST -> review.createdAt.desc();
       case OLDEST -> review.createdAt.asc();
+      case RATING_DESC -> review.rating.desc();
+      case RATING_ASC -> review.rating.asc();
     };
 
     return queryFactory
         .selectFrom(review)
         .where(profileCondition, cursorCondition)
         .orderBy(orderSpecifier)
-        .limit(pageSize + 1)  // hasNext 판단 위해 +1
+        .limit(pageSize + 1) // hasNext 판단용 +1
         .fetch();
   }
 }

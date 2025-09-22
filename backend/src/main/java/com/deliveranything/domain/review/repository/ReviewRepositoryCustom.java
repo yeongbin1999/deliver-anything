@@ -9,5 +9,5 @@ import java.util.List;
 public interface ReviewRepositoryCustom {
 
   List<Review> findReviewsByProfile(User user, ProfileType profileType, ReviewSortType sort,
-      Long cursor, int pageSize);
+      String[] cursor, int size);
 }

@@ -165,13 +165,13 @@ public class ReviewService {
   }
 
   private List<ReviewResponse> getReviewsByProfile(ProfileType profileType, User user,
-      ReviewSortType sort, String[] cursor, int pageSize) {
+      ReviewSortType sort, String[] cursor, int size) {
     List<Review> reviews = reviewRepository.findReviewsByProfile(
         user,
         profileType, // ProfileType 전달
         sort,        // ReviewSortType 전달
         cursor,
-        pageSize
+        size
     );
 
     return reviews.stream()
