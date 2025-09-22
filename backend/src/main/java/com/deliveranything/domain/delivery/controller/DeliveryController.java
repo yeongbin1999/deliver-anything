@@ -29,7 +29,7 @@ public class DeliveryController {
       @Valid @RequestBody RiderToggleStatusRequestDto riderStatusRequestDto
   ) {
     deliveryService.updateRiderStatus(riderStatusRequestDto);
-    return ResponseEntity.ok(ApiResponse.success(null));
+    return ResponseEntity.ok(ApiResponse.success());
   }
 
   @PostMapping("/area")
@@ -39,6 +39,6 @@ public class DeliveryController {
       @Valid @RequestBody DeliveryAreaRequestDto deliveryAreaRequestDto
   ) {
     deliveryService.updateDeliveryArea(deliveryAreaRequestDto);
-    return ResponseEntity.ok(ApiResponse.success(null));
+    return ResponseEntity.ok(ApiResponse.success());
   }
 }
