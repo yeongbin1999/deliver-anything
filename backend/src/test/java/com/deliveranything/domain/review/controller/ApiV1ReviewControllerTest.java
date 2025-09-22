@@ -8,6 +8,7 @@ import com.deliveranything.domain.review.dto.ReviewResponse;
 import com.deliveranything.domain.review.dto.ReviewUpdateRequest;
 import com.deliveranything.domain.review.entity.Review;
 import com.deliveranything.domain.review.enums.ReviewSortType;
+import com.deliveranything.domain.review.enums.ReviewTargetType;
 import com.deliveranything.domain.review.factory.ReviewFactory;
 import com.deliveranything.domain.review.repository.ReviewRepository;
 import com.deliveranything.domain.review.service.ReviewService;
@@ -365,6 +366,59 @@ public class ApiV1ReviewControllerTest {
       assertNotNull(rs.id(), "리뷰 ID가 존재해야 합니다");
       assertEquals(rq.rating(), rs.rating(), "리뷰 평점이 일치해야 합니다");
       assertEquals(rq.comment(), rs.comment(), "리뷰 코멘트가 일치해야 합니다");
+    }
+  }
+
+  @Test
+  @DisplayName("리뷰 목록 조회 - 정렬 순서 검증")
+  public void getReviewsByUser_ordering_success() {
+    // given : 리뷰 작성 유저 생성
+    User user = User.builder()
+        .email("reviewer@example.com")
+        .name("reviewerUser")
+        .password("reviewerPassword")
+        .phoneNumber("010-2222-3333")
+        .socialProvider(null)
+        .build();
+    CustomerProfile profile = CustomerProfile.builder()
+        .user(user)
+        .nickname("reviewerProfile")
+        .build();
+    user.setCustomerProfile(profile);
+    user.switchProfile(ProfileType.CUSTOMER);
+    userRepository.save(user);
+
+    // 리뷰 여러 개 생성 (랜덤 평점)
+    List<ReviewCreateRequest> requests = List.of(
+        new ReviewCreateRequest(5, "comment5", new String[]{}, ReviewTargetType.STORE, 1L),
+        new ReviewCreateRequest(3, "comment3", new String[]{}, ReviewTargetType.STORE, 1L),
+        new ReviewCreateRequest(4, "comment4", new String[]{}, ReviewTargetType.STORE, 1L)
+    );
+
+    for (ReviewCreateRequest rq : requests) {
+      reviewService.createReview(rq, user.getId());
+    }
+
+    // when : 리뷰 목록 조회 (평점 오름차순)
+    CursorPageResponse<ReviewResponse> responses = reviewService.getReviews(user.getId(), ReviewSortType.RATING_ASC, null, 10);
+
+    // then : 개수 검증
+    assertEquals(3, responses.content().size(), "리뷰 개수가 일치해야 합니다");
+
+    // 순서 검증 (평점 오름차순)
+    List<Integer> ratings = responses.content().stream()
+        .map(ReviewResponse::rating)
+        .toList();
+
+    List<Integer> sortedRatings = ratings.stream().sorted().toList();
+
+    assertEquals(sortedRatings, ratings, "리뷰가 평점 오름차순으로 정렬되어야 합니다");
+
+    // 추가 필드 검증
+    for (int i = 0; i < responses.content().size(); i++) {
+      ReviewResponse rs = responses.content().get(i);
+      assertNotNull(rs.id(), "리뷰 ID가 존재해야 합니다");
+      assertNotNull(rs.comment(), "리뷰 코멘트가 존재해야 합니다");
     }
   }
 
