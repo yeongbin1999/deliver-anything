@@ -7,13 +7,18 @@ import com.deliveranything.domain.review.dto.ReviewCreateResponse;
 import com.deliveranything.domain.review.dto.ReviewResponse;
 import com.deliveranything.domain.review.dto.ReviewUpdateRequest;
 import com.deliveranything.domain.review.entity.Review;
+import com.deliveranything.domain.review.enums.ReviewSortType;
 import com.deliveranything.domain.review.factory.ReviewFactory;
 import com.deliveranything.domain.review.repository.ReviewRepository;
 import com.deliveranything.domain.review.service.ReviewService;
+import com.deliveranything.domain.settlement.enums.TargetType;
 import com.deliveranything.domain.user.entity.User;
 import com.deliveranything.domain.user.entity.profile.CustomerProfile;
+import com.deliveranything.domain.user.enums.ProfileType;
 import com.deliveranything.domain.user.repository.UserRepository;
+import com.deliveranything.global.common.CursorPageResponse;
 import com.deliveranything.global.exception.CustomException;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -316,6 +321,51 @@ public class ApiV1ReviewControllerTest {
     assertEquals(HttpStatus.FORBIDDEN, exception.getHttpStatus());
     assertEquals("REVIEW-403", exception.getCode());
     assertEquals("리뷰를 관리할 권한이 없습니다.", exception.getMessage());
+  }
+
+  /**
+   * 리뷰 목록 조회 성공 테스트
+   */
+  @Test
+  @DisplayName("리뷰 목록 조회 - 정상")
+  public void getReviewsByUser_success() {
+    // given : 리뷰 작성 유저 생성
+    User user = User.builder()
+        .email("reviewer@example.com")
+        .name("reviewerUser")
+        .password("reviewerPassword")
+        .phoneNumber("010-2222-3333")
+        .socialProvider(null)
+        .build();
+    CustomerProfile profile = CustomerProfile.builder()
+        .user(user)
+        .nickname("reviewerProfile")
+        .build();
+    user.setCustomerProfile(profile);
+    user.switchProfile(ProfileType.CUSTOMER);
+    userRepository.save(user);
+
+    // 리뷰 여러 개 생성
+    List<ReviewCreateRequest> requests = ReviewFactory.createReviews(3); // 3개의 리뷰 생성
+    for (ReviewCreateRequest rq : requests) {
+      reviewService.createReview(rq, user.getId());
+    }
+
+    // when : 리뷰 목록 조회
+    CursorPageResponse<ReviewResponse> responses = reviewService.getReviews(user.getId(), ReviewSortType.RATING_ASC, null, 10);
+    // getReviewsByUser: 유저 기준, 최대 10개, 커서 없음
+
+    // then : 조회 결과 검증
+    assertEquals(3, responses.content().size(), "리뷰 개수가 일치해야 합니다");
+
+    for (int i = 0; i < responses.content().size(); i++) {
+      ReviewCreateRequest rq = requests.get(i);
+      ReviewResponse rs = responses.content().get(i);
+
+      assertNotNull(rs.id(), "리뷰 ID가 존재해야 합니다");
+      assertEquals(rq.rating(), rs.rating(), "리뷰 평점이 일치해야 합니다");
+      assertEquals(rq.comment(), rs.comment(), "리뷰 코멘트가 일치해야 합니다");
+    }
   }
 
 }
