@@ -24,6 +24,9 @@ public class CustomerProfile extends BaseProfile {
   @JoinColumn(name = "user_id", nullable = false)
   private User user;
 
+  // 기타
+  @Column(name = "default_address_id")
+  private Long defaultAddressId;
 
   @Builder
   public CustomerProfile(User user, String nickname, String profileImageUrl) {
@@ -32,7 +35,7 @@ public class CustomerProfile extends BaseProfile {
   }
 
   public void setDefaultAddress(Long addressId) {
-    user.setDefaultAddress(addressId);
+    this.setDefaultAddress(addressId);
   }
 
   public void updateProfile(String nickname, String profileImageUrl) {

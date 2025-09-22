@@ -149,6 +149,12 @@ public class CustomerProfileService {
     customerAddressRepository.save(customerAddress);
     log.info("배송지 추가 완료: userId={}, addressId={}", userId, customerAddress.getId());
 
+    // 첫 번째 주소는 자동으로 기본 설정
+    if (profile.getDefaultAddressId() == null) {
+      profile.setDefaultAddress(customerAddress.getId());
+      customerProfileRepository.save(profile);
+    }
+
     return customerAddress;
   }
 
@@ -204,7 +210,7 @@ public class CustomerProfileService {
       return false;
     }
 
-    // User 엔티티의 기본 주소 ID 업데이트 ( CustomerAddress -> CustomerProfiel -> User의 default_address_id 참조...인데 기본 배송지 주소를 User가 가지기보단 CustomerProfile이 가지는게 더 맞지 않는 것 같아 수정 예정)
+    // CustomerProfile 엔티티의 기본 주소 ID 업데이트
     customerAddress.setAsDefault();
 
     log.info("기본 배송지 설정 완료: userId={}, addressId={}", userId, addressId);
