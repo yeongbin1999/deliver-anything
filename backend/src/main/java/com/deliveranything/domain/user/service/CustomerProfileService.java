@@ -1,10 +1,12 @@
 package com.deliveranything.domain.user.service;
 
 import com.deliveranything.domain.user.entity.User;
+import com.deliveranything.domain.user.entity.address.CustomerAddress;
 import com.deliveranything.domain.user.entity.profile.CustomerProfile;
 import com.deliveranything.domain.user.repository.CustomerAddressRepository;
 import com.deliveranything.domain.user.repository.CustomerProfileRepository;
 import com.deliveranything.domain.user.repository.UserRepository;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -89,5 +91,18 @@ public class CustomerProfileService {
     log.info("고객 프로필 수정 완료: userId={}, nickname={}", userId, nickname);
     return true;
   }
-  
+
+  // 배송지 관리
+
+  // 모든 배송지 조회
+  public List<CustomerAddress> getAddresses(Long userId) {
+    CustomerProfile profile = getProfile(userId);
+    if (profile == null) {
+      log.warn("고객 프로필을 찾을 수 없습니다.: userId={}", userId);
+      return List.of();
+    }
+
+    return customerAddressRepository.findAddressesByProfile(profile);
+  }
+
 }
