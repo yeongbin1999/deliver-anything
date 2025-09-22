@@ -6,6 +6,7 @@ import com.deliveranything.domain.review.dto.ReviewResponse;
 import com.deliveranything.domain.review.dto.ReviewUpdateRequest;
 import com.deliveranything.domain.review.entity.Review;
 import com.deliveranything.domain.review.entity.ReviewPhoto;
+import com.deliveranything.domain.review.enums.ReviewSortType;
 import com.deliveranything.domain.review.repository.ReviewPhotoRepository;
 import com.deliveranything.domain.review.repository.ReviewRepository;
 import com.deliveranything.domain.user.entity.User;
@@ -14,8 +15,10 @@ import com.deliveranything.domain.user.enums.ProfileType;
 import com.deliveranything.domain.user.repository.CustomerProfileRepository;
 import com.deliveranything.domain.user.repository.UserRepository;
 import com.deliveranything.domain.user.service.UserService;
+import com.deliveranything.global.common.CursorPageResponse;
 import com.deliveranything.global.exception.CustomException;
 import com.deliveranything.global.exception.ErrorCode;
+import com.deliveranything.global.util.CursorUtil;
 import java.util.Arrays;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -38,8 +41,7 @@ public class ReviewService {
   public ReviewCreateResponse createReview(ReviewCreateRequest request, Long userId) {
     //유저 존재 여부 확인
     User user = userRepository.findById(userId)
-//        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND)); 관련 ERROR CODE 생길 시 대체
-        .orElseThrow(() -> new CustomException(ErrorCode.DEV_NOT_FOUND));
+        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
     CustomerProfile customerProfile = user.getCustomerProfile();
 
@@ -78,8 +80,7 @@ public class ReviewService {
   public ReviewResponse updateReview(ReviewUpdateRequest request, Long userId, Long reviewId) {
     //유저 존재 여부 확인
     User user = userRepository.findById(userId)
-//        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND)); 관련 ERROR CODE 생길 시 대체
-        .orElseThrow(() -> new CustomException(ErrorCode.DEV_NOT_FOUND));
+        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
     Review review = reviewRepository.findById(reviewId)
         .orElseThrow(() -> new CustomException(ErrorCode.REVIEW_NOT_FOUND));
@@ -107,6 +108,43 @@ public class ReviewService {
     return ReviewResponse.from(review, reviewPhotoUrls);
   }
 
+  /* 리뷰 리스트 조회 */
+  public CursorPageResponse<ReviewResponse> getReviews(Long userId, ReviewSortType sort,
+      String cursor, Integer size) {
+    User user = userRepository.findById(userId)
+        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+    ProfileType profileType = user.getCurrentActiveProfile();
+    String[] decodedCursor = CursorUtil.decode(cursor);
+
+    //실제 조회
+    List<ReviewResponse> reviewList = getReviewsByProfile(profileType, user, sort, decodedCursor,
+        size);
+
+    boolean hasNext = reviewList.size() > size;
+
+    //클라이언트 전달값
+    List<ReviewResponse> result = hasNext ? reviewList.subList(0, size) : reviewList;
+
+    String nextPageToken = null;
+    if (!reviewList.isEmpty()) {
+      ReviewResponse lastReview = reviewList.get(reviewList.size() - 1);
+
+      String cursorValue = switch (sort) {
+        case LATEST, OLDEST -> lastReview.createdAt().toString();
+        case RATING_DESC, RATING_ASC -> String.valueOf(lastReview.rating());
+      };
+
+      // nextPageToken 구조: [정렬 기준 값, reviewId]
+      // 예: LATEST → ["2025-09-22T08:00:00", 123]
+      //      RATING_DESC → ["5", 123]
+      nextPageToken = CursorUtil.encode(cursorValue, lastReview.id());
+
+    }
+
+    return new CursorPageResponse<>(result, nextPageToken, hasNext);
+  }
+
   //=============================편의 메서드====================================
   /* 리뷰 사진 URL 리스트 반환 */
   @Transactional(readOnly = true)
@@ -120,10 +158,24 @@ public class ReviewService {
   @Transactional(readOnly = true)
   public boolean verifyReviewAuth(Review review, Long userId) {
     User user = userRepository.findById(userId)
-//        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND)); 관련 ERROR CODE 생길 시 대체
-        .orElseThrow(() -> new CustomException(ErrorCode.DEV_NOT_FOUND));
-    CustomerProfile customerProfile =  user.getCustomerProfile();
+        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+    CustomerProfile customerProfile = user.getCustomerProfile();
 
     return review.getCustomerProfile().getId().equals(customerProfile.getId());
+  }
+
+  private List<ReviewResponse> getReviewsByProfile(ProfileType profileType, User user,
+      ReviewSortType sort, String[] cursor, int pageSize) {
+    List<Review> reviews = reviewRepository.findReviewsByProfile(
+        user,
+        profileType, // ProfileType 전달
+        sort,        // ReviewSortType 전달
+        cursor,
+        pageSize
+    );
+
+    return reviews.stream()
+        .map(it -> ReviewResponse.from(it, getReviewPhotoUrlList(it)))
+        .toList();
   }
 }

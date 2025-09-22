@@ -4,6 +4,7 @@ import com.deliveranything.domain.review.dto.ReviewCreateRequest;
 import com.deliveranything.domain.review.dto.ReviewCreateResponse;
 import com.deliveranything.domain.review.dto.ReviewResponse;
 import com.deliveranything.domain.review.dto.ReviewUpdateRequest;
+import com.deliveranything.domain.review.enums.ReviewSortType;
 import com.deliveranything.domain.review.service.ReviewService;
 import com.deliveranything.global.common.ApiResponse;
 import com.deliveranything.global.common.CursorPageResponse;
@@ -86,10 +87,13 @@ public class ApiV1ReviewController {
   public ResponseEntity<ApiResponse<CursorPageResponse<ReviewResponse>>> getReviews(
       //      @AuthenticationPrincipal SecurityUser user,
       //todo: 인증객체 받아와서 getReviews에 전달
+      @RequestParam(defaultValue = "LATEST") ReviewSortType sort,
+      @RequestParam(required = false) String cursor,
+      @RequestParam(defaultValue = "10") Integer size
   ) {
     Long userId = 1L; //임시 유저 id
 
-    CursorPageResponse<ReviewResponse> response = reviewService.getReviews(userId);
+    CursorPageResponse<ReviewResponse> response = reviewService.getReviews(userId, sort, cursor, size);
 
     return ResponseEntity.status(HttpStatus.OK)
         .body(ApiResponse.success(response));
