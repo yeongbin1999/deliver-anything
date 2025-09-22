@@ -29,8 +29,8 @@ public class ReviewRepositoryImpl implements ReviewRepositoryCustom {
     // profileType에 따른 조건
     BooleanExpression profileCondition = switch (profileType) {
       case CUSTOMER -> review.customerProfile.eq(user.getCustomerProfile());
-      case SELLER -> review.targetId.eq(store.id);
-      case RIDER -> review.targetId.eq(riderProfile.id);
+      case SELLER -> review.targetId.eq(user.getId());
+      case RIDER -> review.targetId.eq(user.getRiderProfile().getId());
     };
 
     // 커서 조건
