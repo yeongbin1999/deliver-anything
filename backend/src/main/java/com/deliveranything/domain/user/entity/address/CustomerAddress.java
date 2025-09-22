@@ -30,15 +30,15 @@ public class CustomerAddress extends BaseEntity {
   private String address;
 
   @Column(precision = 10, scale = 7) // 10 , 7  값에 대해서는 협의 필요 (위도 경도 범위)
-  private java.math.BigDecimal latitude;
+  private Double latitude;
 
   @Column(precision = 10, scale = 7)
-  private java.math.BigDecimal longitude;
+  private Double longitude;
 
   @Builder
   public CustomerAddress(CustomerProfile customerProfile, String addressName,
-      String address, java.math.BigDecimal latitude,
-      java.math.BigDecimal longitude) {
+      String address, Double latitude,
+      Double longitude) {
     this.customerProfile = customerProfile;
     this.addressName = addressName;
     this.address = address;
@@ -57,7 +57,7 @@ public class CustomerAddress extends BaseEntity {
   }
 
   public void updateAddress(String addressName, String address,
-      java.math.BigDecimal latitude, java.math.BigDecimal longitude) {
+      Double latitude, Double longitude) {
     this.addressName = addressName;
     this.address = address;
     this.latitude = latitude;
