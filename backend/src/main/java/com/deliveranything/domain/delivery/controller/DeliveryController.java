@@ -5,6 +5,8 @@ import com.deliveranything.domain.delivery.dto.request.RiderToggleStatusRequestD
 import com.deliveranything.domain.delivery.service.DeliveryService;
 import com.deliveranything.global.common.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -16,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/deliveries")
 @RequiredArgsConstructor
+@Tag(name = "Delivery", description = "배달 API")
 public class DeliveryController {
 
   private final DeliveryService deliveryService;
@@ -23,7 +26,7 @@ public class DeliveryController {
   @PatchMapping("/status")
   @Operation(summary = "라이더 토글 전환", description = "라이더 토글 전환으로 상태를 전환합니다.")
   public ResponseEntity<ApiResponse<Void>> updateRiderStatus(
-      @RequestBody RiderToggleStatusRequestDto riderStatusRequestDto
+      @Valid @RequestBody RiderToggleStatusRequestDto riderStatusRequestDto
   ) {
     deliveryService.updateRiderStatus(riderStatusRequestDto);
     return ResponseEntity.ok(ApiResponse.success(null));
@@ -33,7 +36,7 @@ public class DeliveryController {
   @Operation(summary = "배달 가능 지역 설정",
       description = "배달 가능 지역을 설정합니다 (현재는 1군데만, 자유로운 형식으로 가능).")
   public ResponseEntity<ApiResponse<Void>> updateDeliveryArea(
-      @RequestBody DeliveryAreaRequestDto deliveryAreaRequestDto
+      @Valid @RequestBody DeliveryAreaRequestDto deliveryAreaRequestDto
   ) {
     deliveryService.updateDeliveryArea(deliveryAreaRequestDto);
     return ResponseEntity.ok(ApiResponse.success(null));
