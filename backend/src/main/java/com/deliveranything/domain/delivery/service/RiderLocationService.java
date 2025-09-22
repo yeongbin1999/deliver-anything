@@ -19,6 +19,7 @@ public class RiderLocationService {
   public void saveRiderLocation(RiderLocationDto location) {
     // Redis GEOADD 명령어를 사용하여 라이더 위치 저장
     redisTemplate.opsForGeo().add(RIDER_GEO_KEY,
-        new Point(location.longitude(), location.latitude()), location.riderProfileId());
+        new Point(location.longitude(), location.latitude()),
+        String.valueOf(location.riderProfileId()));
   }
 }
