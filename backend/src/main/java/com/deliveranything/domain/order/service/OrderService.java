@@ -1,6 +1,7 @@
 package com.deliveranything.domain.order.service;
 
 import com.deliveranything.domain.order.dto.OrderCreateRequest;
+import com.deliveranything.domain.order.dto.OrderCreateResponse;
 import com.deliveranything.domain.order.dto.OrderItemRequest;
 import com.deliveranything.domain.order.dto.OrderResponse;
 import com.deliveranything.domain.order.entity.Order;
@@ -31,7 +32,7 @@ public class OrderService {
   private final OrderRepositoryCustom orderRepositoryCustom;
 
   @Transactional
-  public OrderResponse createOrder(Long customerId, OrderCreateRequest orderCreateRequest) {
+  public OrderCreateResponse createOrder(Long customerId, OrderCreateRequest orderCreateRequest) {
     Order order = Order.builder()
         .customer(userService.findById(customerId))
         .store(storeService.getStore(orderCreateRequest.storeId()))
@@ -54,9 +55,9 @@ public class OrderService {
     }
 
     Order savedOrder = orderRepository.save(order);
-    paymentService.createPayment(savedOrder.getId(), orderCreateRequest.totalPrice());
 
-    return OrderResponse.from(savedOrder);
+    return OrderCreateResponse.of(savedOrder, paymentService.createPayment(savedOrder.getId(),
+        orderCreateRequest.totalPrice()));
   }
 
   @Transactional(readOnly = true)
