@@ -15,20 +15,31 @@ import com.deliveranything.domain.review.service.ReviewService;
 import com.deliveranything.domain.settlement.enums.TargetType;
 import com.deliveranything.domain.user.entity.User;
 import com.deliveranything.domain.user.entity.profile.CustomerProfile;
+import com.deliveranything.domain.user.entity.profile.RiderProfile;
 import com.deliveranything.domain.user.enums.ProfileType;
+import com.deliveranything.domain.user.enums.RiderToggleStatus;
 import com.deliveranything.domain.user.repository.UserRepository;
 import com.deliveranything.global.common.CursorPageResponse;
 import com.deliveranything.global.exception.CustomException;
+import jakarta.persistence.EntityManager;
+import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.http.HttpStatus;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest
+@EnableJpaAuditing
 @Transactional
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 public class ApiV1ReviewControllerTest {
 
   @Autowired
@@ -39,6 +50,9 @@ public class ApiV1ReviewControllerTest {
 
   @Autowired
   private ReviewRepository reviewRepository;
+
+  @Autowired
+  private EntityManager em;
 
   /**
    * 리뷰 등록 성공 테스트
@@ -217,7 +231,16 @@ public class ApiV1ReviewControllerTest {
     assertEquals(reviewRq.rating(), response.rating());
     assertEquals(reviewRq.comment(), response.comment());
 
-    // TODO: jwtConfig/SecurityConfig 적용 후 생성일/작성자 검증 추가
+    // 생성일 검증
+    assertNotNull(response.createdAt(), "생성일이 null이면 안됩니다");
+
+    // 생성일이 현재 시간 기준으로 너무 멀지 않은지 확인 (테스트 시점 기준)
+    LocalDateTime now = LocalDateTime.now();
+    assertTrue(!response.createdAt().isAfter(now.plusSeconds(1)) &&
+            !response.createdAt().isBefore(now.minusSeconds(1)),
+        "생성일이 현재 시간과 일치해야 합니다");
+
+    // TODO: jwtConfig/SecurityConfig 적용 후 작성자 검증 추가
   }
 
   /**
@@ -266,13 +289,22 @@ public class ApiV1ReviewControllerTest {
     assertEquals(2, updatedReview.photoUrls().size());
     assertTrue(updatedReview.photoUrls().contains("new_photo1.jpg"));
     assertTrue(updatedReview.photoUrls().contains("new_photo2.jpg"));
+
+    // updatedAt 검증
+    assertNotNull(updatedReview.updatedAt(), "수정일(updatedAt)이 null이면 안됩니다");
+
+    // 수정일이 현재 시간 기준으로 너무 멀지 않은지 확인
+    LocalDateTime now = LocalDateTime.now();
+    assertTrue(!updatedReview.updatedAt().isAfter(now.plusSeconds(1)) &&
+            !updatedReview.updatedAt().isBefore(now.minusSeconds(1)),
+        "수정일이 현재 시간과 일치해야 합니다");
   }
 
   /**
    * 다른 유저가 작성한 리뷰 수정 시도 → 권한 없음 예외 발생
    */
   @Test
-  @DisplayName("리뷰 삭제 - 권한 없는 유저의 요청")
+  @DisplayName("리뷰 수정 - 권한 없는 유저의 요청")
   public void updateReview_userWithoutPermission_throwsException() {
     // given : 리뷰 작성 유저 생성
     User owner = User.builder()
@@ -421,5 +453,183 @@ public class ApiV1ReviewControllerTest {
       assertNotNull(rs.comment(), "리뷰 코멘트가 존재해야 합니다");
     }
   }
+
+  @Test
+  @DisplayName("리뷰 목록 조회 - Rider 정렬 순서 검증")
+  public void getReviewsByRider_ordering_success() {
+    // given : 리뷰 작성 유저 생성 (Rider)
+    User user = User.builder()
+        .email("rider@example.com")
+        .name("riderUser")
+        .password("riderPassword")
+        .phoneNumber("010-3333-4444")
+        .socialProvider(null)
+        .build();
+    CustomerProfile customerProfile = CustomerProfile.builder()
+        .user(user)
+        .nickname("reviewerProfile")
+        .build();
+    RiderProfile profile = RiderProfile.builder()
+        .nickname("riderProfile")
+        .toggleStatus(RiderToggleStatus.ON)
+        .area("riderArea")
+        .licenseNumber("riderLicenseNumber")
+        .profileImageUrl("riderProfileImageUrl")
+        .bankName("riderBankName")
+        .bankAccountNumber("riderBankAccountNumber")
+        .bankAccountHolderName("riderBankAccountHolderName")
+        .user(user)
+        .build();
+    user.setRiderProfile(profile);
+    user.switchProfile(ProfileType.RIDER);
+    user.setCustomerProfile(customerProfile);
+    userRepository.save(user);
+    em.flush();
+    em.clear();
+
+    // 리뷰 여러 개 생성
+    List<ReviewCreateRequest> requests = List.of(
+        new ReviewCreateRequest(5, "comment5", new String[]{}, ReviewTargetType.STORE, 1L),
+        new ReviewCreateRequest(3, "comment3", new String[]{}, ReviewTargetType.STORE, 1L),
+        new ReviewCreateRequest(4, "comment4", new String[]{}, ReviewTargetType.STORE, 1L)
+    );
+
+    for (ReviewCreateRequest rq : requests) {
+      reviewService.createReview(rq, user.getId());
+    }
+
+    // when : 리뷰 목록 조회 (평점 오름차순)
+    CursorPageResponse<ReviewResponse> responses = reviewService.getReviews(user.getId(), ReviewSortType.RATING_ASC, null, 10);
+
+    // then : 개수 검증
+    assertEquals(3, responses.content().size());
+
+    // 순서 검증
+    List<Integer> ratings = responses.content().stream().map(ReviewResponse::rating).toList();
+    assertEquals(ratings.stream().sorted().toList(), ratings);
+
+    // 필드 검증
+    for (ReviewResponse rs : responses.content()) {
+      assertNotNull(rs.id());
+      assertNotNull(rs.comment());
+    }
+  }
+
+  @Test
+  @DisplayName("리뷰 목록 조회 - Seller 정렬 순서 검증")
+  public void getReviewsBySeller_ordering_success() {
+    // given : 리뷰 작성 유저 생성 (Seller)
+    User user = User.builder()
+        .email("seller@example.com")
+        .name("sellerUser")
+        .password("sellerPassword")
+        .phoneNumber("010-4444-5555")
+        .socialProvider(null)
+        .build();
+    CustomerProfile customerProfile = CustomerProfile.builder()
+        .user(user)
+        .nickname("reviewerProfile")
+        .build();
+    user.switchProfile(ProfileType.SELLER);
+    user.setCustomerProfile(customerProfile);
+    userRepository.save(user);
+    em.flush();
+    em.clear();
+
+    // 리뷰 여러 개 생성
+    List<ReviewCreateRequest> requests = List.of(
+        new ReviewCreateRequest(5, "comment5", new String[]{}, ReviewTargetType.STORE, 1L),
+        new ReviewCreateRequest(3, "comment3", new String[]{}, ReviewTargetType.STORE, 1L),
+        new ReviewCreateRequest(4, "comment4", new String[]{}, ReviewTargetType.STORE, 1L)
+    );
+
+    for (ReviewCreateRequest rq : requests) {
+      reviewService.createReview(rq, user.getId());
+    }
+
+    // when : 리뷰 목록 조회 (평점 오름차순)
+    CursorPageResponse<ReviewResponse> responses = reviewService.getReviews(user.getId(), ReviewSortType.RATING_ASC, null, 10);
+
+    // then : 개수 검증
+    assertEquals(3, responses.content().size());
+
+    // 순서 검증
+    List<Integer> ratings = responses.content().stream().map(ReviewResponse::rating).toList();
+    assertEquals(ratings.stream().sorted().toList(), ratings);
+
+    // 필드 검증
+    for (ReviewResponse rs : responses.content()) {
+      assertNotNull(rs.id());
+      assertNotNull(rs.comment());
+    }
+  }
+
+  @Test
+  @DisplayName("리뷰 목록 조회 - Seller 최신순 정렬 검증")
+  public void getReviewsBySeller_latestOrder_success() {
+    // given : 리뷰 작성 유저 생성 (Seller)
+    User user = User.builder()
+        .email("seller@example.com")
+        .name("sellerUser")
+        .password("sellerPassword")
+        .phoneNumber("010-4444-5555")
+        .socialProvider(null)
+        .build();
+    CustomerProfile customerProfile = CustomerProfile.builder()
+        .user(user)
+        .nickname("reviewerProfile")
+        .build();
+    user.switchProfile(ProfileType.SELLER);
+    user.setCustomerProfile(customerProfile);
+    userRepository.save(user);
+    em.flush();
+    em.clear();
+
+    // 리뷰 여러 개 생성
+    List<ReviewCreateRequest> requests = List.of(
+        new ReviewCreateRequest(5, "comment5", new String[]{}, ReviewTargetType.STORE, 1L),
+        new ReviewCreateRequest(3, "comment3", new String[]{}, ReviewTargetType.STORE, 1L),
+        new ReviewCreateRequest(4, "comment4", new String[]{}, ReviewTargetType.STORE, 1L)
+    );
+
+    for (ReviewCreateRequest rq : requests) {
+      reviewService.createReview(rq, user.getId());
+    }
+
+    // when : 리뷰 목록 조회 (최신순)
+    CursorPageResponse<ReviewResponse> responses = reviewService.getReviews(
+        user.getId(),
+        ReviewSortType.LATEST, // 최신순
+        null,
+        10
+    );
+
+    // then : 개수 검증
+    assertEquals(3, responses.content().size());
+
+    // 순서 검증 (최신 리뷰가 첫 번째)
+    List<Long> ids = responses.content().stream().map(ReviewResponse::id).toList();
+    List<Long> sortedIdsDesc = ids.stream()
+        .sorted(Comparator.reverseOrder())
+        .toList();
+    assertEquals(sortedIdsDesc, ids);
+
+    // 필드 검증
+    for (ReviewResponse rs : responses.content()) {
+      assertNotNull(rs.id());
+      assertNotNull(rs.comment());
+    }
+  }
+
+  //====================편의 메서드==========================
+  @BeforeEach
+  public void cleanUp() {
+    reviewRepository.deleteAll();
+    reviewRepository.flush();
+
+    userRepository.deleteAll();
+    userRepository.flush();
+  }
+
 
 }
