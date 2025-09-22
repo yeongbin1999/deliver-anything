@@ -88,11 +88,6 @@ public class User extends BaseEntity {
     this.onboardingCompleted = false;
   }
 
-  public void updateBasicInfo(String name, String phoneNumber) {
-    this.name = name;
-    this.phoneNumber = phoneNumber;
-  }
-
   public void updatePassword(String newPassword) {
     this.password = newPassword;
   }
