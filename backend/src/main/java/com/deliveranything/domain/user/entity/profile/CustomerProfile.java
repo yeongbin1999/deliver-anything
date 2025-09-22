@@ -2,6 +2,7 @@ package com.deliveranything.domain.user.entity.profile;
 
 import com.deliveranything.domain.user.entity.User;
 import jakarta.persistence.AttributeOverride;
+import jakarta.persistence.AttributeOverrides;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -17,7 +18,10 @@ import lombok.NoArgsConstructor;
 @Table(name = "customer_profiles")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AttributeOverride(name = "profileImageUrl", column = @Column(name = "customer_profile_image_url", columnDefinition = "TEXT"))
+@AttributeOverrides({
+    @AttributeOverride(name = "nickname", column = @Column(name = "customer_nickname", length = 50)),
+    @AttributeOverride(name = "profileImageUrl", column = @Column(name = "customer_profile_image_url", columnDefinition = "TEXT"))
+})
 public class CustomerProfile extends BaseProfile {
 
   @OneToOne(fetch = FetchType.LAZY)
