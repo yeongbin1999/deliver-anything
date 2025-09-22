@@ -71,6 +71,9 @@ dependencies {
     implementation("org.hibernate.orm:hibernate-spatial:6.5.2.Final")
     implementation("org.locationtech.jts:jts-core:1.19.0")
 
+    // --- WebSocket ---
+    implementation("org.springframework.boot:spring-boot-starter-websocket")
+
     // --- Test ---
     testImplementation("org.springframework.boot:spring-boot-starter-test") {
         exclude(group = "org.junit.vintage", module = "junit-vintage-engine")
