@@ -9,7 +9,8 @@ public record RiderLocationDto(
     // JWT 에서 사용자 정보-Profile ID가 넘어오면 Long -> String 변환 로직 제거 예정
     double latitude,
     double longitude,
-    Long timestamp
+    long timestamp  // 밀리초 단위,
+    // 변환: Instant.ofEpochMilli(timestamp) → LocalDateTime
 ) {
 
 }
