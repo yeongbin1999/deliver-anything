@@ -63,10 +63,6 @@ public class User extends BaseEntity {
   @Column(name = "onboarding_completed", nullable = false)
   private boolean onboardingCompleted;
 
-  // 기타
-  @Column(name = "default_address_id")
-  private Long defaultAddressId;
-
   @Column(name = "last_login_at")
   private LocalDateTime lastLoginAt;
 
@@ -90,15 +86,6 @@ public class User extends BaseEntity {
     this.isEmailVerified = false;
     this.isEnabled = true;
     this.onboardingCompleted = false;
-  }
-
-  public void setDefaultAddress(Long addressId) {
-    this.defaultAddressId = addressId;
-  }
-
-  public void updateBasicInfo(String name, String phoneNumber) {
-    this.name = name;
-    this.phoneNumber = phoneNumber;
   }
 
   public void updatePassword(String newPassword) {
