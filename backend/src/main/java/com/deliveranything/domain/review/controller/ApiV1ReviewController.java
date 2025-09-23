@@ -98,4 +98,20 @@ public class ApiV1ReviewController {
     return ResponseEntity.status(HttpStatus.OK)
         .body(ApiResponse.success(response));
   }
+
+  @GetMapping("/{storeId}/reviews")
+  @Operation(summary = "상점 리뷰 리스트 조회", description = "상점의 리뷰를 조회합니다.")
+  public ResponseEntity<ApiResponse<CursorPageResponse<ReviewResponse>>> getStoreReviews(
+      //      @AuthenticationPrincipal SecurityUser user,
+      //todo: 인증객체 받아와서 전달
+      @RequestParam(defaultValue = "LATEST") ReviewSortType sort,
+      @RequestParam(required = false) String cursor,
+      @RequestParam(defaultValue = "10") Integer size,
+      @PathVariable Long storeId
+  ) {
+    CursorPageResponse<ReviewResponse> response = reviewService.getStoreReviews(storeId, sort, cursor, size);
+
+    return ResponseEntity.status(HttpStatus.OK)
+        .body(ApiResponse.success(response));
+  }
 }

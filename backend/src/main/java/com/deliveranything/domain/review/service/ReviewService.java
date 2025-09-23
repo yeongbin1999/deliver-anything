@@ -9,6 +9,9 @@ import com.deliveranything.domain.review.entity.ReviewPhoto;
 import com.deliveranything.domain.review.enums.ReviewSortType;
 import com.deliveranything.domain.review.repository.ReviewPhotoRepository;
 import com.deliveranything.domain.review.repository.ReviewRepository;
+import com.deliveranything.domain.store.store.entity.Store;
+import com.deliveranything.domain.store.store.repository.StoreRepository;
+import com.deliveranything.domain.store.store.service.StoreService;
 import com.deliveranything.domain.user.entity.User;
 import com.deliveranything.domain.user.entity.profile.CustomerProfile;
 import com.deliveranything.domain.user.enums.ProfileType;
@@ -35,6 +38,7 @@ public class ReviewService {
   private final UserRepository userRepository;
   private final UserService userService;
   private final CustomerProfileRepository customerProfileRepository;
+  private final StoreRepository storeRepository;
 
   //============================메인 API 메서드==================================
   /* 리뷰 생성 */
@@ -108,7 +112,7 @@ public class ReviewService {
     return ReviewResponse.from(review, reviewPhotoUrls);
   }
 
-  /* 리뷰 리스트 조회 */
+  /* 내 리뷰 리스트 조회 */
   public CursorPageResponse<ReviewResponse> getReviews(Long userId, ReviewSortType sort,
       String cursor, Integer size) {
     User user = userRepository.findById(userId)
@@ -145,6 +149,39 @@ public class ReviewService {
     return new CursorPageResponse<>(result, nextPageToken, hasNext);
   }
 
+  /* 상점 리뷰 리스트 조회 */
+  public CursorPageResponse<ReviewResponse> getStoreReviews(Long storeId, ReviewSortType sort, String cursor, Integer size) {
+    Store store = storeRepository.findById(storeId)
+        .orElseThrow(() -> new CustomException(ErrorCode.STORE_NOT_FOUND));
+
+    String[] decodedCursor = CursorUtil.decode(cursor);
+
+    //실제 조회
+    List<ReviewResponse> reviewList = getReviewsByStore(store, sort, decodedCursor, size);
+
+    boolean hasNext = reviewList.size() > size;
+
+    //클라이언트 전달값
+    List<ReviewResponse> result = hasNext ? reviewList.subList(0, size) : reviewList;
+
+    String nextPageToken = null;
+    if (!reviewList.isEmpty()) {
+      ReviewResponse lastReview = reviewList.get(reviewList.size() - 1);
+
+      String cursorValue = switch (sort) {
+        case LATEST, OLDEST -> lastReview.createdAt().toString();
+        case RATING_DESC, RATING_ASC -> String.valueOf(lastReview.rating());
+      };
+
+      // nextPageToken 구조: [정렬 기준 값, reviewId]
+      // 예: LATEST → ["2025-09-22T08:00:00", 123]
+      //      RATING_DESC → ["5", 123]
+      nextPageToken = CursorUtil.encode(cursorValue, lastReview.id());
+
+    }
+    return new CursorPageResponse<>(result, nextPageToken, hasNext);
+  }
+
   //=============================편의 메서드====================================
   /* 리뷰 사진 URL 리스트 반환 */
   @Transactional(readOnly = true)
@@ -170,6 +207,19 @@ public class ReviewService {
         user,
         profileType, // ProfileType 전달
         sort,        // ReviewSortType 전달
+        cursor,
+        size
+    );
+
+    return reviews.stream()
+        .map(it -> ReviewResponse.from(it, getReviewPhotoUrlList(it)))
+        .toList();
+  }
+
+  private List<ReviewResponse> getReviewsByStore(Store store, ReviewSortType sort, String[] cursor, int size) {
+    List<Review> reviews = reviewRepository.findReviewsByStore(
+        store,
+        sort,
         cursor,
         size
     );
