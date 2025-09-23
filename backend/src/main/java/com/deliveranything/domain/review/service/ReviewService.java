@@ -2,6 +2,7 @@ package com.deliveranything.domain.review.service;
 
 import com.deliveranything.domain.review.dto.ReviewCreateRequest;
 import com.deliveranything.domain.review.dto.ReviewCreateResponse;
+import com.deliveranything.domain.review.dto.ReviewLikeResponse;
 import com.deliveranything.domain.review.dto.ReviewResponse;
 import com.deliveranything.domain.review.dto.ReviewUpdateRequest;
 import com.deliveranything.domain.review.entity.Review;
@@ -22,6 +23,7 @@ import com.deliveranything.global.util.CursorUtil;
 import java.util.Arrays;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,6 +37,7 @@ public class ReviewService {
   private final UserRepository userRepository;
   private final UserService userService;
   private final CustomerProfileRepository customerProfileRepository;
+  private final RedisTemplate<String, Object> redisTemplate;
 
   //============================메인 API 메서드==================================
   /* 리뷰 생성 */
@@ -143,6 +146,25 @@ public class ReviewService {
     }
 
     return new CursorPageResponse<>(result, nextPageToken, hasNext);
+  }
+
+  public ReviewLikeResponse likeReview(Long reviewId, Long userId) {
+    String reviewLikeKey = "review:likes:" + reviewId;
+    String reviewSortedKey = "review:likes:";
+
+    //중복 체크
+    if (Boolean.TRUE.equals(redisTemplate.opsForSet().isMember(reviewLikeKey, userId))) {
+      throw new CustomException(ErrorCode.REVIEW_ALREADY_LIKED);
+    }
+
+    //좋아요 등록
+    redisTemplate.opsForSet().add(reviewLikeKey, userId);
+
+    //좋아요 개수 증가
+    redisTemplate.opsForZSet().incrementScore(reviewSortedKey, reviewId, 1);
+    Long likeCount = redisTemplate.opsForSet().size(reviewLikeKey);
+
+    return new ReviewLikeResponse(reviewId, likeCount);
   }
 
   //=============================편의 메서드====================================

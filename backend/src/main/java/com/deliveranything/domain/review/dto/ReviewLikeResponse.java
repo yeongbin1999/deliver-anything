@@ -2,6 +2,5 @@ package com.deliveranything.domain.review.dto;
 
 public record ReviewLikeResponse(
     Long reviewId,
-    Long likeCount,
-    String message
+    Long likeCount
 ) {}
