@@ -3,7 +3,7 @@ package com.deliveranything.domain.order.entity;
 import com.deliveranything.domain.delivery.entity.Delivery;
 import com.deliveranything.domain.order.enums.OrderStatus;
 import com.deliveranything.domain.store.store.entity.Store;
-import com.deliveranything.domain.user.entity.User;
+import com.deliveranything.domain.user.entity.profile.CustomerProfile;
 import com.deliveranything.global.entity.BaseEntity;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -36,7 +36,7 @@ public class Order extends BaseEntity {
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "user_id", nullable = false)
-  private User customer;
+  private CustomerProfile customer;
 
   @OneToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "delivery_id", unique = true)
@@ -68,8 +68,8 @@ public class Order extends BaseEntity {
   private BigDecimal deliveryPrice;
 
   @Builder
-  public Order(User customer, Store store, String address, String riderNote, String storeNote,
-      BigDecimal totalPrice, BigDecimal storePrice, BigDecimal deliveryPrice) {
+  public Order(CustomerProfile customer, Store store, String address, String riderNote,
+      String storeNote, BigDecimal totalPrice, BigDecimal storePrice, BigDecimal deliveryPrice) {
     this.customer = customer;
     this.store = store;
     this.address = address;
