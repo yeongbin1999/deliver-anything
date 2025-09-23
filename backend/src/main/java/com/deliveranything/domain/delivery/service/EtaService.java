@@ -36,6 +36,7 @@ public class EtaService {
         .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {
         })
         .map(response -> {
+          // 타입 캐스팅 예외 주의 및 처리 필요 -> 예정
           List<List<Double>> durations = (List<List<Double>>) response.get("durations");
           Map<String, Double> etaMap = new HashMap<>();
           for (int i = 0; i < riderIds.size(); i++) {
