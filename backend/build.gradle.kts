@@ -75,6 +75,12 @@ dependencies {
     // --- WebSocket ---
     implementation("org.springframework.boot:spring-boot-starter-websocket")
 
+    // --- WebFlux ---
+    implementation("org.springframework.boot:spring-boot-starter-webflux")
+
+    // --- Kafka ---
+    implementation("org.springframework.kafka:spring-kafka")
+
     // --- Test ---
     testImplementation("org.springframework.boot:spring-boot-starter-test") {
         exclude(group = "org.junit.vintage", module = "junit-vintage-engine")
