@@ -150,7 +150,7 @@ public class ReviewService {
 
   public ReviewLikeResponse likeReview(Long reviewId, Long userId) {
     String reviewLikeKey = "review:likes:" + reviewId;
-    String reviewSortedKey = "review:likes:";
+    String reviewSortedKey = "review:likes";
 
     //중복 체크
     if (Boolean.TRUE.equals(redisTemplate.opsForSet().isMember(reviewLikeKey, userId))) {
@@ -165,6 +165,26 @@ public class ReviewService {
     Long likeCount = redisTemplate.opsForSet().size(reviewLikeKey);
 
     return new ReviewLikeResponse(reviewId, likeCount);
+  }
+
+  public ReviewLikeResponse cancelLikeReview(Long reviewId, Long userId) {
+    String reviewLikeKey = "review:likes:" + reviewId;
+    String reviewSortedKey = "review:likes";
+
+    if (Boolean.FALSE.equals(redisTemplate.opsForSet().isMember(reviewLikeKey, userId))) {
+      throw new CustomException(ErrorCode.REVIEW_NOT_LIKED);
+    }
+
+      //좋아요 취소
+      redisTemplate.opsForSet().remove(reviewLikeKey, userId);
+
+      //좋아요 개수 감소
+      redisTemplate.opsForZSet().incrementScore(reviewSortedKey, reviewId, -1);
+
+      //최신 좋아요 수 반환
+      Long likeCount = redisTemplate.opsForSet().size(reviewLikeKey);
+
+      return new ReviewLikeResponse(reviewId, likeCount);
   }
 
   //=============================편의 메서드====================================
