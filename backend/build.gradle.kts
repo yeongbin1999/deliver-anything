@@ -31,6 +31,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
+    implementation("org.springframework.boot:spring-boot-starter-webflux")
     developmentOnly("org.springframework.boot:spring-boot-devtools")
 
     // --- Database ---
@@ -70,6 +71,15 @@ dependencies {
     // --- Spatial (for Geolocation) ---
     implementation("org.hibernate.orm:hibernate-spatial:6.5.2.Final")
     implementation("org.locationtech.jts:jts-core:1.19.0")
+
+    // --- WebSocket ---
+    implementation("org.springframework.boot:spring-boot-starter-websocket")
+
+    // --- WebFlux ---
+    implementation("org.springframework.boot:spring-boot-starter-webflux")
+
+    // --- Kafka ---
+    implementation("org.springframework.kafka:spring-kafka")
 
     // --- Test ---
     testImplementation("org.springframework.boot:spring-boot-starter-test") {

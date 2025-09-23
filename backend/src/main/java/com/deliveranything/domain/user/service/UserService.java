@@ -147,27 +147,7 @@ public class UserService {
 
     log.info("사용자 마지막 로그인 시간 업데이트 완료: userId={}", userId);
   }
-
-  // 기본주소 설정
-  public boolean setDefaultAddress(Long userId, Long addressId) {
-    User user = findById(userId);
-    if (user == null) {
-      log.warn("사용자를 찾을 수 없습니다: userId={}", userId);
-      return false;
-    }
-    // 소비자 프로필 존재 확인
-    if (!hasProfileInternal(user, ProfileType.CUSTOMER)) {
-      log.warn("소비자 프로필을 찾을 수 없습니다: userId={}", userId);
-      return false;
-    }
-
-    user.setDefaultAddress(addressId);
-    userRepository.save(user);
-
-    log.info("기본 주소 설정 완료: userId={}, addressId={}", userId, addressId);
-    return true;
-  }
-
+  
   // 이메일 인증 처리 임시
   @Transactional
   public void verifyEmail(Long userId) {

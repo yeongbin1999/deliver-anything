@@ -1,6 +1,5 @@
 package com.deliveranything.domain.payment.entitiy;
 
-import com.deliveranything.domain.payment.enums.PaymentMethod;
 import com.deliveranything.domain.payment.enums.PaymentStatus;
 import com.deliveranything.global.entity.BaseEntity;
 import com.deliveranything.global.exception.CustomException;
@@ -11,7 +10,6 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
-import java.util.UUID;
 import lombok.NoArgsConstructor;
 
 @NoArgsConstructor
@@ -30,10 +28,7 @@ public class Payment extends BaseEntity {
   private PaymentStatus status;
 
   @Column(unique = true)
-  private UUID pgUid;
-
-  @Enumerated(EnumType.STRING)
-  private PaymentMethod paymentMethod;
+  private String paymentKey;
 
   public Payment(Long orderId, BigDecimal amount) {
     this.orderId = orderId;
@@ -41,11 +36,11 @@ public class Payment extends BaseEntity {
     this.status = PaymentStatus.READY;
   }
 
-  public void cancel() {
+  public void updateStatus(PaymentStatus status) {
     if (this.status != PaymentStatus.READY) {
       throw new CustomException(ErrorCode.PAYMENT_INVALID_STATUS);
     }
 
-    this.status = PaymentStatus.CANCELED;
+    this.status = status;
   }
 }

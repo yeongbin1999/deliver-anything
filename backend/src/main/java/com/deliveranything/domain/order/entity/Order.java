@@ -50,7 +50,7 @@ public class Order extends BaseEntity {
   private OrderStatus orderStatus;
 
   @Column(nullable = false, unique = true)
-  private UUID merchantId;
+  private String merchantId;
 
   @Column(nullable = false)
   private String address;
@@ -79,7 +79,7 @@ public class Order extends BaseEntity {
     this.storePrice = storePrice;
     this.deliveryPrice = deliveryPrice;
     this.orderStatus = OrderStatus.PENDING;
-    this.merchantId = UUID.randomUUID();
+    this.merchantId = UUID.randomUUID().toString();
   }
 
   public void addOrderItem(OrderItem orderItem) {

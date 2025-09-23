@@ -86,4 +86,9 @@ public class OrderService {
     return OrderResponse.from(orderRepository.findByIdAndCustomerId(orderId, customerId)
         .orElseThrow(() -> new CustomException(ErrorCode.CUSTOMER_ORDER_NOT_FOUND)));
   }
+
+  public Order getOrder(String merchantId) {
+    return orderRepository.findByMerchantId(merchantId)
+        .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND));
+  }
 }

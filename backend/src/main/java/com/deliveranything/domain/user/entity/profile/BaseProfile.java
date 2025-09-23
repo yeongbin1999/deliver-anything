@@ -30,6 +30,7 @@ public abstract class BaseProfile extends BaseEntity {
   }
 
   public void updateProfileImageUrl(String profileImageUrl) {
+    this.profileImageUrl = profileImageUrl;
   }
   
 }
