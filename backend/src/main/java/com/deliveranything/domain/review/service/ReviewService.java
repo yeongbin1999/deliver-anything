@@ -121,7 +121,8 @@ public class ReviewService {
     ProfileType profileType = user.getCurrentActiveProfile();
     String[] decodedCursor = CursorUtil.decode(cursor);
 
-    List<ReviewResponse> reviewList = getReviewsByProfile(profileType, user, sort, decodedCursor, size);
+    List<ReviewResponse> reviewList = getReviewsByProfile(profileType, user, sort, decodedCursor,
+        size);
 
     return toCursorPage(reviewList, sort, size);
   }
@@ -175,7 +176,8 @@ public class ReviewService {
         .toList();
   }
 
-  private List<ReviewResponse> getReviewsByStore(Store store, ReviewSortType sort, String[] cursor, int size) {
+  private List<ReviewResponse> getReviewsByStore(Store store, ReviewSortType sort, String[] cursor,
+      int size) {
     List<Review> reviews = reviewRepository.findReviewsByStore(
         store,
         sort,

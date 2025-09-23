@@ -51,7 +51,8 @@ public class ReviewRepositoryImpl implements ReviewRepositoryCustom {
   // 리뷰 조회 - 상점 기준
   // ==========================
   @Override
-  public List<Review> findReviewsByStore(Store store, ReviewSortType sort, String[] cursor, int size) {
+  public List<Review> findReviewsByStore(Store store, ReviewSortType sort, String[] cursor,
+      int size) {
     QReview review = QReview.review;
 
     BooleanBuilder builder = new BooleanBuilder();

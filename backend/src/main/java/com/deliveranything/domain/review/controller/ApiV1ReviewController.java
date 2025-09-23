@@ -93,7 +93,8 @@ public class ApiV1ReviewController {
   ) {
     Long userId = 1L; //임시 유저 id
 
-    CursorPageResponse<ReviewResponse> response = reviewService.getReviews(userId, sort, cursor, size);
+    CursorPageResponse<ReviewResponse> response = reviewService.getReviews(userId, sort, cursor,
+        size);
 
     return ResponseEntity.status(HttpStatus.OK)
         .body(ApiResponse.success(response));
@@ -109,7 +110,8 @@ public class ApiV1ReviewController {
       @RequestParam(defaultValue = "10") Integer size,
       @PathVariable Long storeId
   ) {
-    CursorPageResponse<ReviewResponse> response = reviewService.getStoreReviews(storeId, sort, cursor, size);
+    CursorPageResponse<ReviewResponse> response = reviewService.getStoreReviews(storeId, sort,
+        cursor, size);
 
     return ResponseEntity.status(HttpStatus.OK)
         .body(ApiResponse.success(response));
