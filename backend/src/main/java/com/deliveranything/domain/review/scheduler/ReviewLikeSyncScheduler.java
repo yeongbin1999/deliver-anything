@@ -1,8 +1,6 @@
 package com.deliveranything.domain.review.scheduler;
 
 import com.deliveranything.domain.review.repository.ReviewRepository;
-import com.deliveranything.global.exception.CustomException;
-import com.deliveranything.global.exception.ErrorCode;
 import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
