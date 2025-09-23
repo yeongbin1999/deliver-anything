@@ -49,13 +49,16 @@ public class Order extends BaseEntity {
   @Column(nullable = false)
   private OrderStatus orderStatus;
 
-  @Column(nullable = false, unique = true)
+  @Column(nullable = false, unique = true, length = 200)
   private String merchantId;
 
-  @Column(nullable = false)
+  @Column(nullable = false, length = 100)
   private String address;
 
+  @Column(length = 30)
   private String riderNote;
+
+  @Column(length = 30)
   private String storeNote;
 
   @Column(nullable = false, precision = 19, scale = 2)

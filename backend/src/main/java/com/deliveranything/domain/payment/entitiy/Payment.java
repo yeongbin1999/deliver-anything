@@ -27,7 +27,7 @@ public class Payment extends BaseEntity {
   @Column(nullable = false)
   private PaymentStatus status;
 
-  @Column(unique = true)
+  @Column(unique = true, length = 200)
   private String paymentKey;
 
   public Payment(Long orderId, BigDecimal amount) {
