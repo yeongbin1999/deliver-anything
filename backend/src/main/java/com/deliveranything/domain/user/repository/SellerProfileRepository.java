@@ -11,9 +11,12 @@ import org.springframework.stereotype.Repository;
 public interface SellerProfileRepository extends JpaRepository<SellerProfile, Long> {
 
   boolean existsByBusinessCertificateNumber(String businessCertificateNumber);
+<<<<<<< HEAD
 
   Optional<SellerProfile> findByBusinessCertificateNumber(String businessCertificateNumber);
 
   @Query("SELECT sp FROM SellerProfile sp WHERE sp.user.id = :userId")
   Optional<SellerProfile> findByUserId(@Param("userId") Long userId);
+=======
+>>>>>>> 55bff02 (feat(be) : SellerProfileService - 프로필 생성하면서 Store도 생성되도록 연동)
 }
