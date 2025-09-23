@@ -18,8 +18,12 @@ public class StoreClient {
   private final StoreService storeService;
 
   // 판매자용 기본 상점 생성
+<<<<<<< HEAD
   public Long createStoreForSeller(Long sellerProfileId,
       String businessName) { // businessName : 상점 이름
+=======
+  public Long createStoreForSeller(Long sellerProfileId, String businessName) {
+>>>>>>> f77aec4 (feat(be): Store 도메인과 연동을 위한 StoreClient 생성)
     try {
       // Record 생성자 직접 사용
       StoreCreateRequest request = new StoreCreateRequest(
@@ -29,7 +33,11 @@ public class StoreClient {
           37.5665,
           126.9780,
           "{}"
+<<<<<<< HEAD
       ); // 기본 위치(서울)로 설정, 필요시 수정 가능
+=======
+      );
+>>>>>>> f77aec4 (feat(be): Store 도메인과 연동을 위한 StoreClient 생성)
 
       /*** 기존 StoreService 메서드 호출
        * StoreService의 createStore에 sellerProfileId 파라미터만 추가하면 바로 연동!
