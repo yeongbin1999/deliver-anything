@@ -121,66 +121,25 @@ public class ReviewService {
     ProfileType profileType = user.getCurrentActiveProfile();
     String[] decodedCursor = CursorUtil.decode(cursor);
 
-    //실제 조회
-    List<ReviewResponse> reviewList = getReviewsByProfile(profileType, user, sort, decodedCursor,
-        size);
+    List<ReviewResponse> reviewList = getReviewsByProfile(profileType, user, sort, decodedCursor, size);
 
-    boolean hasNext = reviewList.size() > size;
-
-    //클라이언트 전달값
-    List<ReviewResponse> result = hasNext ? reviewList.subList(0, size) : reviewList;
-
-    String nextPageToken = null;
-    if (!reviewList.isEmpty()) {
-      ReviewResponse lastReview = reviewList.get(reviewList.size() - 1);
-
-      String cursorValue = switch (sort) {
-        case LATEST, OLDEST -> lastReview.createdAt().toString();
-        case RATING_DESC, RATING_ASC -> String.valueOf(lastReview.rating());
-      };
-
-      // nextPageToken 구조: [정렬 기준 값, reviewId]
-      // 예: LATEST → ["2025-09-22T08:00:00", 123]
-      //      RATING_DESC → ["5", 123]
-      nextPageToken = CursorUtil.encode(cursorValue, lastReview.id());
-
-    }
-
-    return new CursorPageResponse<>(result, nextPageToken, hasNext);
+    return toCursorPage(reviewList, sort, size);
   }
 
+
   /* 상점 리뷰 리스트 조회 */
-  public CursorPageResponse<ReviewResponse> getStoreReviews(Long storeId, ReviewSortType sort, String cursor, Integer size) {
+  public CursorPageResponse<ReviewResponse> getStoreReviews(Long storeId, ReviewSortType sort,
+      String cursor, Integer size) {
     Store store = storeRepository.findById(storeId)
         .orElseThrow(() -> new CustomException(ErrorCode.STORE_NOT_FOUND));
 
     String[] decodedCursor = CursorUtil.decode(cursor);
 
-    //실제 조회
     List<ReviewResponse> reviewList = getReviewsByStore(store, sort, decodedCursor, size);
 
-    boolean hasNext = reviewList.size() > size;
-
-    //클라이언트 전달값
-    List<ReviewResponse> result = hasNext ? reviewList.subList(0, size) : reviewList;
-
-    String nextPageToken = null;
-    if (!reviewList.isEmpty()) {
-      ReviewResponse lastReview = reviewList.get(reviewList.size() - 1);
-
-      String cursorValue = switch (sort) {
-        case LATEST, OLDEST -> lastReview.createdAt().toString();
-        case RATING_DESC, RATING_ASC -> String.valueOf(lastReview.rating());
-      };
-
-      // nextPageToken 구조: [정렬 기준 값, reviewId]
-      // 예: LATEST → ["2025-09-22T08:00:00", 123]
-      //      RATING_DESC → ["5", 123]
-      nextPageToken = CursorUtil.encode(cursorValue, lastReview.id());
-
-    }
-    return new CursorPageResponse<>(result, nextPageToken, hasNext);
+    return toCursorPage(reviewList, sort, size);
   }
+
 
   //=============================편의 메서드====================================
   /* 리뷰 사진 URL 리스트 반환 */
@@ -227,5 +186,29 @@ public class ReviewService {
     return reviews.stream()
         .map(it -> ReviewResponse.from(it, getReviewPhotoUrlList(it)))
         .toList();
+  }
+
+  //Cursor 기반 페이지네이션 공용 처리
+  private CursorPageResponse<ReviewResponse> toCursorPage(
+      List<ReviewResponse> reviewList,
+      ReviewSortType sort,
+      int size
+  ) {
+    boolean hasNext = reviewList.size() > size;
+    List<ReviewResponse> result = hasNext ? reviewList.subList(0, size) : reviewList;
+
+    String nextPageToken = null;
+    if (!reviewList.isEmpty()) {
+      ReviewResponse lastReview = reviewList.get(reviewList.size() - 1);
+
+      String cursorValue = switch (sort) {
+        case LATEST, OLDEST -> lastReview.createdAt().toString();
+        case RATING_DESC, RATING_ASC -> String.valueOf(lastReview.rating());
+      };
+
+      nextPageToken = CursorUtil.encode(cursorValue, lastReview.id());
+    }
+
+    return new CursorPageResponse<>(result, nextPageToken, hasNext);
   }
 }
