@@ -74,7 +74,7 @@ public class CustomerProfileService {
     if (user == null) {
       return false;
     }
-    return user.getCustomerProfile() != null;
+    return user.hasCustomerProfile();
   }
 
   // 고객 프로필 수정

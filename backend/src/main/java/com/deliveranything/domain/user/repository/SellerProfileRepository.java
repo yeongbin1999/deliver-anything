@@ -6,5 +6,6 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface SellerProfileRepository extends JpaRepository<SellerProfile, Long> {
-  
+
+  boolean existsByBusinessCertificateNumber(String businessCertificateNumber);
 }
