@@ -82,7 +82,7 @@ public class ApiV1ReviewController {
         .body(ApiResponse.success(response));
   }
 
-  @GetMapping
+  @GetMapping("/me")
   @Operation(summary = "리뷰 리스트 조회", description = "유저 id로 유저 currentActiveProfile 조회 후 해당 프로필로 리뷰를 조회합니다.")
   public ResponseEntity<ApiResponse<CursorPageResponse<ReviewResponse>>> getReviews(
       //      @AuthenticationPrincipal SecurityUser user,
