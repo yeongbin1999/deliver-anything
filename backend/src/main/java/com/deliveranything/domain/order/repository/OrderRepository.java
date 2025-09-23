@@ -7,4 +7,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface OrderRepository extends JpaRepository<Order, Long> {
 
   Optional<Order> findByIdAndCustomerId(Long orderId, Long customerId);
+
+  Optional<Order> findByMerchantId(String merchantId);
 }
