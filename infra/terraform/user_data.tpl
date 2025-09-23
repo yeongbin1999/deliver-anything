@@ -46,6 +46,7 @@ docker run -d \
 
 # --- Elasticsearch (내부 전용) ---
 docker rm -f elasticsearch || true
+mkdir -p /dockerProjects/elasticsearch/volumes/data
 docker run -d \
   --name elasticsearch \
   --restart unless-stopped \
@@ -53,8 +54,28 @@ docker run -d \
   -p 9200:9200 \
   -p 9300:9300 \
   -e "discovery.type=single-node" \
-  -e "ES_JAVA_OPTS=-Xms1g -Xmx1g" \
+  -e "ES_JAVA_OPTS=-Xms512m -Xmx512m" \
+  -e "xpack.security.enabled=false" \
+  -v /dockerProjects/elasticsearch/volumes/data:/usr/share/elasticsearch/data \
   ${elasticsearch_image}
+
+# --- Kafka (Zookeeper 없이 KRaft 모드) ---
+docker rm -f kafka || true
+mkdir -p /dockerProjects/kafka/volumes/kafka
+docker run -d \
+  --name kafka \
+  --restart unless-stopped \
+  --network common \
+  -p 9092:9092 \
+  -e KAFKA_KRAFT_MODE=true \
+  -e KAFKA_PROCESS_ROLES=broker,controller \
+  -e KAFKA_CONTROLLER_QUORUM_VOTERS=1@kafka:9093 \
+  -e KAFKA_BROKER_ID=1 \
+  -e KAFKA_LISTENERS=PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093 \
+  -e KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092 \
+  -e KAFKA_LOG_DIRS=/kafka/logs \
+  -v /dockerProjects/kafka/volumes/kafka:/kafka \
+  bitnami/kafka:latest
 
 # --- Redis (내부 전용) ---
 docker rm -f redis || true
