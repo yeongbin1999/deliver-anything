@@ -10,14 +10,13 @@ public class AppConfig {
 
   @Bean
   public WebClient osrmWebClient(
-      // application.yml에 설정된 OSRM 서버 URL을 주입
-      // 배포 시 http://{EC2-IP}:5000 형태로 변경 필요
+      // application.yml에 설정된 osrm.base-url 값을 주입, 기본값은 http://localhost:5000
       @Value("${osrm.base-url:http://localhost:5000}") String baseUrl) {
     return WebClient.builder()
         .baseUrl(baseUrl)
         .build();
   }
-  
+
   @Bean
   public WebClient.Builder webClientBuilder() {
     return WebClient.builder();
