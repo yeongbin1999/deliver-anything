@@ -58,6 +58,10 @@ public class Review extends BaseEntity {
   @Column(name = "updated_at")
   private LocalDateTime updatedAt;
 
+  @Schema(description = "좋아요 수")
+  @Column(name = "like_count")
+  private int likeCount;
+
   //========================생성 메소드===========================
   @Builder
   public Review(int rating, String comment, ReviewTargetType targetType, Long targetId,

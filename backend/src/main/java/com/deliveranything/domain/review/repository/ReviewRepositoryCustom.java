@@ -10,4 +10,6 @@ public interface ReviewRepositoryCustom {
 
   List<Review> findReviewsByProfile(User user, ProfileType profileType, ReviewSortType sort,
       String[] cursor, int size);
+
+  void updateLikeCount(Long reviewId, int likeCount);
 }

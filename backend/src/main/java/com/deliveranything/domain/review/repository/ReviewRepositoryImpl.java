@@ -11,6 +11,7 @@ import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 
@@ -58,5 +59,15 @@ public class ReviewRepositoryImpl implements ReviewRepositoryCustom {
         .orderBy(orderSpecifier)
         .limit(pageSize + 1) // hasNext 판단용 +1
         .fetch();
+  }
+
+  @Override
+  public void updateLikeCount(Long reviewId, int likeCount) {
+    QReview review = QReview.review;
+
+    queryFactory.update(review)
+        .set(review.likeCount, likeCount)
+        .where(review.id.eq(reviewId))
+        .execute();
   }
 }
