@@ -23,6 +23,8 @@ import com.deliveranything.global.util.CursorUtil;
 import java.util.Arrays;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.connection.ReturnType;
+import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -148,9 +150,10 @@ public class ReviewService {
     return new CursorPageResponse<>(result, nextPageToken, hasNext);
   }
 
+  /* 리뷰 좋아요 추가 */
   public ReviewLikeResponse likeReview(Long reviewId, Long userId) {
     String reviewLikeKey = "review:likes:" + reviewId;
-    String reviewSortedKey = "review:likes:";
+    String reviewSortedKey = "review:likes";
 
     //중복 체크
     if (Boolean.TRUE.equals(redisTemplate.opsForSet().isMember(reviewLikeKey, userId))) {
@@ -166,6 +169,46 @@ public class ReviewService {
 
     return new ReviewLikeResponse(reviewId, likeCount);
   }
+
+  /* 리뷰 좋아요 취소 */
+  public ReviewLikeResponse cancelLikeReview(Long reviewId, Long userId) {
+    // Lua 스크립트 정의
+    String luaScript = """
+        if redis.call('SISMEMBER', KEYS[1], ARGV[1]) == 0 then
+            return -1
+        end
+        
+        redis.call('SREM', KEYS[1], ARGV[1])
+        redis.call('ZINCRBY', KEYS[2], -1, ARGV[2])
+        
+        return redis.call('SCARD', KEYS[1])
+        """;
+
+    // Redis key 설정
+    String reviewLikeKey = "review:likes:" + reviewId;
+    String reviewSortedKey = "review:likes";
+
+    // Lua 스크립트 실행 (원자적 연산)
+    Long likeCount = redisTemplate.execute(
+        (RedisCallback<Long>) connection -> connection.eval(
+            luaScript.getBytes(),
+            ReturnType.INTEGER,
+            2,
+            reviewLikeKey.getBytes(),
+            reviewSortedKey.getBytes(),
+            userId.toString().getBytes(),
+            reviewId.toString().getBytes()
+        )
+    );
+
+    // 좋아요가 없는 경우 예외 처리
+    if (likeCount == -1) {
+      throw new CustomException(ErrorCode.REVIEW_NOT_LIKED);
+    }
+
+    return new ReviewLikeResponse(reviewId, likeCount);
+  }
+
 
   //=============================편의 메서드====================================
   /* 리뷰 사진 URL 리스트 반환 */

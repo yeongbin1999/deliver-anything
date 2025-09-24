@@ -115,4 +115,19 @@ public class ApiV1ReviewController {
     return ResponseEntity.status(HttpStatus.CREATED)
         .body(ApiResponse.success(response));
   }
+
+  @DeleteMapping("/{reviewId}/like")
+  @Operation(summary = "리뷰 좋아요 취소", description = "로그인한 사용자가 특정 리뷰에 좋아요를 누른 상태에서 다시 좋아요를 누르면 취소됩니다.")
+  public ResponseEntity<ApiResponse<ReviewLikeResponse>> cancelLikeReview(
+      //      @AuthenticationPrincipal SecurityUser user,
+      //todo: 인증객체 받아와서 전달
+      @PathVariable Long reviewId
+  ) {
+    Long userId = 1L; //임시 유저 id
+
+    ReviewLikeResponse response = reviewService.cancelLikeReview(reviewId, userId);
+
+    return ResponseEntity.status(HttpStatus.OK)
+        .body(ApiResponse.success(response));
+  }
 }
