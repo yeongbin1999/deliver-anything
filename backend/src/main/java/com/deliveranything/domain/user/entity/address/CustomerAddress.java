@@ -2,6 +2,7 @@ package com.deliveranything.domain.user.entity.address;
 
 import com.deliveranything.domain.user.entity.profile.CustomerProfile;
 import com.deliveranything.global.entity.BaseEntity;
+import com.deliveranything.global.util.PointUtil;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -12,6 +13,7 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.locationtech.jts.geom.Point;
 
 @Entity
 @Table(name = "customer_addresses")
@@ -29,11 +31,9 @@ public class CustomerAddress extends BaseEntity {
   @Column(nullable = false, length = 100)
   private String address;
 
-  @Column(precision = 10, scale = 7) // 10 , 7  값에 대해서는 협의 필요 (위도 경도 범위)
-  private Double latitude;
-
-  @Column(precision = 10, scale = 7)
-  private Double longitude;
+  // 위도 경도를 변경 Point 객체로 변경
+  @Column(columnDefinition = "POINT SRID 4326")
+  private Point location;
 
   @Builder
   public CustomerAddress(CustomerProfile customerProfile, String addressName,
@@ -42,8 +42,8 @@ public class CustomerAddress extends BaseEntity {
     this.customerProfile = customerProfile;
     this.addressName = addressName;
     this.address = address;
-    this.latitude = latitude;
-    this.longitude = longitude;
+    // 위도/경도를 받아서 Point 객체로 변환
+    this.location = PointUtil.createPoint(latitude, longitude);
   }
 
   // 비즈니스 메서드
@@ -56,7 +56,17 @@ public class CustomerAddress extends BaseEntity {
       Double latitude, Double longitude) {
     this.addressName = addressName;
     this.address = address;
-    this.latitude = latitude;
-    this.longitude = longitude;
+    // 위도/경도를 Point 객체로 변환
+    this.location = PointUtil.createPoint(latitude, longitude);
+
+  }
+
+  // 편의 메서드: 위도/경도 개별 접근
+  public Double getLatitude() {
+    return location != null ? location.getY() : null;
+  }
+
+  public Double getLongitude() {
+    return location != null ? location.getX() : null;
   }
 }
