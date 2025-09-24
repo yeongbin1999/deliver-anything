@@ -21,8 +21,8 @@ public enum ErrorCode {
   // 리뷰 관련 오류
   REVIEW_NO_PERMISSION(HttpStatus.FORBIDDEN, "REVIEW-403", "리뷰를 관리할 권한이 없습니다."),
   REVIEW_NOT_FOUND(HttpStatus.NOT_FOUND, "REVIEW-404", "리뷰를 찾을 수 없습니다."),
-  REVIEW_ALREADY_LIKED(HttpStatus.CONFLICT, "REVIEW-409", "리뷰에 이미 좋아요를 눌렀습니다."),
-  REVIEW_NOT_LIKED(HttpStatus.CONFLICT, "REVIEW-409", "좋아요를 누르지 않은 리뷰입니다."),
+  REVIEW_ALREADY_LIKED(HttpStatus.CONFLICT, "REVIEW-001", "리뷰에 이미 좋아요를 눌렀습니다."),
+  REVIEW_NOT_LIKED(HttpStatus.CONFLICT, "REVIEW-002", "좋아요를 누르지 않은 리뷰입니다."),
 
   // 주문 관련 오류
   ORDER_NOT_FOUND(HttpStatus.NOT_FOUND, "ORDER-404", "주문 정보를 찾을 수 없습니다."),

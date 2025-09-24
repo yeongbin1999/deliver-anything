@@ -173,13 +173,16 @@ public class ReviewService {
   /* 리뷰 좋아요 취소 */
   public ReviewLikeResponse cancelLikeReview(Long reviewId, Long userId) {
     // Lua 스크립트 정의
-    String luaScript =
-        "if redis.call('SISMEMBER', KEYS[1], ARGV[1]) == 0 then " +
-            "  return -1 " +
-            "end " +
-            "redis.call('SREM', KEYS[1], ARGV[1]) " +
-            "redis.call('ZINCRBY', KEYS[2], -1, ARGV[2]) " +
-            "return redis.call('SCARD', KEYS[1])";
+    String luaScript = """
+        if redis.call('SISMEMBER', KEYS[1], ARGV[1]) == 0 then
+            return -1
+        end
+        
+        redis.call('SREM', KEYS[1], ARGV[1])
+        redis.call('ZINCRBY', KEYS[2], -1, ARGV[2])
+        
+        return redis.call('SCARD', KEYS[1])
+        """;
 
     // Redis key 설정
     String reviewLikeKey = "review:likes:" + reviewId;

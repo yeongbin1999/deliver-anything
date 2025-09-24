@@ -127,7 +127,7 @@ public class ApiV1ReviewController {
 
     ReviewLikeResponse response = reviewService.cancelLikeReview(reviewId, userId);
 
-    return ResponseEntity.status(HttpStatus.NO_CONTENT)
+    return ResponseEntity.status(HttpStatus.OK)
         .body(ApiResponse.success(response));
   }
 }
