@@ -16,9 +16,7 @@ public class RiderEtaConsumer {
   }
 
   @KafkaListener(topics = "order-events", groupId = "delivery-service")
-  public void consume(RiderEtaEvent event) {
-    for (RiderNotificationDto dto : event.notifications()) {
-      webSocketPublisher.publishToRider(dto.riderId(), dto);
-    }
+  public void consume(RiderNotificationDto dto) {
+    webSocketPublisher.publishToRider(dto.riderId(), dto);
   }
 }
