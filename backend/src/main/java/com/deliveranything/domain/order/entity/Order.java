@@ -47,7 +47,7 @@ public class Order extends BaseEntity {
 
   @Enumerated(EnumType.STRING)
   @Column(nullable = false)
-  private OrderStatus orderStatus;
+  private OrderStatus status;
 
   @Column(nullable = false, unique = true, length = 200)
   private String merchantId;
@@ -81,12 +81,20 @@ public class Order extends BaseEntity {
     this.totalPrice = totalPrice;
     this.storePrice = storePrice;
     this.deliveryPrice = deliveryPrice;
-    this.orderStatus = OrderStatus.PENDING;
+    this.status = OrderStatus.PENDING;
     this.merchantId = UUID.randomUUID().toString();
   }
 
   public void addOrderItem(OrderItem orderItem) {
     this.orderItems.add(orderItem);
     orderItem.setOrder(this);
+  }
+
+  public void updateStatus(OrderStatus status) {
+    if (!this.status.canTransitTo(status)) {
+      // TODO: 백엔드 내부에서 주문 상태에 접근하므로 log 만 후에 기록한다. 프론트는 해석만 할 뿐 주문 상태들을 건드릴 필요 없음.
+    }
+
+    this.status = status;
   }
 }
