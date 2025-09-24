@@ -209,6 +209,17 @@ public class ReviewService {
     return new ReviewLikeResponse(reviewId, likeCount);
   }
 
+  /* 리뷰 좋아요 수 조회 */
+  public ReviewLikeResponse getReviewLikeCount(Long reviewId) {
+    String reviewSortedKey = "review:likes"; // ZSet 키
+
+    Double score = redisTemplate.opsForZSet().score(reviewSortedKey, reviewId);
+
+    Long likeCount = (score != null) ? score.longValue() : 0L;
+
+    return new ReviewLikeResponse(reviewId, likeCount);
+  }
+
 
   //=============================편의 메서드====================================
   /* 리뷰 사진 URL 리스트 반환 */
