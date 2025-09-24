@@ -130,4 +130,15 @@ public class ApiV1ReviewController {
     return ResponseEntity.status(HttpStatus.OK)
         .body(ApiResponse.success(response));
   }
+
+  @GetMapping("/{reviewId}/likes")
+  @Operation(summary = "리뷰 좋아요 수 조회", description = "특정 리뷰에 달린 좋아요의 수를 조회합니다.")
+  public ResponseEntity<ApiResponse<ReviewLikeResponse>> getReviewLikeCount(
+      @PathVariable Long reviewId
+  ) {
+    ReviewLikeResponse response = reviewService.getReviewLikeCount(reviewId);
+
+    return ResponseEntity.status(HttpStatus.OK)
+        .body(ApiResponse.success(response));
+  }
 }
