@@ -7,9 +7,12 @@ import com.deliveranything.domain.review.dto.ReviewResponse;
 import com.deliveranything.domain.review.dto.ReviewUpdateRequest;
 import com.deliveranything.domain.review.entity.Review;
 import com.deliveranything.domain.review.entity.ReviewPhoto;
+import com.deliveranything.domain.review.enums.LikeAction;
 import com.deliveranything.domain.review.enums.ReviewSortType;
+import com.deliveranything.domain.review.enums.ReviewTargetType;
 import com.deliveranything.domain.review.repository.ReviewPhotoRepository;
 import com.deliveranything.domain.review.repository.ReviewRepository;
+import com.deliveranything.domain.settlement.enums.TargetType;
 import com.deliveranything.domain.user.entity.User;
 import com.deliveranything.domain.user.entity.profile.CustomerProfile;
 import com.deliveranything.domain.user.enums.ProfileType;
@@ -52,8 +55,7 @@ public class ReviewService {
   /* 리뷰 생성 */
   public ReviewCreateResponse createReview(ReviewCreateRequest request, Long userId) {
     //유저 존재 여부 확인
-    User user = userRepository.findById(userId)
-        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+    User user = userService.findById(userId);
 
     CustomerProfile customerProfile = user.getCustomerProfile();
 
@@ -78,8 +80,7 @@ public class ReviewService {
 
   /* 리뷰 삭제 */
   public void deleteReview(Long userId, Long reviewId) {
-    Review review = reviewRepository.findById(reviewId)
-        .orElseThrow(() -> new CustomException(ErrorCode.REVIEW_NOT_FOUND));
+    Review review = findById(reviewId);
 
     if (verifyReviewAuth(review, userId)) {
       reviewRepository.delete(review);
@@ -91,11 +92,9 @@ public class ReviewService {
   /* 리뷰 수정 */
   public ReviewResponse updateReview(ReviewUpdateRequest request, Long userId, Long reviewId) {
     //유저 존재 여부 확인
-    User user = userRepository.findById(userId)
-        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+    User user = userService.findById(userId);
 
-    Review review = reviewRepository.findById(reviewId)
-        .orElseThrow(() -> new CustomException(ErrorCode.REVIEW_NOT_FOUND));
+    Review review = findById(reviewId);
 
     //유저 권한 체크
     if (!verifyReviewAuth(review, userId)) {
@@ -112,8 +111,7 @@ public class ReviewService {
 
   /* 단일 리뷰 조회 */
   public ReviewResponse getReview(Long reviewId) {
-    Review review = reviewRepository.findById(reviewId)
-        .orElseThrow(() -> new CustomException(ErrorCode.REVIEW_NOT_FOUND));
+    Review review = findById(reviewId);
 
     List<String> reviewPhotoUrls = getReviewPhotoUrlList(review);
 
@@ -123,8 +121,7 @@ public class ReviewService {
   /* 리뷰 리스트 조회 */
   public CursorPageResponse<ReviewResponse> getReviews(Long userId, ReviewSortType sort,
       String cursor, Integer size) {
-    User user = userRepository.findById(userId)
-        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+    User user = userService.findById(userId);
 
     ProfileType profileType = user.getCurrentActiveProfile();
     String[] decodedCursor = CursorUtil.decode(cursor);
@@ -159,72 +156,59 @@ public class ReviewService {
 
   /* 리뷰 좋아요 추가 */
   public ReviewLikeResponse likeReview(Long reviewId, Long userId) {
-    String reviewLikeKey = "review:likes:" + reviewId;
-    String reviewSortedKey = "review:likes";
+    Review review = findById(reviewId);
 
-    //중복 체크
-    if (Boolean.TRUE.equals(redisTemplate.opsForSet().isMember(reviewLikeKey, userId))) {
+    if (review.getTargetType() != ReviewTargetType.STORE) {
+      throw new CustomException(ErrorCode.REVIEW_INVALID_TARGET);
+    }
+
+    String reviewLikeKey = "review:likes:" + reviewId;
+    String reviewSortedKey = "review:likes:store:" + review.getTargetId();
+
+    Long likeCount = executeLikeAction(reviewLikeKey, reviewSortedKey, userId, reviewId, LikeAction.LIKE);
+
+    if (likeCount == -1) {
       throw new CustomException(ErrorCode.REVIEW_ALREADY_LIKED);
     }
 
-    //좋아요 등록
-    redisTemplate.opsForSet().add(reviewLikeKey, userId);
-
-    //좋아요 개수 증가
-    redisTemplate.opsForZSet().incrementScore(reviewSortedKey, reviewId, 1);
-    Long likeCount = redisTemplate.opsForSet().size(reviewLikeKey);
-
-    return new ReviewLikeResponse(reviewId, likeCount);
+    return new ReviewLikeResponse(reviewId, likeCount, true);
   }
 
   /* 리뷰 좋아요 취소 */
   public ReviewLikeResponse cancelLikeReview(Long reviewId, Long userId) {
-    // Lua 스크립트 정의
-    String luaScript = """
-        if redis.call('SISMEMBER', KEYS[1], ARGV[1]) == 0 then
-            return -1
-        end
-        
-        redis.call('SREM', KEYS[1], ARGV[1])
-        redis.call('ZINCRBY', KEYS[2], -1, ARGV[2])
-        
-        return redis.call('SCARD', KEYS[1])
-        """;
+    Review review = findById(reviewId);
+
+    if (review.getTargetType() != ReviewTargetType.STORE) {
+      throw new CustomException(ErrorCode.REVIEW_INVALID_TARGET);
+    }
 
     // Redis key 설정
     String reviewLikeKey = "review:likes:" + reviewId;
-    String reviewSortedKey = "review:likes";
+    String reviewSortedKey = "review:likes:store:" + review.getTargetId();
 
-    // Lua 스크립트 실행 (원자적 연산)
-    Long likeCount = redisTemplate.execute(
-        (RedisCallback<Long>) connection -> connection.eval(
-            luaScript.getBytes(),
-            ReturnType.INTEGER,
-            2,
-            reviewLikeKey.getBytes(),
-            reviewSortedKey.getBytes(),
-            userId.toString().getBytes(),
-            reviewId.toString().getBytes()
-        )
-    );
+    Long likeCount = executeLikeAction(reviewLikeKey, reviewSortedKey, userId, reviewId, LikeAction.UNLIKE);
 
     // 좋아요가 없는 경우 예외 처리
     if (likeCount == -1) {
       throw new CustomException(ErrorCode.REVIEW_NOT_LIKED);
     }
 
-    return new ReviewLikeResponse(reviewId, likeCount);
+    return new ReviewLikeResponse(reviewId, likeCount, false);
   }
 
   /* 리뷰 좋아요 수 조회 */
   public ReviewLikeResponse getReviewLikeCount(Long reviewId) {
-    String reviewSortedKey = "review:likes"; // ZSet 키
+    Review review = findById(reviewId);
 
-    Double score = redisTemplate.opsForZSet().score(reviewSortedKey, reviewId);
+    if (review.getTargetType() != ReviewTargetType.STORE) {
+      throw new CustomException(ErrorCode.REVIEW_INVALID_TARGET);
+    }
 
-    Long likeCount = (score != null) ? score.longValue() : 0L;
+    String reviewLikeKey = "review:likes:" + reviewId;
 
-    return new ReviewLikeResponse(reviewId, likeCount);
+    Long likeCount = redisTemplate.opsForSet().size(reviewLikeKey);
+
+    return new ReviewLikeResponse(reviewId, likeCount, null);
   }
 
 
@@ -237,17 +221,17 @@ public class ReviewService {
         .toList();
   }
 
-  //리뷰 권한 확인 (작성자 확인)
+  /* 리뷰 권한 확인 (작성자 확인) */
   @Transactional(readOnly = true)
   public boolean verifyReviewAuth(Review review, Long userId) {
-    User user = userRepository.findById(userId)
-        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+    User user = userService.findById(userId);
     CustomerProfile customerProfile = user.getCustomerProfile();
 
     return review.getCustomerProfile().getId().equals(customerProfile.getId());
   }
 
-  private List<ReviewResponse> getReviewsByProfile(ProfileType profileType, User user,
+  /* 프로필에 따라 내 리뷰 조회하기 */
+  public List<ReviewResponse> getReviewsByProfile(ProfileType profileType, User user,
       ReviewSortType sort, String[] cursor, int size) {
     List<Review> reviews = reviewRepository.findReviewsByProfile(
         user,
@@ -262,27 +246,70 @@ public class ReviewService {
         .toList();
   }
 
-//  /* 리뷰 좋아요 순 정렬 리스트 반환 */
-//  public List<ReviewLikeResponse> getReviewsSortedByLikes() {
-//    String reviewSortedKey = "review:likes";
-//
-//    //모든 값 조회
-//    Set<ZSetOperations.TypedTuple<Object>> allReviews = redisTemplate.opsForZSet()
-//        .reverseRangeWithScores(reviewSortedKey, 0, -1);
-//
-//    List<ReviewLikeResponse> list = new ArrayList<>();
-//
-//    if (allReviews != null) {
-//      for (ZSetOperations.TypedTuple<Object> tuple : allReviews) {
-//        if (tuple == null || tuple.getValue() == null || tuple.getScore() == null) continue;
-//
-//        Long reviewId = Long.valueOf(tuple.getValue().toString());
-//        Long score = tuple.getScore().longValue();
-//
-//        list.add(new ReviewLikeResponse(reviewId, score));
-//      }
-//    }
-//
-//    return list;
-//  }
+  public Review findById(Long reviewId) {
+    return reviewRepository.findById(reviewId)
+        .orElseThrow(() -> new CustomException(ErrorCode.REVIEW_NOT_FOUND));
+  }
+
+  /* 리뷰 좋아요 순 정렬 리스트 반환 */
+  public List<ReviewLikeResponse> getReviewsSortedByLikes(Long storeId, Long userId) {
+    String reviewSortedKey = "review:likes:store:" + storeId;
+
+    //모든 값 조회
+    Set<ZSetOperations.TypedTuple<Object>> allReviews = redisTemplate.opsForZSet()
+        .reverseRangeWithScores(reviewSortedKey, 0, -1);
+
+    List<ReviewLikeResponse> list = new ArrayList<>();
+
+    if (allReviews != null) {
+      for (ZSetOperations.TypedTuple<Object> tuple : allReviews) {
+        if (tuple == null || tuple.getValue() == null || tuple.getScore() == null) continue;
+
+        Long reviewId = Long.valueOf(tuple.getValue().toString());
+        Long score = tuple.getScore().longValue();
+
+        Boolean likedByMe = (userId != null) && Boolean.TRUE.equals(
+            redisTemplate.opsForSet().isMember("review:likes:" + reviewId, userId));
+
+        list.add(new ReviewLikeResponse(reviewId, score, likedByMe));
+      }
+    }
+
+    return list;
+  }
+
+  /* 리뷰 Like, Unlike 로직 */
+  private Long executeLikeAction(String reviewLikeKey, String reviewSortedKey, Long userId, Long reviewId, LikeAction action) {
+    String luaScript = """
+        local memberExists = redis.call('SISMEMBER', KEYS[1], ARGV[2])
+        
+            if (ARGV[1] == 'LIKE' and memberExists == 1) or (ARGV[1] == 'UNLIKE' and memberExists == 0) then
+                return -1
+            end
+        
+            if ARGV[1] == 'LIKE' then
+                redis.call('SADD', KEYS[1], ARGV[2])
+            else
+                redis.call('SREM', KEYS[1], ARGV[2])
+            end
+        
+            redis.call('ZINCRBY', KEYS[2], tonumber(ARGV[3]), ARGV[4])
+            return redis.call('SCARD', KEYS[1])
+    """;
+
+    return redisTemplate.execute((RedisCallback<Long>) connection ->
+        connection.eval(
+            luaScript.getBytes(),
+            ReturnType.INTEGER,
+            2,
+            reviewLikeKey.getBytes(),
+            reviewSortedKey.getBytes(),
+            action.name().getBytes(),   // ARGV[1] : LIKE / UNLIKE
+            userId.toString().getBytes(), // ARGV[2] : userId
+            String.valueOf(action.getIncrement()).getBytes(), // ARGV[3] : +1/-1
+            reviewId.toString().getBytes() // ARGV[4] : ZSet member
+        )
+    );
+  }
+
 }
