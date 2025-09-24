@@ -6,6 +6,7 @@ import com.deliveranything.domain.order.dto.OrderItemRequest;
 import com.deliveranything.domain.order.dto.OrderResponse;
 import com.deliveranything.domain.order.entity.Order;
 import com.deliveranything.domain.order.entity.OrderItem;
+import com.deliveranything.domain.order.enums.OrderStatus;
 import com.deliveranything.domain.order.repository.OrderRepository;
 import com.deliveranything.domain.order.repository.OrderRepositoryCustom;
 import com.deliveranything.domain.payment.service.PaymentService;
@@ -87,8 +88,35 @@ public class OrderService {
         .orElseThrow(() -> new CustomException(ErrorCode.CUSTOMER_ORDER_NOT_FOUND)));
   }
 
-  public Order getOrder(String merchantId) {
+  @Transactional(readOnly = true)
+  public List<Order> getPreparedOrders() {
+    return orderRepository.findByStatus(OrderStatus.PREPARING);
+  }
+
+  @Transactional
+  public void updateStatus(Long orderId, OrderStatus orderStatus) {
+    getOrderById(orderId).updateStatus(orderStatus);
+  }
+
+  @Transactional(readOnly = true)
+  public Order getOrderByDeliveryId(Long deliveryId) {
+    return orderRepository.findByDeliveryId(deliveryId)
+        .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND));
+  }
+
+  @Transactional(readOnly = true)
+  public List<Order> getRiderDeliveryOrders(Long riderProfileId) {
+    return orderRepository.findByDeliveryRiderProfileId(riderProfileId);
+  }
+
+  @Transactional(readOnly = true)
+  public Order getOrderByMerchantId(String merchantId) {
     return orderRepository.findByMerchantId(merchantId)
+        .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND));
+  }
+
+  private Order getOrderById(Long orderId) {
+    return orderRepository.findById(orderId)
         .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND));
   }
 }
