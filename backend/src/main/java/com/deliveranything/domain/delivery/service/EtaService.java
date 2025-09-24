@@ -46,4 +46,32 @@ public class EtaService {
           return etaMap;
         });
   }
+
+  // 상점 <-> 주문자 사이 거리 (eta 기준)
+  public Mono<Map<String, Double>> getDistance(
+      double storeLat, double storeLon,
+      double userLat, double userLon
+  ) {
+    String coordinates = String.format("%f,%f;%f,%f", storeLon, storeLat, userLon, userLat);
+
+    return osrmWebClient.get()
+        .uri("/table/v1/driving/{coordinates}?annotations=distance", coordinates)
+        .retrieve()
+        .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {
+        })
+        .map(response -> {
+          List<List<Double>> distances = (List<List<Double>>) response.get("distances");
+          Map<String, Double> result = new HashMap<>();
+
+          if (distances != null && !distances.isEmpty()) {
+            double distanceM = distances.get(0).get(1);  // 상점 → 주문자 거리(m)
+            // 소수 둘째 자리에서 반올림
+            double distanceKm = Math.round(
+                ((distanceM / 1000.0) * 100.0) / 100); // km 단위 변환 (소수 둘째자리 반올림)
+            result.put("distance", distanceKm);
+          }
+
+          return result;
+        });
+  }
 }

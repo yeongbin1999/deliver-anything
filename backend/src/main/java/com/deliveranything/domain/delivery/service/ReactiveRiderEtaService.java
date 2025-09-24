@@ -26,13 +26,13 @@ public class ReactiveRiderEtaService {
 
   //반경 내 라이더 검색 후 ETA 계산
   // Kafka 발행(2차 구현)
-  public Mono<Map<String, Double>> findNearbyRidersEta(double userLat, double userLon,
+  public Mono<Map<String, Double>> findNearbyRidersEta(double customerLat, double customerLon,
       double radiusKm) {
     // Redis GEOSEARCH
     GeoResults<RedisGeoCommands.GeoLocation<String>> nearbyRiders =
         redisTemplate.opsForGeo().search(
             RIDER_GEO_KEY,
-            GeoReference.fromCoordinate(userLon, userLat),
+            GeoReference.fromCoordinate(customerLat, customerLon),
             new Distance(radiusKm, Metrics.KILOMETERS),
             RedisGeoCommands.GeoSearchCommandArgs.newGeoSearchArgs().includeDistance()
         );
@@ -51,7 +51,6 @@ public class ReactiveRiderEtaService {
     }
 
     // OSRM Table API → ETA 계산 (비동기)
-    return etaService.getEtaForMultipleReactive(userLat, userLon, riderPoints, riderIds);
+    return etaService.getEtaForMultipleReactive(customerLat, customerLon, riderPoints, riderIds);
   }
-
 }
