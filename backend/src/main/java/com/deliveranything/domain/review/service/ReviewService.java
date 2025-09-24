@@ -20,12 +20,19 @@ import com.deliveranything.global.common.CursorPageResponse;
 import com.deliveranything.global.exception.CustomException;
 import com.deliveranything.global.exception.ErrorCode;
 import com.deliveranything.global.util.CursorUtil;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.connection.ReturnType;
 import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -254,4 +261,28 @@ public class ReviewService {
         .map(it -> ReviewResponse.from(it, getReviewPhotoUrlList(it)))
         .toList();
   }
+
+//  /* 리뷰 좋아요 순 정렬 리스트 반환 */
+//  public List<ReviewLikeResponse> getReviewsSortedByLikes() {
+//    String reviewSortedKey = "review:likes";
+//
+//    //모든 값 조회
+//    Set<ZSetOperations.TypedTuple<Object>> allReviews = redisTemplate.opsForZSet()
+//        .reverseRangeWithScores(reviewSortedKey, 0, -1);
+//
+//    List<ReviewLikeResponse> list = new ArrayList<>();
+//
+//    if (allReviews != null) {
+//      for (ZSetOperations.TypedTuple<Object> tuple : allReviews) {
+//        if (tuple == null || tuple.getValue() == null || tuple.getScore() == null) continue;
+//
+//        Long reviewId = Long.valueOf(tuple.getValue().toString());
+//        Long score = tuple.getScore().longValue();
+//
+//        list.add(new ReviewLikeResponse(reviewId, score));
+//      }
+//    }
+//
+//    return list;
+//  }
 }
