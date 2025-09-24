@@ -1,4 +1,4 @@
-package com.deliveranything.domain.delivery.dto;
+package com.deliveranything.domain.delivery.event.dto;
 
 import com.deliveranything.domain.order.dto.OrderDetailsDto;
 import com.deliveranything.domain.order.enums.OrderStatus;
