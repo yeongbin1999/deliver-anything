@@ -74,4 +74,77 @@ public class SellerProfileService {
 
     return sellerProfile;
   }
+
+  // 판매자 프로필 조회
+  public SellerProfile getProfile(Long userId) {
+    return sellerProfileRepository.findByUserId(userId).orElse(null);
+  }
+
+  // 판매자 프로필 존재 여부 확인
+  public boolean hasProfile(Long userId) {
+    return sellerProfileRepository.findByUserId(userId).isPresent();
+  }
+
+  // id로 판매자 프로필 존재여부 확인
+  public boolean existsById(Long sellerProfileId) {
+    return sellerProfileRepository.existsById(sellerProfileId);
+  }
+
+  // 판매자 프로필 수정
+  @Transactional
+  public boolean updateProfile(Long userId, String nickname, String profileImageUrl) {
+    SellerProfile profile = getProfile(userId);
+    if (profile == null) {
+      return false;
+    }
+
+    profile.updateProfile(nickname, profileImageUrl);
+    sellerProfileRepository.save(profile);
+
+    log.info("판매자 프로필 수정 완료: userId={}, nickname={}", userId, nickname);
+    return true;
+  }
+
+  // 사업자 정보 수정
+  @Transactional
+  public boolean updateBusinessInfo(Long userId, String businessName, String businessPhoneNumber) {
+    SellerProfile profile = getProfile(userId);
+    if (profile == null) {
+      return false;
+    }
+
+    profile.updateBusinessInfo(businessName, businessPhoneNumber);
+    sellerProfileRepository.save(profile);
+
+    log.info("사업자 정보 수정 완료: userId={}, businessName={}", userId, businessName);
+    return true;
+  }
+
+  // 정산 정보 수정
+  @Transactional
+  public boolean updateBankInfo(Long userId, String bankName, String accountNumber,
+      String accountHolder) {
+    SellerProfile profile = getProfile(userId);
+    if (profile == null) {
+      return false;
+    }
+
+    profile.updateBankInfo(bankName, accountNumber, accountHolder);
+    sellerProfileRepository.save(profile);
+
+    log.info("정산 정보 수정 완료: userId={}, bankName={}", userId, bankName);
+    return true;
+  }
+
+  // 사업자 등록번호 중복 체크
+  public boolean existsByBusinessCertificateNumber(String businessCertificateNumber) {
+    return sellerProfileRepository.existsByBusinessCertificateNumber(businessCertificateNumber);
+  }
+
+  // 사업자 등록번호로 판매자 프로필 조회
+  public SellerProfile getProfileByBusinessCertificateNumber(String businessCertificateNumber) {
+    return sellerProfileRepository.findByBusinessCertificateNumber(businessCertificateNumber)
+        .orElse(null);
+  }
+
 }

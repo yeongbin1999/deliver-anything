@@ -1,10 +1,14 @@
 package com.deliveranything.domain.user.service;
 
 import com.deliveranything.domain.user.entity.User;
+import com.deliveranything.domain.user.entity.profile.RiderProfile;
 import com.deliveranything.domain.user.enums.ProfileType;
+import com.deliveranything.domain.user.enums.RiderToggleStatus;
+import com.deliveranything.domain.user.repository.RiderProfileRepository;
 import com.deliveranything.domain.user.repository.UserRepository;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +22,10 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserService {
 
   private final UserRepository userRepository;
+  private final CustomerProfileService customerProfileService;
+  private final SellerProfileService sellerProfileService;
+  private final RiderProfileService riderProfileService;
+  private final RiderProfileRepository riderProfileRepository;
 
   // 기본 조회 Methods
   public User findById(Long id) {
@@ -98,7 +106,8 @@ public class UserService {
 
   // 온보딩 관련 Methods
   @Transactional
-  public boolean completeOnboarding(Long userId, ProfileType selectedProfile) {
+  public boolean completeOnboarding(Long userId, ProfileType selectedProfile,
+      Map<String, Object> profileData) {
     User user = findById(userId);
     if (user == null) {
       log.warn("사용자를 찾을 수 없습니다: userId={}", userId);
@@ -111,18 +120,86 @@ public class UserService {
       return false;
     }
 
-    // 선택한 프로필이 존재하는지 확인 (Service에서 직접 처리)
-    if (!hasProfileInternal(user, selectedProfile)) {
-      log.warn("해당 프로필을 찾을 수 없습니다: userId={}, selectedProfile={}", userId, selectedProfile);
+    // 프로필 생성
+    boolean profileCreated = createProfileByType(userId, selectedProfile, profileData);
+    if (!profileCreated) {
+      log.warn("프로필 생성 실패: userId={}, selectedProfile={}", userId, selectedProfile);
       return false;
     }
 
-    // 단순 상태 변경
+    // 온보딩 완료 처리
     user.completeOnboarding(selectedProfile);
     userRepository.save(user);
 
     log.info("온보딩 완료: userId={}, selectedProfile={}", userId, selectedProfile);
     return true;
+  }
+
+  /**
+   * 프로필 타입별 생성 로직
+   */
+  private boolean createProfileByType(Long userId, ProfileType profileType,
+      Map<String, Object> profileData) {
+    return switch (profileType) {
+      case CUSTOMER -> {
+        String nickname = (String) profileData.get("nickname");
+        var profile = customerProfileService.createProfile(userId, nickname);
+        yield profile != null;
+      }
+      case SELLER -> {
+        String nickname = (String) profileData.get("nickname");
+        String businessName = (String) profileData.get("businessName");
+        String businessCertificateNumber = (String) profileData.get("businessCertificateNumber");
+        String businessPhoneNumber = (String) profileData.get("businessPhoneNumber");
+        String bankName = (String) profileData.get("bankName");
+        String accountNumber = (String) profileData.get("accountNumber");
+        String accountHolder = (String) profileData.get("accountHolder");
+
+        var profile = sellerProfileService.createProfile(
+            userId, nickname, businessName, businessCertificateNumber,
+            businessPhoneNumber, bankName, accountNumber, accountHolder
+        );
+        yield profile != null;
+      }
+      case RIDER -> {
+        // 일단 builder 패턴 사용
+        try {
+          User user = userRepository.findById(userId).orElse(null);
+          if (user == null) {
+            yield false;
+          }
+
+          String nickname = (String) profileData.get("nickname");
+          String licenseNumber = (String) profileData.get("licenseNumber");
+          String area = (String) profileData.getOrDefault("area", "서울");
+          String bankName = (String) profileData.getOrDefault("bankName", "");
+          String bankAccountNumber = (String) profileData.getOrDefault("bankAccountNumber", "");
+          String bankAccountHolderName = (String) profileData.getOrDefault("bankAccountHolderName",
+              "");
+
+          RiderProfile riderProfile = RiderProfile.builder()
+              .nickname(nickname)
+              .toggleStatus(RiderToggleStatus.OFF) // 기본값: 비활성화
+              .area(area)
+              .licenseNumber(licenseNumber)
+              .profileImageUrl(null)
+              .bankName(bankName)
+              .bankAccountNumber(bankAccountNumber)
+              .bankAccountHolderName(bankAccountHolderName)
+              .user(user)
+              .build();
+
+          // Repository 직접 사용 (임시)
+          riderProfileRepository.save(riderProfile);
+          log.info("라이더 프로필 생성 완료 (임시): userId={}, licenseNumber={}", userId, licenseNumber);
+          yield true;
+
+        } catch (Exception e) {
+          log.error("라이더 프로필 생성 실패 (임시): userId={}", userId, e);
+          yield false;
+        }
+      }
+    };
   }
 
   public boolean isOnboardingCompleted(Long userId) {
@@ -147,7 +224,7 @@ public class UserService {
 
     log.info("사용자 마지막 로그인 시간 업데이트 완료: userId={}", userId);
   }
-  
+
   // 이메일 인증 처리 임시
   @Transactional
   public void verifyEmail(Long userId) {
