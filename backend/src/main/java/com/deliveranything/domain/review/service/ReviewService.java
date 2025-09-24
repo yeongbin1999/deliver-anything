@@ -12,12 +12,9 @@ import com.deliveranything.domain.review.enums.ReviewSortType;
 import com.deliveranything.domain.review.enums.ReviewTargetType;
 import com.deliveranything.domain.review.repository.ReviewPhotoRepository;
 import com.deliveranything.domain.review.repository.ReviewRepository;
-import com.deliveranything.domain.settlement.enums.TargetType;
 import com.deliveranything.domain.user.entity.User;
 import com.deliveranything.domain.user.entity.profile.CustomerProfile;
 import com.deliveranything.domain.user.enums.ProfileType;
-import com.deliveranything.domain.user.repository.CustomerProfileRepository;
-import com.deliveranything.domain.user.repository.UserRepository;
 import com.deliveranything.domain.user.service.UserService;
 import com.deliveranything.global.common.CursorPageResponse;
 import com.deliveranything.global.exception.CustomException;
@@ -25,11 +22,7 @@ import com.deliveranything.global.exception.ErrorCode;
 import com.deliveranything.global.util.CursorUtil;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.connection.ReturnType;
@@ -46,9 +39,7 @@ public class ReviewService {
 
   private final ReviewRepository reviewRepository;
   private final ReviewPhotoRepository reviewPhotoRepository;
-  private final UserRepository userRepository;
   private final UserService userService;
-  private final CustomerProfileRepository customerProfileRepository;
   private final RedisTemplate<String, Object> redisTemplate;
 
   //============================메인 API 메서드==================================
@@ -165,7 +156,8 @@ public class ReviewService {
     String reviewLikeKey = "review:likes:" + reviewId;
     String reviewSortedKey = "review:likes:store:" + review.getTargetId();
 
-    Long likeCount = executeLikeAction(reviewLikeKey, reviewSortedKey, userId, reviewId, LikeAction.LIKE);
+    Long likeCount = executeLikeAction(reviewLikeKey, reviewSortedKey, userId, reviewId,
+        LikeAction.LIKE);
 
     if (likeCount == -1) {
       throw new CustomException(ErrorCode.REVIEW_ALREADY_LIKED);
@@ -175,7 +167,7 @@ public class ReviewService {
   }
 
   /* 리뷰 좋아요 취소 */
-  public ReviewLikeResponse cancelLikeReview(Long reviewId, Long userId) {
+  public ReviewLikeResponse unlikeReview(Long reviewId, Long userId) {
     Review review = findById(reviewId);
 
     if (review.getTargetType() != ReviewTargetType.STORE) {
@@ -186,7 +178,8 @@ public class ReviewService {
     String reviewLikeKey = "review:likes:" + reviewId;
     String reviewSortedKey = "review:likes:store:" + review.getTargetId();
 
-    Long likeCount = executeLikeAction(reviewLikeKey, reviewSortedKey, userId, reviewId, LikeAction.UNLIKE);
+    Long likeCount = executeLikeAction(reviewLikeKey, reviewSortedKey, userId, reviewId,
+        LikeAction.UNLIKE);
 
     // 좋아요가 없는 경우 예외 처리
     if (likeCount == -1) {
@@ -197,7 +190,7 @@ public class ReviewService {
   }
 
   /* 리뷰 좋아요 수 조회 */
-  public ReviewLikeResponse getReviewLikeCount(Long reviewId) {
+  public ReviewLikeResponse getReviewLikeCount(Long reviewId, Long userId) {
     Review review = findById(reviewId);
 
     if (review.getTargetType() != ReviewTargetType.STORE) {
@@ -207,8 +200,9 @@ public class ReviewService {
     String reviewLikeKey = "review:likes:" + reviewId;
 
     Long likeCount = redisTemplate.opsForSet().size(reviewLikeKey);
+    Boolean likedByMe = redisTemplate.opsForSet().isMember(reviewLikeKey, userId);
 
-    return new ReviewLikeResponse(reviewId, likeCount, null);
+    return new ReviewLikeResponse(reviewId, likeCount, likedByMe);
   }
 
 
@@ -263,7 +257,9 @@ public class ReviewService {
 
     if (allReviews != null) {
       for (ZSetOperations.TypedTuple<Object> tuple : allReviews) {
-        if (tuple == null || tuple.getValue() == null || tuple.getScore() == null) continue;
+        if (tuple == null || tuple.getValue() == null || tuple.getScore() == null) {
+          continue;
+        }
 
         Long reviewId = Long.valueOf(tuple.getValue().toString());
         Long score = tuple.getScore().longValue();
@@ -279,23 +275,24 @@ public class ReviewService {
   }
 
   /* 리뷰 Like, Unlike 로직 */
-  private Long executeLikeAction(String reviewLikeKey, String reviewSortedKey, Long userId, Long reviewId, LikeAction action) {
+  private Long executeLikeAction(String reviewLikeKey, String reviewSortedKey, Long userId,
+      Long reviewId, LikeAction action) {
     String luaScript = """
-        local memberExists = redis.call('SISMEMBER', KEYS[1], ARGV[2])
+            local memberExists = redis.call('SISMEMBER', KEYS[1], ARGV[2])
         
-            if (ARGV[1] == 'LIKE' and memberExists == 1) or (ARGV[1] == 'UNLIKE' and memberExists == 0) then
-                return -1
-            end
+                if (ARGV[1] == 'LIKE' and memberExists == 1) or (ARGV[1] == 'UNLIKE' and memberExists == 0) then
+                    return -1
+                end
         
-            if ARGV[1] == 'LIKE' then
-                redis.call('SADD', KEYS[1], ARGV[2])
-            else
-                redis.call('SREM', KEYS[1], ARGV[2])
-            end
+                if ARGV[1] == 'LIKE' then
+                    redis.call('SADD', KEYS[1], ARGV[2])
+                else
+                    redis.call('SREM', KEYS[1], ARGV[2])
+                end
         
-            redis.call('ZINCRBY', KEYS[2], tonumber(ARGV[3]), ARGV[4])
-            return redis.call('SCARD', KEYS[1])
-    """;
+                redis.call('ZINCRBY', KEYS[2], tonumber(ARGV[3]), ARGV[4])
+                return redis.call('SCARD', KEYS[1])
+        """;
 
     return redisTemplate.execute((RedisCallback<Long>) connection ->
         connection.eval(

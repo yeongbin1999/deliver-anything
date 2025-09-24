@@ -12,6 +12,11 @@ public enum LikeAction {
     this.likedByMe = likedByMe;
   }
 
-  public int getIncrement() { return increment; }
-  public boolean isLikedByMe() { return likedByMe; }
+  public int getIncrement() {
+    return increment;
+  }
+
+  public boolean isLikedByMe() {
+    return likedByMe;
+  }
 }
