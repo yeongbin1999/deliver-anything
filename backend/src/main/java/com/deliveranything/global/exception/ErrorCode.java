@@ -33,7 +33,6 @@ public enum ErrorCode {
       "결제 검증 실패: 결제 ID, 주문 번호, 결제 금액 중 하나 이상 불일치합니다."),
   PG_PAYMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "PG-PAYMENT-404", "PG사에서 주문의 결제 이력을 찾을 수 없습니다."),
 
-
   PAYMENT_AMOUNT_NOT_VALID(HttpStatus.BAD_REQUEST, "PAYMENT-001", "결제 금액이 주문의 가격과 다릅니다."),
   PAYMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "PAYMENT-404", "결제 이력을 찾을 수 없습니다."),
   PAYMENT_INVALID_STATUS(HttpStatus.CONFLICT, "PAYMENT-409", "결제 상태를 변경할 수 없습니다."),
