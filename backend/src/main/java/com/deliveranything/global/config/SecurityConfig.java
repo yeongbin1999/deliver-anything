@@ -36,7 +36,7 @@ public class SecurityConfig {
             .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
 
             // 공개 API 엔드포인트
-            .requestMatchers("/api/v1/auth/register", "/api/v1/auth/login", "/api/v1/auth/logout")
+            .requestMatchers("/api/v1/auth/signup", "/api/v1/auth/login", "/api/v1/auth/logout")
             .permitAll()
             .requestMatchers("/api/v1/auth/verification/**").permitAll()
             .requestMatchers("/api/v1/auth/oauth2/**").permitAll()
