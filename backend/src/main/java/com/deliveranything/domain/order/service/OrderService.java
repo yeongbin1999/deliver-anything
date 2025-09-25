@@ -15,6 +15,7 @@ import com.deliveranything.domain.user.service.CustomerProfileService;
 import com.deliveranything.global.common.CursorPageResponse;
 import com.deliveranything.global.exception.CustomException;
 import com.deliveranything.global.exception.ErrorCode;
+import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -62,7 +63,7 @@ public class OrderService {
   }
 
   @Transactional(readOnly = true)
-  public CursorPageResponse<OrderResponse> getCustomerOrders(
+  public CursorPageResponse<OrderResponse> getCustomerOrdersByCursor(
       Long customerId,
       Long cursor,
       int size
@@ -77,7 +78,7 @@ public class OrderService {
 
     return new CursorPageResponse<>(
         orderResponses,
-        hasNext ? orderResponses.getLast().orderId().toString() : null,
+        hasNext ? orderResponses.getLast().id().toString() : null,
         hasNext
     );
   }
@@ -113,6 +114,23 @@ public class OrderService {
   public Order getOrderByMerchantId(String merchantId) {
     return orderRepository.findByMerchantId(merchantId)
         .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND));
+  }
+
+  @Transactional(readOnly = true)
+  public List<Order> getStoreOrdersWithStatuses(Long storeId, List<OrderStatus> orderStatuses) {
+    return orderRepository.findByStoreIdAndStatusInOrderByCreatedAtAsc(storeId, orderStatuses);
+  }
+
+  @Transactional(readOnly = true)
+  public List<Order> getStoreOrdersByCursor(
+      Long storeId,
+      List<OrderStatus> orderStatuses,
+      LocalDateTime lastCreatedAt,
+      Long lastOrderId,
+      int size
+  ) {
+    return orderRepositoryCustom.findStoreOrders(storeId, orderStatuses, lastCreatedAt, lastOrderId,
+        size + 1);
   }
 
   private Order getOrderById(Long orderId) {
