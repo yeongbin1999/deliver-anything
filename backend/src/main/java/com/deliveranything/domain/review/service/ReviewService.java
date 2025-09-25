@@ -25,6 +25,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.connection.ReturnType;
 import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -35,6 +36,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Slf4j
 public class ReviewService {
 
   private final ReviewRepository reviewRepository;
@@ -45,6 +47,7 @@ public class ReviewService {
   //============================메인 API 메서드==================================
   /* 리뷰 생성 */
   public ReviewCreateResponse createReview(ReviewCreateRequest request, Long userId) {
+    log.info("리뷰 생성 요청 - userId: {}, request: {}", userId, request);
     //유저 존재 여부 확인
     User user = userService.findById(userId);
 
@@ -53,6 +56,7 @@ public class ReviewService {
     //리뷰 생성 및 저장
     Review review = Review.from(request, customerProfile);
     reviewRepository.save(review);
+    log.debug("리뷰 저장 완료 - reviewId: {}", review.getId());
 
     //리뷰 사진 생성 및 저장
     List<ReviewPhoto> reviewPhotos = Arrays.stream(request.photoUrls())
@@ -62,26 +66,33 @@ public class ReviewService {
             .build())
         .toList();
     reviewPhotoRepository.saveAll(reviewPhotos);
+    log.debug("리뷰 사진 {}개 저장 완료 - reviewId : {}", reviewPhotos.size(), review.getId());
 
     //사진 URL 리스트 반환
     List<String> reviewPhotoUrls = getReviewPhotoUrlList(review);
+    log.info("리뷰 생성 성공 - reviewId: {}, userId: {}", review.getId(), userId);
 
     return ReviewCreateResponse.from(review, reviewPhotoUrls);
   }
 
   /* 리뷰 삭제 */
   public void deleteReview(Long userId, Long reviewId) {
+    log.info("리뷰 삭제 요청 - userId: {}, reviewId: {}", userId, reviewId);
     Review review = findById(reviewId);
 
     if (verifyReviewAuth(review, userId)) {
       reviewRepository.delete(review);
+      log.info("리뷰 삭제 성공 - reviewId: {}", reviewId);
     } else {
+      log.warn("리뷰 삭제 권한 없음 - userId: {}, reviewId: {}", userId, reviewId);
       throw new CustomException(ErrorCode.REVIEW_NO_PERMISSION);
     }
   }
 
   /* 리뷰 수정 */
   public ReviewResponse updateReview(ReviewUpdateRequest request, Long userId, Long reviewId) {
+    log.info("리뷰 수정 요청 - userId: {}, request: {}, reviewId: {}", userId, request, reviewId);
+
     //유저 존재 여부 확인
     User user = userService.findById(userId);
 
@@ -89,6 +100,7 @@ public class ReviewService {
 
     //유저 권한 체크
     if (!verifyReviewAuth(review, userId)) {
+      log.warn("리뷰 수정 권한 없음 - userId: {}, reviewId: {}", userId, reviewId);
       throw new CustomException(ErrorCode.REVIEW_NO_PERMISSION);
     }
 
@@ -96,22 +108,26 @@ public class ReviewService {
     review.update(request);
     review.updateReviewPhoto(request.photoUrls());
     reviewRepository.save(review);
+    log.info("리뷰 수정 성공 - userId: {}, reviewId: {}", userId, reviewId);
 
     return ReviewResponse.from(review, getReviewPhotoUrlList(review));
   }
 
   /* 단일 리뷰 조회 */
   public ReviewResponse getReview(Long reviewId) {
+    log.info("리뷰 조회 요청 - reviewId: {}", reviewId);
     Review review = findById(reviewId);
 
     List<String> reviewPhotoUrls = getReviewPhotoUrlList(review);
 
+    log.info("리뷰 조회 성공 - reviewId: {}", reviewId);
     return ReviewResponse.from(review, reviewPhotoUrls);
   }
 
   /* 리뷰 리스트 조회 */
   public CursorPageResponse<ReviewResponse> getReviews(Long userId, ReviewSortType sort,
       String cursor, Integer size) {
+    log.info("내 리뷰 리스트 조회 요청 - userId: {}, sort: {}, cursor: {}, size: {}", userId, sort, cursor, size);
     User user = userService.findById(userId);
 
     ProfileType profileType = user.getCurrentActiveProfile();
@@ -142,14 +158,18 @@ public class ReviewService {
 
     }
 
+    log.info("리뷰 리스트 조회 성공 - userId: {}, resultCount: {}", userId, result.size());
+    log.debug("nextPageToken: {}", nextPageToken);
     return new CursorPageResponse<>(result, nextPageToken, hasNext);
   }
 
   /* 리뷰 좋아요 추가 */
   public ReviewLikeResponse likeReview(Long reviewId, Long userId) {
+    log.info("리뷰 좋아요 요청 - userId: {}, reviewId: {}", userId, reviewId);
     Review review = findById(reviewId);
 
     if (review.getTargetType() != ReviewTargetType.STORE) {
+      log.warn("잘못된 리뷰 대상 - reviewId: {}, targetType: {}", reviewId, review.getTargetType());
       throw new CustomException(ErrorCode.REVIEW_INVALID_TARGET);
     }
 
@@ -160,17 +180,21 @@ public class ReviewService {
         LikeAction.LIKE);
 
     if (likeCount == -1) {
+      log.warn("이미 좋아요한 리뷰 - userId: {}, reviewId: {}", userId, reviewId);
       throw new CustomException(ErrorCode.REVIEW_ALREADY_LIKED);
     }
 
+    log.info("리뷰 좋아요 성공 - userId: {}, reviewId: {}, likeCount: {}", userId, reviewId, likeCount);
     return new ReviewLikeResponse(reviewId, likeCount, true);
   }
 
   /* 리뷰 좋아요 취소 */
   public ReviewLikeResponse unlikeReview(Long reviewId, Long userId) {
+    log.info("리뷰 좋아요 취소 요청 - userId: {}, reviewId: {}", userId, reviewId);
     Review review = findById(reviewId);
 
     if (review.getTargetType() != ReviewTargetType.STORE) {
+      log.warn("잘못된 리뷰 대상 - reviewId: {}, targetType: {}", reviewId, review.getTargetType());
       throw new CustomException(ErrorCode.REVIEW_INVALID_TARGET);
     }
 
@@ -183,17 +207,21 @@ public class ReviewService {
 
     // 좋아요가 없는 경우 예외 처리
     if (likeCount == -1) {
+      log.warn("좋아요를 누르지 않은 리뷰 - userId: {}, reviewId: {}", userId, reviewId);
       throw new CustomException(ErrorCode.REVIEW_NOT_LIKED);
     }
 
+    log.info("리뷰 좋아요 취소 성공 - userId: {}, reviewId: {}, likeCount: {}", userId, reviewId, likeCount);
     return new ReviewLikeResponse(reviewId, likeCount, false);
   }
 
   /* 리뷰 좋아요 수 조회 */
   public ReviewLikeResponse getReviewLikeCount(Long reviewId, Long userId) {
+    log.info("리뷰 좋아요 수 조회 요청 - reviewId: {}", reviewId);
     Review review = findById(reviewId);
 
     if (review.getTargetType() != ReviewTargetType.STORE) {
+      log.warn("잘못된 리뷰 대상 - reviewId: {}, targetType: {}", reviewId, review.getTargetType());
       throw new CustomException(ErrorCode.REVIEW_INVALID_TARGET);
     }
 
@@ -202,6 +230,7 @@ public class ReviewService {
     Long likeCount = redisTemplate.opsForSet().size(reviewLikeKey);
     Boolean likedByMe = redisTemplate.opsForSet().isMember(reviewLikeKey, userId);
 
+    log.info("리뷰 좋아요 수 조회 성공 - reviewId: {}, likeCount: {}", reviewId, likeCount);
     return new ReviewLikeResponse(reviewId, likeCount, likedByMe);
   }
 
@@ -247,6 +276,7 @@ public class ReviewService {
 
   /* 리뷰 좋아요 순 정렬 리스트 반환 */
   public List<ReviewLikeResponse> getReviewsSortedByLikes(Long storeId, Long userId) {
+    //상점 내 리뷰 조회 시 좋아요 순 정렬을 가능하게 해주는 메서드. 리뷰 api 내에서는 사용되지 않습니다.
     String reviewSortedKey = "review:likes:store:" + storeId;
 
     //모든 값 조회
