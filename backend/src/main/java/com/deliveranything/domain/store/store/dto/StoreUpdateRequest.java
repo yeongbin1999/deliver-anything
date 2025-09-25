@@ -1,14 +1,12 @@
 package com.deliveranything.domain.store.store.dto;
 
-import com.deliveranything.domain.store.store.enums.StoreCategoryType;
-
 public record StoreUpdateRequest(
-    StoreCategoryType storeCategory,
+    Long storeCategoryId,
     String name,
+    String description,
     String roadAddr,
     Double lat,
-    Double lng,
-    String openHoursJson
+    Double lng
 ) {
 
 }

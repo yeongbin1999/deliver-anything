@@ -1,16 +1,24 @@
-package com.deliveranything.domain.product.entity;
+package com.deliveranything.domain.product.product.entity;
 
+import com.deliveranything.domain.product.product.dto.ProductCreateRequest;
+import com.deliveranything.domain.product.stock.entity.Stock;
 import com.deliveranything.domain.store.store.entity.Store;
 import com.deliveranything.global.entity.BaseEntity;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.ForeignKey;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -34,12 +42,6 @@ public class Product extends BaseEntity {
   @JoinColumn(name = "store_id", nullable = false, foreignKey = @ForeignKey(name = "fk_products_store"))
   private Store store;
 
-//  추후 도입 고민 가게 업종 분류에 따라 물품 카테고리도 달라짐 & 일반 소매점에서 검색 외 카테고리까지 필요한지
-//  @ManyToOne(fetch = FetchType.LAZY)
-//  @JoinColumn(name = "product_category_id",
-//      foreignKey = @ForeignKey(name = "fk_products_product_category"))
-//  private ProductCategory productCategory;
-
   @Column(nullable = false, length = 120)
   private String name;
 
@@ -49,21 +51,25 @@ public class Product extends BaseEntity {
   @Column(nullable = false)
   private Integer price;
 
-  @Column(name = "primary_image_url", nullable = false, length = 512)
-  private String primaryImageUrl;
+  @Column(name = "image_url", nullable = false, length = 512)
+  private String imageUrl;
 
-  //  popularScore = (최근30일 판매량 × 가중치1) + (최근30일 매출액 × 가중치2) 계획
-  @Column(name = "popular_score", nullable = false, columnDefinition = "DOUBLE DEFAULT 0")
-  private Double popularScore = 0.0;
+  @ElementCollection(fetch = FetchType.LAZY)
+  @CollectionTable(
+      name = "product_keywords",
+      joinColumns = @JoinColumn(name = "product_id", foreignKey = @ForeignKey(name = "fk_product_keywords_product")),
+      indexes = {
+          @Index(name = "idx_product_keywords_keyword", columnList = "keyword")
+      }
+  )
+  private List<String> keywords = new ArrayList<>();
 
-  public Product(Store store, String name, Integer price, String primaryImageUrl) {
-    this.store = store;
-    this.name = name;
-    this.price = price;
-    this.primaryImageUrl = primaryImageUrl;
+  @OneToOne(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+  private Stock stock;
+
+
+
+  public static Product of(ProductCreateRequest request, Store store) {
+    return new Product();
   }
-
-//  public void changeCategory(ProductCategory category) {
-//    this.productCategory = category;
-//  }
 }

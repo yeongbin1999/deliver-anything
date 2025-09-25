@@ -10,6 +10,10 @@ spring:
       - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
       - org.springframework.boot.autoconfigure.session.SessionAutoConfiguration
 
+  sql:
+    init:
+      mode: always
+
   jpa:
     database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
@@ -41,6 +45,10 @@ spring:
       port: 6379           # Redis 포트
       password:            # Redis 비밀번호 없음
       timeout: 6000ms      # 연결 타임아웃 (6초)
+
+  elasticsearch:
+    uris:
+      - http://localhost:9200
 
 springdoc:
   default-produces-media-type: application/json;charset=UTF-8   # API 응답 기본 Content-Type
