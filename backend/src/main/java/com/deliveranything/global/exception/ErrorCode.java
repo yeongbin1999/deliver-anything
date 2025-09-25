@@ -21,6 +21,9 @@ public enum ErrorCode {
   // 리뷰 관련 오류
   REVIEW_NO_PERMISSION(HttpStatus.FORBIDDEN, "REVIEW-403", "리뷰를 관리할 권한이 없습니다."),
   REVIEW_NOT_FOUND(HttpStatus.NOT_FOUND, "REVIEW-404", "리뷰를 찾을 수 없습니다."),
+  REVIEW_ALREADY_LIKED(HttpStatus.CONFLICT, "REVIEW-001", "리뷰에 이미 좋아요를 눌렀습니다."),
+  REVIEW_NOT_LIKED(HttpStatus.CONFLICT, "REVIEW-002", "좋아요를 누르지 않은 리뷰입니다."),
+  REVIEW_INVALID_TARGET(HttpStatus.BAD_REQUEST, "REVIEW-003", "리뷰 대상이 유효하지 않습니다."),
 
   // 주문 관련 오류
   ORDER_NOT_FOUND(HttpStatus.NOT_FOUND, "ORDER-404", "주문 정보를 찾을 수 없습니다."),
@@ -30,7 +33,6 @@ public enum ErrorCode {
   PG_PAYMENT_CONFIRM_FAILED(HttpStatus.BAD_REQUEST, "PG-PAYMENT-001",
       "결제 검증 실패: 결제 ID, 주문 번호, 결제 금액 중 하나 이상 불일치합니다."),
   PG_PAYMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "PG-PAYMENT-404", "PG사에서 주문의 결제 이력을 찾을 수 없습니다."),
-
 
   PAYMENT_AMOUNT_NOT_VALID(HttpStatus.BAD_REQUEST, "PAYMENT-001", "결제 금액이 주문의 가격과 다릅니다."),
   PAYMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "PAYMENT-404", "결제 이력을 찾을 수 없습니다."),

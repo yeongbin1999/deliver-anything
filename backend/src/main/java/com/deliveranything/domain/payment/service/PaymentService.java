@@ -40,7 +40,8 @@ public class PaymentService {
   @Transactional
   public void confirmPayment(Long paymentId, PaymentConfirmRequest request) {
     Payment payment = getPayment(paymentId);
-    long orderPrice = orderService.getOrder(request.merchantUid()).getTotalPrice().longValue();
+    long orderPrice = orderService.getOrderByMerchantId(request.merchantUid()).getTotalPrice()
+        .longValue();
 
     if (orderPrice != request.amount()) {
       payment.updateStatus(PaymentStatus.FAILED);

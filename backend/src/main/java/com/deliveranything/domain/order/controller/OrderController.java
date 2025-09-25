@@ -46,7 +46,7 @@ public class OrderController {
       @RequestParam(defaultValue = "10") int size
   ) {
     return ResponseEntity.ok().body(ApiResponse.success("소비자 전체 주문 내역 조회 성공",
-        orderService.getCustomerOrders(인증 객체의 소비자 ID, cursor, size)));
+        orderService.getCustomerOrdersByCursor(인증 객체의 소비자 ID, cursor, size)));
   }
 
   @GetMapping("/{orderId}")

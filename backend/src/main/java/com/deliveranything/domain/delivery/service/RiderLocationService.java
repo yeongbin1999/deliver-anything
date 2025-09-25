@@ -14,7 +14,7 @@ public class RiderLocationService {
 
   private final StringRedisTemplate redisTemplate;
 
-  private static final String RIDER_GEO_KEY = "riders:location";
+  public static final String RIDER_GEO_KEY = "riders:location";
 
   public void saveRiderLocation(RiderLocationDto location) {
     // Redis GEOADD 명령어를 사용하여 라이더 위치 저장

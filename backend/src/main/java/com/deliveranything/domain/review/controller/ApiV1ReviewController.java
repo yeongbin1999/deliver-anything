@@ -2,6 +2,7 @@ package com.deliveranything.domain.review.controller;
 
 import com.deliveranything.domain.review.dto.ReviewCreateRequest;
 import com.deliveranything.domain.review.dto.ReviewCreateResponse;
+import com.deliveranything.domain.review.dto.ReviewLikeResponse;
 import com.deliveranything.domain.review.dto.ReviewResponse;
 import com.deliveranything.domain.review.dto.ReviewUpdateRequest;
 import com.deliveranything.domain.review.enums.ReviewSortType;
@@ -93,7 +94,53 @@ public class ApiV1ReviewController {
   ) {
     Long userId = 1L; //임시 유저 id
 
-    CursorPageResponse<ReviewResponse> response = reviewService.getReviews(userId, sort, cursor, size);
+    CursorPageResponse<ReviewResponse> response = reviewService.getReviews(userId, sort, cursor,
+        size);
+
+    return ResponseEntity.status(HttpStatus.OK)
+        .body(ApiResponse.success(response));
+  }
+
+  @PostMapping("/{reviewId}/like")
+  @Operation(summary = "리뷰 좋아요 등록", description = "로그인한 사용자가 특정 리뷰에 좋아요를 누릅니다. 이미 좋아요한 리뷰는 중복 등록할 수 없습니다.")
+  public ResponseEntity<ApiResponse<ReviewLikeResponse>> likeReview(
+      //      @AuthenticationPrincipal SecurityUser user,
+      //todo: 인증객체 받아와서 전달
+      @PathVariable Long reviewId
+  ) {
+    Long userId = 1L; //임시 유저 id
+
+    ReviewLikeResponse response = reviewService.likeReview(reviewId, userId);
+
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .body(ApiResponse.success(response));
+  }
+
+  @DeleteMapping("/{reviewId}/like")
+  @Operation(summary = "리뷰 좋아요 취소", description = "로그인한 사용자가 특정 리뷰에 좋아요를 누른 상태에서 다시 좋아요를 누르면 취소됩니다.")
+  public ResponseEntity<ApiResponse<ReviewLikeResponse>> unLikeReview(
+      //      @AuthenticationPrincipal SecurityUser user,
+      //todo: 인증객체 받아와서 전달
+      @PathVariable Long reviewId
+  ) {
+    Long userId = 1L; //임시 유저 id
+
+    ReviewLikeResponse response = reviewService.unlikeReview(reviewId, userId);
+
+    return ResponseEntity.status(HttpStatus.OK)
+        .body(ApiResponse.success(response));
+  }
+
+  @GetMapping("/{reviewId}/likes")
+  @Operation(summary = "리뷰 좋아요 수 조회", description = "특정 리뷰에 달린 좋아요의 수를 조회합니다.")
+  public ResponseEntity<ApiResponse<ReviewLikeResponse>> getReviewLikeCount(
+      //      @AuthenticationPrincipal SecurityUser user,
+      //todo: 인증객체 받아와서 전달
+      @PathVariable Long reviewId
+  ) {
+    Long userId = 1L; //임시 유저 id
+
+    ReviewLikeResponse response = reviewService.getReviewLikeCount(reviewId, userId);
 
     return ResponseEntity.status(HttpStatus.OK)
         .body(ApiResponse.success(response));

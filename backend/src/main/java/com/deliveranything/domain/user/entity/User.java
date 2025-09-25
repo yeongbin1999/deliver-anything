@@ -2,6 +2,7 @@ package com.deliveranything.domain.user.entity;
 
 import com.deliveranything.domain.user.entity.profile.CustomerProfile;
 import com.deliveranything.domain.user.entity.profile.RiderProfile;
+import com.deliveranything.domain.user.entity.profile.SellerProfile;
 import com.deliveranything.domain.user.enums.ProfileType;
 import com.deliveranything.domain.user.enums.SocialProvider;
 import com.deliveranything.global.entity.BaseEntity;
@@ -11,7 +12,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
@@ -70,8 +70,10 @@ public class User extends BaseEntity {
   @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
   private CustomerProfile customerProfile;
 
-  @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-  @JoinColumn(name = "rider_profile_id")
+  @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+  private SellerProfile sellerProfile;
+
+  @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
   private RiderProfile riderProfile;
 
   @Builder
@@ -106,7 +108,18 @@ public class User extends BaseEntity {
   }
 
   public void switchProfile(ProfileType targetProfile) {
+    if (!hasProfileForType(targetProfile)) {
+      throw new IllegalStateException(targetProfile + " 프로필이 존재하지 않습니다");
+    }
     this.currentActiveProfile = targetProfile;
+  }
+
+  private boolean hasProfileForType(ProfileType profileType) {
+    return switch (profileType) {
+      case CUSTOMER -> hasCustomerProfile();
+      case SELLER -> hasSellerProfile();
+      case RIDER -> hasRiderProfile();
+    };
   }
 
   public void enable() {
@@ -115,6 +128,18 @@ public class User extends BaseEntity {
 
   public void disable() {
     this.isEnabled = false;
+  }
+
+  public boolean hasCustomerProfile() {
+    return customerProfile != null;
+  }
+
+  public boolean hasSellerProfile() {
+    return sellerProfile != null;
+  }
+
+  public boolean hasRiderProfile() {
+    return riderProfile != null;
   }
 
   //테스트용 임시 세터 메서드.
