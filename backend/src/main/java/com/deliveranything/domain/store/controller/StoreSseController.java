@@ -11,7 +11,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/stores/sse")
 @RestController
-public class StoreOrderSseController {
+public class StoreSseController {
 
   private final SseEmitterManager sseEmitterManager;
 
