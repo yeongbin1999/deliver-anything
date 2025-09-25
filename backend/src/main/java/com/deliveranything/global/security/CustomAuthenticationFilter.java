@@ -3,15 +3,13 @@ package com.deliveranything.global.security;
 import com.deliveranything.domain.user.entity.User;
 import com.deliveranything.domain.user.entity.token.RefreshToken;
 import com.deliveranything.domain.user.enums.ProfileType;
-import com.deliveranything.domain.user.exception.UserErrorException;
 import com.deliveranything.domain.user.repository.RefreshTokenRepository;
 import com.deliveranything.domain.user.repository.UserRepository;
 import com.deliveranything.domain.user.service.AuthTokenService;
-import com.deliveranything.domain.user.service.UserService;
 import com.deliveranything.global.common.ApiResponse;
 import com.deliveranything.global.exception.CustomException;
 import com.deliveranything.global.exception.ErrorCode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.deliveranything.standard.util.Ut;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -37,8 +35,6 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
   private final UserRepository userRepository;
   private final RefreshTokenRepository refreshTokenRepository;
   private final AuthTokenService authTokenService;
-  private final ObjectMapper objectMapper;
-  private final UserService userService;
 
   @Override
   protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
@@ -191,9 +187,7 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
     }
 
     // 2순위: apiKey로 확인 (강사님 방식 호환)
-    return userService.findByApiKey(token)
-        .map(user -> (User) user)
-        .orElseThrow(() -> new UserErrorException(ErrorCode.USER_NOT_FOUND));
+    return userRepository.findByApiKey(token).orElse(null);
   }
 
   /**
@@ -267,6 +261,6 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
     response.setStatus(e.getHttpStatus().value());
 
     ApiResponse<Void> apiResponse = ApiResponse.fail(e.getCode(), e.getMessage());
-    response.getWriter().write(objectMapper.writeValueAsString(apiResponse));
+    response.getWriter().write(Ut.json.toString(apiResponse));
   }
 }

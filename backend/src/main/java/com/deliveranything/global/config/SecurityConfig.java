@@ -2,7 +2,7 @@ package com.deliveranything.global.config;
 
 import com.deliveranything.global.common.ApiResponse;
 import com.deliveranything.global.security.CustomAuthenticationFilter;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.deliveranything.standard.util.Ut;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -12,8 +12,6 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
@@ -25,12 +23,6 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class SecurityConfig {
 
   private final CustomAuthenticationFilter customAuthenticationFilter;
-  private final ObjectMapper objectMapper;
-
-  @Bean
-  PasswordEncoder passwordEncoder() {
-    return new BCryptPasswordEncoder();
-  }
 
   @Bean
   public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -100,7 +92,7 @@ public class SecurityConfig {
                   "AUTH-401",
                   "로그인 후 이용해주세요."
               );
-              response.getWriter().write(objectMapper.writeValueAsString(apiResponse));
+              response.getWriter().write(Ut.json.toString(apiResponse));
             })
             .accessDeniedHandler((request, response, accessDeniedException) -> {
               response.setContentType("application/json;charset=UTF-8");
@@ -110,7 +102,7 @@ public class SecurityConfig {
                   "AUTH-403",
                   "해당 기능을 사용할 권한이 없습니다. 프로필을 확인해주세요."
               );
-              response.getWriter().write(objectMapper.writeValueAsString(apiResponse));
+              response.getWriter().write(Ut.json.toString(apiResponse));
             })
         );
 
@@ -128,7 +120,7 @@ public class SecurityConfig {
     configuration.setAllowedOriginPatterns(List.of(
         "http://localhost:3000",    // React 개발 서버
         "http://localhost:8080",    // Spring Boot 서버
-        "https://*.deliver-anything.shop",  // 배포 도메인
+        "https://*.deliveranything.com",  // 배포 도메인
         "https://cdpn.io"          // CodePen 테스트
     ));
 
