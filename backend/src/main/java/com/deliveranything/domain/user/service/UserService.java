@@ -1,17 +1,28 @@
 package com.deliveranything.domain.user.service;
 
 import com.deliveranything.domain.user.entity.User;
+import com.deliveranything.domain.user.entity.profile.CustomerProfile;
 import com.deliveranything.domain.user.entity.profile.RiderProfile;
+import com.deliveranything.domain.user.entity.profile.SellerProfile;
+import com.deliveranything.domain.user.entity.token.RefreshToken;
 import com.deliveranything.domain.user.enums.ProfileType;
 import com.deliveranything.domain.user.enums.RiderToggleStatus;
+import com.deliveranything.domain.user.enums.SocialProvider;
+import com.deliveranything.domain.user.repository.CustomerProfileRepository;
+import com.deliveranything.domain.user.repository.RefreshTokenRepository;
 import com.deliveranything.domain.user.repository.RiderProfileRepository;
+import com.deliveranything.domain.user.repository.SellerProfileRepository;
 import com.deliveranything.domain.user.repository.UserRepository;
+import com.deliveranything.global.exception.CustomException;
+import com.deliveranything.global.exception.ErrorCode;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,25 +33,28 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserService {
 
   private final UserRepository userRepository;
-  private final CustomerProfileService customerProfileService;
-  private final SellerProfileService sellerProfileService;
-  private final RiderProfileService riderProfileService;
+  private final CustomerProfileRepository customerProfileRepository;
+  private final SellerProfileRepository sellerProfileRepository;
   private final RiderProfileRepository riderProfileRepository;
+  private final RefreshTokenRepository refreshTokenRepository;
+  private final AuthTokenService authTokenService;
+  private final PasswordEncoder passwordEncoder;
 
-  // 기본 조회 Methods
+  // ========== 기본 사용자 관리 ==========
+
   public User findById(Long id) {
-    return userRepository.findById(id).orElse(null);
+    return userRepository.findById(id)
+        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
   }
 
-  public Optional<User> findByIdOptional(Long id) {
-    return userRepository.findById(id);
+  public Optional<User> findByEmail(String email) {
+    return userRepository.findByEmail(email);
   }
 
-  public User findByEmail(String email) {
-    return userRepository.findByEmail(email).orElse(null);
+  public Optional<User> findByApiKey(String apiKey) {
+    return userRepository.findByApiKey(apiKey);
   }
 
-  // 중복 체크 Methods
   public boolean existsByEmail(String email) {
     return userRepository.existsByEmail(email);
   }
@@ -49,73 +63,95 @@ public class UserService {
     return userRepository.existsByPhoneNumber(phoneNumber);
   }
 
-  public Optional<Object> findByApiKey(String apiKey) {
-    return userRepository.findByApiKey(apiKey);
+  public long count() {
+    return userRepository.count();
   }
 
+  // ========== 회원가입 및 인증 ==========
+
+  /**
+   * 회원가입 (멀티 프로필 지원)
+   */
   @Transactional
-  public void updatePassword(Long userId, String newPassword) {
-    User user = findById(userId);
-    if (user == null) {
-      log.warn("사용자를 찾을 수 없습니다: userId={}", userId);
-      return;
+  public User signup(String email, String password, String name, String phoneNumber) {
+    // 중복 체크
+    if (existsByEmail(email)) {
+      log.warn("이미 존재하는 이메일: {}", email);
+      throw new CustomException(ErrorCode.USER_NOT_FOUND);
     }
-    user.updatePassword(newPassword);
-    userRepository.save(user);
-    log.info("사용자 비밀번호 업데이트 완료: userId={}", userId);
+
+    if (existsByPhoneNumber(phoneNumber)) {
+      log.warn("이미 존재하는 전화번호: {}", phoneNumber);
+      throw new CustomException(ErrorCode.USER_NOT_FOUND);
+    }
+
+    // 비밀번호 암호화
+    String encodedPassword = passwordEncoder.encode(password);
+
+    User newUser = User.builder()
+        .email(email)
+        .password(encodedPassword)
+        .name(name)
+        .phoneNumber(phoneNumber)
+        .socialProvider(SocialProvider.LOCAL)
+        .build();
+
+    User savedUser = userRepository.save(newUser);
+    log.info("신규 사용자 가입 완료: userId={}, email={}", savedUser.getId(), email);
+
+    return savedUser;
   }
 
-  // 프로필 관리 Methods
+  /**
+   * 로그인
+   */
   @Transactional
-  public boolean switchProfile(Long userId, ProfileType targetProfile) {
-    User user = findById(userId);
-    if (user == null) {
-      log.warn("사용자를 찾을 수 없습니다: userId={}", userId);
-      return false;
+  public User login(String email, String password) {
+    User user = findByEmail(email)
+        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+    if (!user.isEnabled()) {
+      log.warn("비활성화된 계정 로그인 시도: email={}", email);
+      throw new CustomException(ErrorCode.USER_NOT_FOUND);
     }
-    if (!user.isOnboardingCompleted()) {
-      log.warn("온보딩이 완료되지 않은 사용자입니다: userId={}", userId);
-      return false;
+
+    // 비밀번호 검증
+    if (!passwordEncoder.matches(password, user.getPassword())) {
+      log.warn("잘못된 비밀번호 로그인 시도: email={}", email);
+      throw new CustomException(ErrorCode.USER_NOT_FOUND);
     }
-    if (user.getCurrentActiveProfile() == targetProfile) {
-      log.info("이미 활성화된 프로필입니다: userId={}, targetProfile={}", userId, targetProfile);
-      return true;
-    }
-    user.switchProfile(targetProfile);
+
+    // 마지막 로그인 시간 업데이트
+    user.updateLastLoginAt();
     userRepository.save(user);
 
-    log.info("프로필 전환 완료: userId={}, newActiveProfile={}", userId, targetProfile);
-    return true;
+    log.info("로그인 성공: userId={}, email={}", user.getId(), email);
+    return user;
   }
 
-  public List<ProfileType> getAvailableProfiles(Long userId) {
-    User user = findById(userId);
-    if (user == null) {
-      log.warn("사용자를 찾을 수 없습니다: userId={}", userId);
-      return List.of();
-    }
-
-    // Service에서 직접 처리
-    return getAvailableProfilesInternal(user);
+  /**
+   * JWT Access Token 생성
+   */
+  public String genAccessToken(User user) {
+    return authTokenService.genAccessToken(user);
   }
 
-  public boolean canSwitchToProfile(Long userId, ProfileType targetProfile) {
-    User user = findById(userId);
-    if (user == null) {
-      return false;
-    }
-    return canSwitchToProfileInternal(user, targetProfile);
+  /**
+   * JWT 페이로드 파싱
+   */
+  public Map<String, Object> payload(String accessToken) {
+    return authTokenService.payload(accessToken);
   }
 
-  // 온보딩 관련 Methods
+  // ========== 멀티 프로필 온보딩 ==========
+
+  /**
+   * 온보딩 완료 처리
+   */
   @Transactional
   public boolean completeOnboarding(Long userId, ProfileType selectedProfile,
       Map<String, Object> profileData) {
     User user = findById(userId);
-    if (user == null) {
-      log.warn("사용자를 찾을 수 없습니다: userId={}", userId);
-      return false;
-    }
 
     // 이미 온보딩 완료된 경우
     if (user.isOnboardingCompleted()) {
@@ -124,7 +160,7 @@ public class UserService {
     }
 
     // 프로필 생성
-    boolean profileCreated = createProfileByType(userId, selectedProfile, profileData);
+    boolean profileCreated = createProfileByType(user, selectedProfile, profileData);
     if (!profileCreated) {
       log.warn("프로필 생성 실패: userId={}, selectedProfile={}", userId, selectedProfile);
       return false;
@@ -139,15 +175,127 @@ public class UserService {
   }
 
   /**
+   * 프로필 전환
+   */
+  @Transactional
+  public boolean switchProfile(Long userId, ProfileType targetProfile) {
+    User user = findById(userId);
+
+    if (!user.isOnboardingCompleted()) {
+      log.warn("온보딩이 완료되지 않은 사용자입니다: userId={}", userId);
+      return false;
+    }
+
+    if (user.getCurrentActiveProfile() == targetProfile) {
+      log.info("이미 활성화된 프로필입니다: userId={}, targetProfile={}", userId, targetProfile);
+      return true;
+    }
+
+    try {
+      user.switchProfile(targetProfile);
+      userRepository.save(user);
+      log.info("프로필 전환 완료: userId={}, newActiveProfile={}", userId, targetProfile);
+      return true;
+    } catch (IllegalStateException e) {
+      log.warn("프로필 전환 실패: userId={}, targetProfile={}, error={}", userId, targetProfile,
+          e.getMessage());
+      return false;
+    }
+  }
+
+  /**
+   * 사용 가능한 프로필 목록 조회
+   */
+  public List<ProfileType> getAvailableProfiles(Long userId) {
+    User user = findById(userId);
+
+    List<ProfileType> profiles = new ArrayList<>();
+
+    if (user.hasCustomerProfile()) {
+      profiles.add(ProfileType.CUSTOMER);
+    }
+    if (user.hasSellerProfile()) {
+      profiles.add(ProfileType.SELLER);
+    }
+    if (user.hasRiderProfile()) {
+      profiles.add(ProfileType.RIDER);
+    }
+
+    return profiles;
+  }
+
+  // ========== RefreshToken 관리 ==========
+
+  /**
+   * RefreshToken 생성
+   */
+  @Transactional
+  public RefreshToken createRefreshToken(User user, String deviceInfo) {
+    // 해당 디바이스의 기존 토큰 비활성화
+    refreshTokenRepository.deactivateTokenByUserAndDevice(user, deviceInfo);
+
+    RefreshToken refreshToken = RefreshToken.builder()
+        .user(user)
+        .expiresAt(LocalDateTime.now().plusDays(30)) // 30일 유효
+        .deviceInfo(deviceInfo)
+        .build();
+
+    RefreshToken saved = refreshTokenRepository.save(refreshToken);
+    log.info("RefreshToken 생성: userId={}, deviceInfo={}", user.getId(), deviceInfo);
+
+    return saved;
+  }
+
+  /**
+   * 모든 RefreshToken 무효화 (로그아웃)
+   */
+  @Transactional
+  public void invalidateAllRefreshTokens(Long userId) {
+    User user = findById(userId);
+
+    refreshTokenRepository.deactivateAllTokensByUser(user);
+    log.info("모든 RefreshToken 무효화: userId={}", userId);
+  }
+
+  // ========== 계정 관리 ==========
+
+  @Transactional
+  public void updatePassword(Long userId, String newPassword) {
+    User user = findById(userId);
+
+    String encodedPassword = passwordEncoder.encode(newPassword);
+    user.updatePassword(encodedPassword);
+    userRepository.save(user);
+
+    log.info("사용자 비밀번호 업데이트 완료: userId={}", userId);
+  }
+
+  @Transactional
+  public void verifyEmail(Long userId) {
+    User user = findById(userId);
+
+    user.verifyEmail();
+    userRepository.save(user);
+
+    log.info("이메일 인증 완료: userId={}", userId);
+  }
+
+  // ========== Private Helper Methods ==========
+
+  /**
    * 프로필 타입별 생성 로직
    */
-  private boolean createProfileByType(Long userId, ProfileType profileType,
+  private boolean createProfileByType(User user, ProfileType profileType,
       Map<String, Object> profileData) {
-    return switch (profileType) {
+    switch (profileType) {
       case CUSTOMER -> {
         String nickname = (String) profileData.get("nickname");
-        var profile = customerProfileService.createProfile(userId, nickname);
-        yield profile != null;
+        CustomerProfile profile = CustomerProfile.builder()
+            .user(user)
+            .nickname(nickname)
+            .profileImageUrl(null)
+            .build();
+        customerProfileRepository.save(profile);
       }
       case SELLER -> {
         String nickname = (String) profileData.get("nickname");
@@ -158,225 +306,38 @@ public class UserService {
         String accountNumber = (String) profileData.get("accountNumber");
         String accountHolder = (String) profileData.get("accountHolder");
 
-        var profile = sellerProfileService.createProfile(
-            userId, nickname, businessName, businessCertificateNumber,
-            businessPhoneNumber, bankName, accountNumber, accountHolder
-        );
-        yield profile != null;
+        SellerProfile profile = SellerProfile.builder()
+            .user(user)
+            .nickname(nickname)
+            .profileImageUrl(null)
+            .businessName(businessName)
+            .businessCertificateNumber(businessCertificateNumber)
+            .businessPhoneNumber(businessPhoneNumber)
+            .bankName(bankName)
+            .accountNumber(accountNumber)
+            .accountHolder(accountHolder)
+            .build();
+        sellerProfileRepository.save(profile);
       }
       case RIDER -> {
-        // 일단 builder 패턴 사용
-        try {
-          User user = userRepository.findById(userId).orElse(null);
-          if (user == null) {
-            yield false;
-          }
+        String nickname = (String) profileData.get("nickname");
+        String licenseNumber = (String) profileData.get("licenseNumber");
+        String area = (String) profileData.getOrDefault("area", "서울");
 
-          String nickname = (String) profileData.get("nickname");
-          String licenseNumber = (String) profileData.get("licenseNumber");
-          String area = (String) profileData.getOrDefault("area", "서울");
-          String bankName = (String) profileData.getOrDefault("bankName", "");
-          String bankAccountNumber = (String) profileData.getOrDefault("bankAccountNumber", "");
-          String bankAccountHolderName = (String) profileData.getOrDefault("bankAccountHolderName",
-              "");
-
-          RiderProfile riderProfile = RiderProfile.builder()
-              .nickname(nickname)
-              .toggleStatus(RiderToggleStatus.OFF) // 기본값: 비활성화
-              .area(area)
-              .licenseNumber(licenseNumber)
-              .profileImageUrl(null)
-              .bankName(bankName)
-              .bankAccountNumber(bankAccountNumber)
-              .bankAccountHolderName(bankAccountHolderName)
-              .user(user)
-              .build();
-
-          // Repository 직접 사용 (임시)
-          riderProfileRepository.save(riderProfile);
-          log.info("라이더 프로필 생성 완료 (임시): userId={}, licenseNumber={}", userId, licenseNumber);
-          yield true;
-
-        } catch (Exception e) {
-          log.error("라이더 프로필 생성 실패 (임시): userId={}", userId, e);
-          yield false;
-        }
+        RiderProfile profile = RiderProfile.builder()
+            .nickname(nickname)
+            .toggleStatus(RiderToggleStatus.OFF)
+            .area(area)
+            .licenseNumber(licenseNumber)
+            .profileImageUrl(null)
+            .bankName("")
+            .bankAccountNumber("")
+            .bankAccountHolderName("")
+            .user(user)
+            .build();
+        riderProfileRepository.save(profile);
       }
-    };
-  }
-
-  public boolean isOnboardingCompleted(Long userId) {
-    User user = findById(userId);
-    if (user == null) {
-      return false;
     }
-    return user.isOnboardingCompleted();
-  }
-
-  // 기타 Methods
-  @Transactional
-  public void updateLastLoginAt(Long userId) {
-    User user = findById(userId);
-    if (user == null) {
-      log.warn("사용자를 찾을 수 없습니다: userId={}", userId);
-      return;
-    }
-
-    user.updateLastLoginAt();
-    userRepository.save(user);
-
-    log.info("사용자 마지막 로그인 시간 업데이트 완료: userId={}", userId);
-  }
-
-  // 이메일 인증 처리 임시
-  @Transactional
-  public void verifyEmail(Long userId) {
-    User user = findById(userId);
-    if (user == null) {
-      log.warn("사용자를 찾을 수 없습니다: userId={}", userId);
-      return;
-    }
-
-    user.verifyEmail();
-    userRepository.save(user);
-
-    log.info("이메일 인증 완료: userId={}", userId);
-  }
-
-  // 회원 가입 - 임시 (추후 이메일 인증, SocialProvider, SocialId 등 추가 고려)
-  public User signup(String email, String password, String name, String phoneNumber) {
-    // 중복 체크
-    if (existsByEmail(email)) {
-      log.warn("이미 존재하는 이메일: {}", email);
-      return null;
-    }
-
-    if (existsByPhoneNumber(phoneNumber)) {
-      log.warn("이미 존재하는 전화번호: {}", phoneNumber);
-      return null;
-    }
-
-    User newUser = User.builder()
-        .email(email)
-        .password(password)
-        .name(name)
-        .phoneNumber(phoneNumber)
-        .build();
-
-    userRepository.save(newUser);
-    log.info("신규 사용자 가입 완료: userId={}", newUser.getId());
-    return newUser;
-  }
-
-  // 계정 활성화/비활성화 ( Spring Security의 UserDetailsService 연동 대비)
-  @Transactional
-  public void enableUser(Long userId) {
-    User user = findById(userId);
-    if (user == null) {
-      log.warn("사용자를 찾을 수 없습니다: userId={}", userId);
-      return;
-    }
-
-    user.enable();
-    userRepository.save(user);
-    log.info("계정 활성화: userId={}", userId);
-  }
-
-  @Transactional
-  public void disableUser(Long userId) {
-    User user = findById(userId);
-    if (user == null) {
-      log.warn("사용자를 찾을 수 없습니다: userId={}", userId);
-      return;
-    }
-
-    user.disable();
-    userRepository.save(user);
-    log.info("계정 비활성화: userId={}", userId);
-  }
-
-  public boolean isUserEnabled(Long userId) {
-    User user = findById(userId);
-    if (user == null) {
-      return false;
-    }
-    return user.isEnabled();
-  }
-
-  // 회원탈퇴 (일단 논리적 삭제)
-  @Transactional
-  public boolean deleteUser(Long userId) {
-    User user = findById(userId);
-    if (user == null) {
-      log.warn("사용자를 찾을 수 없습니다: userId={}", userId);
-      return false;
-    }
-
-    // 계정 비활성화 (논리적 삭제)
-    user.disable();
-    userRepository.save(user);
-
-    log.info("회원 탈퇴 처리 완료: userId={}", userId);
     return true;
   }
-
-  // 로그인 기능 (임시 - Spring Security 도입 전)
-  public User login(String email, String password) {
-    User user = findByEmail(email);
-    if (user == null) {
-      log.warn("존재하지 않는 이메일: {}", email);
-      return null;
-    }
-
-    if (!user.isEnabled()) {
-      log.warn("비활성화된 계정 로그인 시도: email={}", email);
-      return null;
-    }
-
-    // TODO: Spring Security 도입 후 PasswordEncoder로 암호화된 비밀번호 비교
-    if (!user.getPassword().equals(password)) {
-      log.warn("잘못된 비밀번호 로그인 시도: email={}", email);
-      return null;
-    }
-
-    // 로그인 성공 - 마지막 로그인 시간 업데이트
-    updateLastLoginAt(user.getId());
-
-    log.info("로그인 성공: userId={}, email={}", user.getId(), email);
-    return user;
-  }
-
-  // 프로필 관리를 위한 Private Helper Methods
-  private List<ProfileType> getAvailableProfilesInternal(User user) {
-    List<ProfileType> profiles = new ArrayList<>();
-
-    if (user.getCustomerProfile() != null) {
-      profiles.add(ProfileType.CUSTOMER);
-    }
-    // TODO: SellerProfile, RiderProfile 연관관계 추가 시 로직 확장
-
-    return profiles;
-  }
-
-
-  private boolean canSwitchToProfileInternal(User user, ProfileType targetProfile) {
-    if (!user.isOnboardingCompleted()) {
-      return false;
-    }
-
-    return switch (targetProfile) {
-      case CUSTOMER -> user.getCustomerProfile() != null;
-      case SELLER -> false; // TODO: 나중에 SellerProfile 연관관계 추가 시 수정
-      case RIDER -> false;  // TODO: 나중에 RiderProfile 연관관계 추가 시 수정
-    };
-  }
-
-  private boolean hasProfileInternal(User user, ProfileType profileType) {
-    return switch (profileType) {
-      case CUSTOMER -> user.getCustomerProfile() != null;
-      case SELLER -> false; // TODO: 나중에 수정
-      case RIDER -> false;  // TODO: 나중에 수정
-    };
-  }
-
 }
