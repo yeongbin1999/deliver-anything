@@ -103,13 +103,16 @@ public class User extends BaseEntity implements UserDetails {
 
   @Builder
   public User(String email, String password, String name, String phoneNumber,
-      SocialProvider socialProvider, String socialId) {
+      SocialProvider socialProvider, String socialId, ProfileType CurrentActiveProfile,
+      Long currentActiveProfileId) {
     this.email = email;
     this.password = password;
     this.name = name;
     this.phoneNumber = phoneNumber;
     this.socialProvider = socialProvider != null ? socialProvider : SocialProvider.LOCAL;
     this.socialId = socialId;
+    this.currentActiveProfile = CurrentActiveProfile;
+    this.currentActiveProfileId = currentActiveProfileId;
 
     // 계정 상태 초기값 설정
     this.isEmailVerified = false;

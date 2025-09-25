@@ -1,6 +1,7 @@
-package com.deliveranything.global.security;
+package com.deliveranything.global.config;
 
 import com.deliveranything.global.common.ApiResponse;
+import com.deliveranything.global.security.CustomAuthenticationFilter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
