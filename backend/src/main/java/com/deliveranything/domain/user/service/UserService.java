@@ -49,6 +49,9 @@ public class UserService {
     return userRepository.existsByPhoneNumber(phoneNumber);
   }
 
+  public Optional<Object> findByApiKey(String apiKey) {
+    return userRepository.findByApiKey(apiKey);
+  }
 
   @Transactional
   public void updatePassword(Long userId, String newPassword) {
