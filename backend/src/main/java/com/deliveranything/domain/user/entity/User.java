@@ -3,6 +3,7 @@ package com.deliveranything.domain.user.entity;
 import com.deliveranything.domain.user.entity.profile.CustomerProfile;
 import com.deliveranything.domain.user.entity.profile.RiderProfile;
 import com.deliveranything.domain.user.entity.profile.SellerProfile;
+import com.deliveranything.domain.user.entity.token.RefreshToken;
 import com.deliveranything.domain.user.enums.ProfileType;
 import com.deliveranything.domain.user.enums.SocialProvider;
 import com.deliveranything.global.entity.BaseEntity;
@@ -12,6 +13,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
@@ -249,6 +251,10 @@ public class User extends BaseEntity implements UserDetails {
   public boolean hasRiderProfile() {
     return riderProfile != null;
   }
+
+  // 토큰 관리
+  @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+  private List<RefreshToken> refreshTokens = new ArrayList<>();
 
   // 사용 가능한 프로필 목록 반환 (JWT 페이로드용)
   public List<ProfileType> getAvailableProfiles() {
