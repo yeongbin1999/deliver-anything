@@ -79,7 +79,8 @@ public class Ut {
    */
   public static class json {
 
-    public static ObjectMapper objectMapper;
+    // ✅ 수정: objectMapper 직접 초기화
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
     public static String toString(Object object) {
       return toString(object, null);

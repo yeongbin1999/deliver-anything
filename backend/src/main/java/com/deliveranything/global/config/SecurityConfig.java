@@ -73,6 +73,10 @@ public class SecurityConfig {
         .headers(headers -> headers
             .frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin)
         )
+
+        // ✅ CORS 설정 적용 추가
+        .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+
         .csrf(AbstractHttpConfigurer::disable)
         .formLogin(AbstractHttpConfigurer::disable)
         .logout(AbstractHttpConfigurer::disable)
@@ -120,7 +124,7 @@ public class SecurityConfig {
     configuration.setAllowedOriginPatterns(List.of(
         "http://localhost:3000",    // React 개발 서버
         "http://localhost:8080",    // Spring Boot 서버
-        "https://*.deliveranything.com",  // 배포 도메인
+        "https://*.deliver-anything.shop",  // 배포 도메인
         "https://cdpn.io"          // CodePen 테스트
     ));
 

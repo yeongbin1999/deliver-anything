@@ -47,7 +47,7 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
     } catch (CustomException e) {
       handleAuthenticationError(response, e);
     } catch (Exception e) {
-      log.error("인증 처리 중 예상치 못한 오류", e);
+      log.error("Unexpected error during authentication processing", e);
       handleAuthenticationError(response, new CustomException(ErrorCode.USER_NOT_FOUND));
     }
   }
@@ -159,7 +159,18 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
     if (payload != null) {
       Long userId = (Long) payload.get("id");
       String name = (String) payload.get("name");
-      ProfileType currentActiveProfile = (ProfileType) payload.get("currentActiveProfile");
+
+      // ✅ 안전한 타입 변환
+      String profileStr = (String) payload.get("currentActiveProfile");
+      ProfileType currentActiveProfile = null;
+      if (profileStr != null) {
+        try {
+          currentActiveProfile = ProfileType.valueOf(profileStr);
+        } catch (IllegalArgumentException e) {
+          log.warn("Invalid ProfileType in JWT: {}", profileStr);
+        }
+      }
+
       Long currentActiveProfileId = (Long) payload.get("currentActiveProfileId");
 
       // JWT에서 사용자 정보 복원 (DB 조회 최소화)
