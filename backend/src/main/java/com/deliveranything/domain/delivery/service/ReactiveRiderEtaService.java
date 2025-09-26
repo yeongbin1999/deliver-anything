@@ -2,6 +2,11 @@ package com.deliveranything.domain.delivery.service;
 
 import static com.deliveranything.domain.delivery.service.RiderLocationService.RIDER_GEO_KEY;
 
+import com.deliveranything.domain.user.entity.profile.RiderProfile;
+import com.deliveranything.domain.user.enums.RiderToggleStatus;
+import com.deliveranything.domain.user.repository.RiderProfileRepository;
+import com.deliveranything.global.exception.CustomException;
+import com.deliveranything.global.exception.ErrorCode;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -23,6 +28,7 @@ public class ReactiveRiderEtaService {
 
   private final StringRedisTemplate redisTemplate;
   private final EtaService etaService;
+  private final RiderProfileRepository riderProfileRepository;
 
   //반경 내 라이더 검색 후 ETA 계산
   // Kafka 발행(2차 구현)
@@ -46,6 +52,11 @@ public class ReactiveRiderEtaService {
 
     for (GeoResult<RedisGeoCommands.GeoLocation<String>> result : nearbyRiders) {
       RedisGeoCommands.GeoLocation<String> loc = result.getContent();
+      RiderProfile riderProfile = riderProfileRepository.findById(Long.parseLong(loc.getName()))
+          .orElseThrow(() -> new CustomException(ErrorCode.RIDER_NOT_FOUND));
+      if (riderProfile.getToggleStatus() == RiderToggleStatus.OFF) {
+        continue; // OFF 상태 라이더는 제외
+      }
       riderIds.add(loc.getName());
       riderPoints.add(loc.getPoint());
     }
