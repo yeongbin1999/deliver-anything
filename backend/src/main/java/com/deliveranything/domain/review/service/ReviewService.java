@@ -3,6 +3,7 @@ package com.deliveranything.domain.review.service;
 import com.deliveranything.domain.review.dto.ReviewCreateRequest;
 import com.deliveranything.domain.review.dto.ReviewCreateResponse;
 import com.deliveranything.domain.review.dto.ReviewLikeResponse;
+import com.deliveranything.domain.review.dto.ReviewRatingAndListResponseDto;
 import com.deliveranything.domain.review.dto.ReviewResponse;
 import com.deliveranything.domain.review.dto.ReviewUpdateRequest;
 import com.deliveranything.domain.review.entity.Review;
@@ -127,7 +128,8 @@ public class ReviewService {
   /* 리뷰 리스트 조회 */
   public CursorPageResponse<ReviewResponse> getReviews(Long userId, ReviewSortType sort,
       String cursor, Integer size) {
-    log.info("내 리뷰 리스트 조회 요청 - userId: {}, sort: {}, cursor: {}, size: {}", userId, sort, cursor, size);
+    log.info("내 리뷰 리스트 조회 요청 - userId: {}, sort: {}, cursor: {}, size: {}", userId, sort, cursor,
+        size);
     User user = userService.findById(userId);
 
     ProfileType profileType = user.getCurrentActiveProfile();
@@ -339,4 +341,16 @@ public class ReviewService {
     );
   }
 
+  public Double getAvgRating(Long riderProfileId) {
+    return Math.round(reviewRepository.findAvgRatingByTargetIdAndTargetType(riderProfileId,
+        ReviewTargetType.RIDER) * 100.0) / 100.0;
+  }
+
+  public ReviewRatingAndListResponseDto getReviewRatingAndList(
+      Long userId, ReviewSortType sort, String cursor, Integer size) {
+    return new ReviewRatingAndListResponseDto(
+        getAvgRating(userId),
+        getReviews(userId, sort, cursor, size)
+    );
+  }
 }
