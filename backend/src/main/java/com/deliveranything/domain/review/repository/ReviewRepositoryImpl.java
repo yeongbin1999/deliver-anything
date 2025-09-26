@@ -2,7 +2,7 @@ package com.deliveranything.domain.review.repository;
 
 import com.deliveranything.domain.review.entity.QReview;
 import com.deliveranything.domain.review.entity.Review;
-import com.deliveranything.domain.review.enums.ReviewSortType;
+import com.deliveranything.domain.review.enums.MyReviewSortType;
 import com.deliveranything.domain.store.store.entity.QStore;
 import com.deliveranything.domain.user.entity.User;
 import com.deliveranything.domain.user.entity.profile.QRiderProfile;
@@ -11,7 +11,6 @@ import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 
@@ -21,7 +20,7 @@ public class ReviewRepositoryImpl implements ReviewRepositoryCustom {
   private final JPAQueryFactory queryFactory;
 
   @Override
-  public List<Review> findReviewsByProfile(User user, ProfileType profileType, ReviewSortType sort,
+  public List<Review> findReviewsByProfile(User user, ProfileType profileType, MyReviewSortType sort,
       String[] cursor, int pageSize) {
     QReview review = QReview.review;
     QRiderProfile riderProfile = QRiderProfile.riderProfile;

@@ -6,18 +6,14 @@ import com.deliveranything.domain.review.dto.ReviewCreateRequest;
 import com.deliveranything.domain.review.dto.ReviewCreateResponse;
 import com.deliveranything.domain.review.dto.ReviewResponse;
 import com.deliveranything.domain.review.dto.ReviewUpdateRequest;
-import com.deliveranything.domain.review.entity.Review;
-import com.deliveranything.domain.review.enums.ReviewSortType;
+import com.deliveranything.domain.review.enums.MyReviewSortType;
 import com.deliveranything.domain.review.enums.ReviewTargetType;
 import com.deliveranything.domain.review.factory.ReviewFactory;
 import com.deliveranything.domain.review.repository.ReviewRepository;
 import com.deliveranything.domain.review.service.ReviewService;
-import com.deliveranything.domain.settlement.enums.TargetType;
 import com.deliveranything.domain.user.entity.User;
 import com.deliveranything.domain.user.entity.profile.CustomerProfile;
-import com.deliveranything.domain.user.entity.profile.RiderProfile;
 import com.deliveranything.domain.user.enums.ProfileType;
-import com.deliveranything.domain.user.enums.RiderToggleStatus;
 import com.deliveranything.domain.user.repository.UserRepository;
 import com.deliveranything.global.common.CursorPageResponse;
 import com.deliveranything.global.exception.CustomException;
@@ -28,7 +24,6 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
@@ -386,7 +381,7 @@ public class ApiV1ReviewControllerTest {
 
     // when : 리뷰 목록 조회
     CursorPageResponse<ReviewResponse> responses = reviewService.getReviews(user.getId(),
-        ReviewSortType.RATING_ASC, null, 10);
+        MyReviewSortType.RATING_ASC, null, 10);
     // getReviewsByUser: 유저 기준, 최대 10개, 커서 없음
 
     // then : 조회 결과 검증
@@ -434,7 +429,7 @@ public class ApiV1ReviewControllerTest {
 
     // when : 리뷰 목록 조회 (평점 오름차순)
     CursorPageResponse<ReviewResponse> responses = reviewService.getReviews(user.getId(),
-        ReviewSortType.RATING_ASC, null, 10);
+        MyReviewSortType.RATING_ASC, null, 10);
 
     // then : 개수 검증
     assertEquals(3, responses.content().size(), "리뷰 개수가 일치해야 합니다");
@@ -551,7 +546,7 @@ public class ApiV1ReviewControllerTest {
 
     // when : 리뷰 목록 조회 (평점 오름차순)
     CursorPageResponse<ReviewResponse> responses = reviewService.getReviews(user.getId(),
-        ReviewSortType.RATING_ASC, null, 10);
+        MyReviewSortType.RATING_ASC, null, 10);
 
     // then : 개수 검증
     assertEquals(3, responses.content().size());
@@ -602,7 +597,7 @@ public class ApiV1ReviewControllerTest {
     // when : 리뷰 목록 조회 (최신순)
     CursorPageResponse<ReviewResponse> responses = reviewService.getReviews(
         user.getId(),
-        ReviewSortType.LATEST, // 최신순
+        MyReviewSortType.LATEST, // 최신순
         null,
         10
     );
