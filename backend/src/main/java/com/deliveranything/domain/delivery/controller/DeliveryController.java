@@ -3,16 +3,23 @@ package com.deliveranything.domain.delivery.controller;
 import com.deliveranything.domain.delivery.dto.request.DeliveryAreaRequestDto;
 import com.deliveranything.domain.delivery.dto.request.RiderToggleStatusRequestDto;
 import com.deliveranything.domain.delivery.service.DeliveryService;
+import com.deliveranything.domain.review.dto.ReviewRatingAndListResponseDto;
+import com.deliveranything.domain.review.dto.ReviewResponse;
+import com.deliveranything.domain.review.enums.ReviewSortType;
+import com.deliveranything.domain.review.service.ReviewService;
 import com.deliveranything.global.common.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -22,6 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class DeliveryController {
 
   private final DeliveryService deliveryService;
+  private final ReviewService reviewService;
 
   @PatchMapping("/status")
   @Operation(summary = "라이더 토글 전환", description = "라이더 토글 전환으로 상태를 전환합니다.")
@@ -40,5 +48,25 @@ public class DeliveryController {
   ) {
     deliveryService.updateDeliveryArea(deliveryAreaRequestDto);
     return ResponseEntity.ok(ApiResponse.success());
+  }
+
+  @GetMapping("/reviews")
+  public ResponseEntity<ApiResponse<ReviewRatingAndListResponseDto>> getReviews(
+      @RequestParam Long userId, // profileId 고려 -> 인증객체
+      @RequestParam(required = false, defaultValue = "LATEST") ReviewSortType sort,
+      @RequestParam(required = false) String cursor,
+      @RequestParam(required = false, defaultValue = "10") Integer size
+  ) {
+    ReviewRatingAndListResponseDto response = reviewService.getReviewRatingAndList(
+        userId, sort, cursor, size);
+    return ResponseEntity.ok(ApiResponse.success(response));
+  }
+
+  @GetMapping("/reviews/{reviewId}")
+  public ResponseEntity<ApiResponse<ReviewResponse>> getReviewDetail(
+      @PathVariable Long reviewId
+  ) {
+    ReviewResponse response = reviewService.getReview(reviewId);
+    return ResponseEntity.ok(ApiResponse.success(response));
   }
 }
