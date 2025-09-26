@@ -77,32 +77,85 @@ public class ReviewRepositoryImpl implements ReviewRepositoryCustom {
       String[] decodedCursor, int pageSize) {
     QReview review = QReview.review;
 
-    // 커서 조건
-    BooleanExpression cursorCondition = null;
+    // 커서 값 초기화
+    Long cursorId = null;
+    Integer cursorValue = null;          // rating 또는 likeCount 기준
+    LocalDateTime cursorCreatedAt = null;
+
+    // decodedCursor가 존재하면 값 파싱
     if (decodedCursor != null && decodedCursor.length > 0) {
+      switch (sort) {
+        case LATEST:
+        case OLDEST:
+          cursorCreatedAt = LocalDateTime.parse(decodedCursor[0]);
+          cursorId = Long.parseLong(decodedCursor[1]);
+          break;
+        case RATING_DESC:
+        case RATING_ASC:
+          cursorValue = Integer.parseInt(decodedCursor[0]);
+          cursorId = Long.parseLong(decodedCursor[1]);
+          break;
+        case LIKED_DESC:
+          cursorValue = Integer.parseInt(decodedCursor[0]);
+          cursorId = Long.parseLong(decodedCursor[1]);
+          break;
+      }
+    }
+
+    // 커서 조건 생성
+    BooleanExpression cursorCondition = null;
+    if (cursorId != null) {
       cursorCondition = switch (sort) {
-        case LATEST -> review.createdAt.lt(LocalDateTime.parse(decodedCursor[0]));
-        case OLDEST -> review.createdAt.gt(LocalDateTime.parse(decodedCursor[0]));
-        case RATING_DESC -> review.rating.lt(Integer.parseInt(decodedCursor[0]));
-        case RATING_ASC -> review.rating.gt(Integer.parseInt(decodedCursor[0]));
-        case LIKED_DESC -> review.likeCount.lt(Integer.parseInt(decodedCursor[0]));
+        case LATEST -> review.createdAt.lt(cursorCreatedAt)
+            .or(review.createdAt.eq(cursorCreatedAt)
+                .and(review.id.lt(cursorId)));
+        case OLDEST -> review.createdAt.gt(cursorCreatedAt)
+            .or(review.createdAt.eq(cursorCreatedAt)
+                .and(review.id.gt(cursorId)));
+        case RATING_DESC -> review.rating.lt(cursorValue)
+            .or(review.rating.eq(cursorValue)
+                .and(review.id.lt(cursorId)));
+        case RATING_ASC -> review.rating.gt(cursorValue)
+            .or(review.rating.eq(cursorValue)
+                .and(review.id.gt(cursorId)));
+        case LIKED_DESC -> review.likeCount.lt(cursorValue)
+            .or(review.likeCount.eq(cursorValue)
+                .and(review.id.lt(cursorId)));
       };
     }
 
-    // 정렬
-    OrderSpecifier<?> orderSpecifier = switch (sort) {
-      case LATEST -> review.createdAt.desc();
-      case OLDEST -> review.createdAt.asc();
-      case RATING_DESC -> review.rating.desc();
-      case RATING_ASC -> review.rating.asc();
-      case LIKED_DESC -> review.likeCount.desc();
-    };
+    // 정렬 기준 생성 (복합 정렬)
+    OrderSpecifier<?> primary = null, secondary = null;
 
+    switch (sort) {
+      case LATEST:
+        primary = review.createdAt.desc();
+        secondary = review.id.desc();
+        break;
+      case OLDEST:
+        primary = review.createdAt.asc();
+        secondary = review.id.asc();
+        break;
+      case RATING_DESC:
+        primary = review.rating.desc();
+        secondary = review.id.desc();
+        break;
+      case RATING_ASC:
+        primary = review.rating.asc();
+        secondary = review.id.asc();
+        break;
+      case LIKED_DESC:
+        primary = review.likeCount.desc();
+        secondary = review.id.desc();
+        break;
+    }
+
+    // 실제 조회
     return queryFactory
         .selectFrom(review)
-        .where(review.targetId.eq(storeId), cursorCondition) // storeId 기준 필터링
-        .orderBy(orderSpecifier)
-        .limit(pageSize + 1) // hasNext 판단용 +1
+        .where(review.targetId.eq(storeId), cursorCondition)
+        .orderBy(primary, secondary)
+        .limit(pageSize + 1)
         .fetch();
   }
 }
