@@ -4,17 +4,20 @@ import com.deliveranything.domain.order.dto.OrderCreateRequest;
 import com.deliveranything.domain.order.dto.OrderCreateResponse;
 import com.deliveranything.domain.order.dto.OrderItemRequest;
 import com.deliveranything.domain.order.dto.OrderResponse;
+import com.deliveranything.domain.order.dto.OrderStoreCursorResponse;
 import com.deliveranything.domain.order.entity.Order;
 import com.deliveranything.domain.order.entity.OrderItem;
 import com.deliveranything.domain.order.enums.OrderStatus;
 import com.deliveranything.domain.order.repository.OrderRepository;
 import com.deliveranything.domain.order.repository.OrderRepositoryCustom;
 import com.deliveranything.domain.payment.service.PaymentService;
+import com.deliveranything.domain.product.product.service.ProductService;
 import com.deliveranything.domain.store.store.service.StoreService;
 import com.deliveranything.domain.user.service.CustomerProfileService;
 import com.deliveranything.global.common.CursorPageResponse;
 import com.deliveranything.global.exception.CustomException;
 import com.deliveranything.global.exception.ErrorCode;
+import com.deliveranything.global.util.CursorUtil;
 import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -122,15 +125,41 @@ public class OrderService {
   }
 
   @Transactional(readOnly = true)
-  public List<Order> getStoreOrdersByCursor(
+  public CursorPageResponse<OrderStoreCursorResponse> getStoreOrdersByCursor(
       Long storeId,
-      List<OrderStatus> orderStatuses,
-      LocalDateTime lastCreatedAt,
-      Long lastOrderId,
+      String nextPageToken,
       int size
   ) {
-    return orderRepositoryCustom.findStoreOrders(storeId, orderStatuses, lastCreatedAt, lastOrderId,
-        size + 1);
+    LocalDateTime lastCreatedAt = null;
+    Long lastOrderId = null;
+    String[] decodedParts = CursorUtil.decode(nextPageToken);
+
+    if (decodedParts != null && decodedParts.length == 2) {
+      try {
+        lastCreatedAt = LocalDateTime.parse(decodedParts[0]);
+        lastOrderId = Long.parseLong(decodedParts[1]);
+      } catch (NumberFormatException e) {
+        lastCreatedAt = null;
+        lastOrderId = null;
+      }
+    }
+
+    List<Order> cursorOrders = orderRepositoryCustom.findStoreOrders(storeId,
+        List.of(OrderStatus.COMPLETED, OrderStatus.REJECTED), lastCreatedAt, lastOrderId, size + 1);
+
+    List<OrderStoreCursorResponse> cursorResponses = cursorOrders.stream()
+        .limit(size)
+        .map(OrderStoreCursorResponse::from)
+        .toList();
+
+    boolean hasNext = cursorOrders.size() > size;
+    OrderStoreCursorResponse lastResponse = cursorResponses.getLast();
+
+    return new CursorPageResponse<>(
+        cursorResponses,
+        hasNext ? CursorUtil.encode(lastResponse.createdAt(), lastResponse.orderId()) : null,
+        hasNext
+    );
   }
 
   private Order getOrderById(Long orderId) {
