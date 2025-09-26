@@ -400,11 +400,13 @@ public class ReviewService {
     return new CursorPageResponse<>(result, nextPageToken, hasNext);
   }
 
+  /* 라이더 별점 평균값 조회 메서드 */
   public Double getAvgRating(Long riderProfileId) {
     return Math.round(reviewRepository.findAvgRatingByTargetIdAndTargetType(riderProfileId,
         ReviewTargetType.RIDER) * 100.0) / 100.0;
   }
 
+  /* 별점 평균값 & 리뷰 리스트 조회 메서드 */
   public ReviewRatingAndListResponseDto getReviewRatingAndList(
       Long userId, MyReviewSortType sort, String cursor, Integer size) {
     return new ReviewRatingAndListResponseDto(
