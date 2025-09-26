@@ -1,16 +1,23 @@
 package com.deliveranything.global.config;
 
+import com.deliveranything.domain.delivery.handler.RedisSubscriber;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.listener.PatternTopic;
+import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 @Configuration
+@RequiredArgsConstructor
 public class RedisConfig {
+
+  private final RedisSubscriber redisSubscriber;
 
   @Bean
   public LettuceConnectionFactory redisConnectionFactory() {
@@ -33,5 +40,18 @@ public class RedisConfig {
   @Bean
   public StringRedisTemplate stringRedisTemplate(RedisConnectionFactory connectionFactory) {
     return new StringRedisTemplate(connectionFactory);
+  }
+
+  // Redis Pub/Sub용 추가
+  @Bean
+  public RedisMessageListenerContainer redisMessageListenerContainer(
+      RedisConnectionFactory connectionFactory) {
+    RedisMessageListenerContainer container = new RedisMessageListenerContainer();
+    container.setConnectionFactory(connectionFactory);
+
+    // order-events 채널 구독
+    container.addMessageListener(redisSubscriber, new PatternTopic("order-events"));
+
+    return container;
   }
 }

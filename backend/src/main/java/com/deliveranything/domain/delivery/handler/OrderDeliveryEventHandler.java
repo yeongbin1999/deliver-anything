@@ -1,10 +1,10 @@
 package com.deliveranything.domain.delivery.handler;
 
 import com.deliveranything.domain.delivery.event.dto.OrderDeliveryCreatedEvent;
-import com.deliveranything.domain.delivery.event.event.RiderEtaPublisher;
+import com.deliveranything.domain.delivery.event.event.RedisPublisher;
 import com.deliveranything.domain.delivery.service.OrderNotificationService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -12,12 +12,11 @@ import org.springframework.stereotype.Component;
 public class OrderDeliveryEventHandler {
 
   private final OrderNotificationService orderNotificationService;
-  private final RiderEtaPublisher riderEtaPublisher;
+  private final RedisPublisher redisPublisher; // Kafka → Redis 변경
 
-  @KafkaListener(topics = "order-events", groupId = "delivery-service")
+  @EventListener // @KafkaListener → @EventListener로 변경
   public void handleOrderCreated(OrderDeliveryCreatedEvent orderEvent) {
-    // Kafka 발행 분리
     orderNotificationService.processOrderEvent(orderEvent)
-        .subscribe(riderEtaPublisher::publish);
+        .subscribe(redisPublisher::publish); // Kafka → Redis 변경
   }
 }
