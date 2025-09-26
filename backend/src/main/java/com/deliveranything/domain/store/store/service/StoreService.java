@@ -1,10 +1,11 @@
 package com.deliveranything.domain.store.store.service;
 
-import com.deliveranything.domain.order.dto.OrderStoreCursorResponse;
+import com.deliveranything.domain.order.dto.OrderResponse;
 import com.deliveranything.domain.order.service.OrderService;
 import com.deliveranything.domain.store.category.entity.StoreCategory;
 import com.deliveranything.domain.store.category.service.StoreCategoryService;
 import com.deliveranything.domain.store.store.dto.StoreCreateRequest;
+import com.deliveranything.domain.store.store.dto.StoreOrderCursorResponse;
 import com.deliveranything.domain.store.store.dto.StoreUpdateRequest;
 import com.deliveranything.domain.store.store.entity.Store;
 import com.deliveranything.domain.store.store.repository.StoreRepository;
@@ -69,11 +70,18 @@ public class StoreService {
   }
 
   @Transactional(readOnly = true)
-  public CursorPageResponse<OrderStoreCursorResponse> getFinalizedStoreOrder(
+  public CursorPageResponse<StoreOrderCursorResponse> getFinalizedStoreOrder(
       Long storeId,
       String nextPageToken,
       int size
   ) {
-    return orderService.getStoreOrdersByCursor(storeId, nextPageToken, size);
+    CursorPageResponse<OrderResponse> orderPage = orderService.getStoreOrdersByCursor(storeId,
+        nextPageToken, size);
+
+    return new CursorPageResponse<>(
+        orderPage.content().stream().map(StoreOrderCursorResponse::from).toList(),
+        orderPage.nextPageToken(),
+        orderPage.hasNext()
+    );
   }
 }
