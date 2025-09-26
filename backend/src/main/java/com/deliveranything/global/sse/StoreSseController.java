@@ -1,6 +1,5 @@
-package com.deliveranything.domain.store.controller;
+package com.deliveranything.global.sse;
 
-import com.deliveranything.global.sse.SseEmitterManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -20,4 +19,14 @@ public class StoreSseController {
   public SseEmitter subscribe(@PathVariable Long storeId) {
     return sseEmitterManager.subscribe("store-" + storeId);
   }
+
+  /**
+   * SSE 클라이언트와 서버 사이의 1:1 연결
+   * 상점(Store)은 데이터 엔티티이지, 주체가 아님
+   * SSE 연결 주체는 항상 User(Client) 이어야 함
+   * 클라이언트가 subscribe 호출 → 서버가 userId 기준으로 emitter 등록
+   * 여기서 문제 1번
+   * 각 프로필을 서브 계정처럼 사용하고 있는데 프로필 Id가 각 프로필마다 존재해 겹침
+   *
+   */
 }
