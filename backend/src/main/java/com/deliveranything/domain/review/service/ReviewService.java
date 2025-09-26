@@ -365,9 +365,16 @@ public class ReviewService {
     String[] decodedCursor = CursorUtil.decode(cursor);
 
     //실제 조회
-    List<ReviewResponse> reviewList = reviewPhotoRepository.getStoreReviews(storeId, sort,
+    List<Review> reviews = reviewRepository.getStoreReviews(storeId, sort,
         decodedCursor,
         size);
+
+    List<ReviewResponse> reviewList = new ArrayList<>();
+
+    for (Review review : reviews) {
+      Long likeCount = redisTemplate.opsForSet().size("review:likes:" + review.getId());
+      reviewList.add(ReviewResponse.from(review, getReviewPhotoUrlList(review), likeCount));
+    }
 
     boolean hasNext = reviewList.size() > size;
 

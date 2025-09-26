@@ -3,6 +3,7 @@ package com.deliveranything.domain.review.repository;
 import com.deliveranything.domain.review.entity.QReview;
 import com.deliveranything.domain.review.entity.Review;
 import com.deliveranything.domain.review.enums.MyReviewSortType;
+import com.deliveranything.domain.review.enums.StoreReviewSortType;
 import com.deliveranything.domain.store.store.entity.QStore;
 import com.deliveranything.domain.user.entity.User;
 import com.deliveranything.domain.user.entity.profile.QRiderProfile;
@@ -68,5 +69,11 @@ public class ReviewRepositoryImpl implements ReviewRepositoryCustom {
         .set(review.likeCount, likeCount)
         .where(review.id.eq(reviewId))
         .execute();
+  }
+
+  @Override
+  public List<Review> getStoreReviews(Long storeId, StoreReviewSortType sort, String[] decodedCursor, int size) {
+
+    return List.of();
   }
 }
