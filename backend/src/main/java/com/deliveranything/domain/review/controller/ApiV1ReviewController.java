@@ -5,10 +5,8 @@ import com.deliveranything.domain.review.dto.ReviewCreateResponse;
 import com.deliveranything.domain.review.dto.ReviewLikeResponse;
 import com.deliveranything.domain.review.dto.ReviewResponse;
 import com.deliveranything.domain.review.dto.ReviewUpdateRequest;
-import com.deliveranything.domain.review.enums.ReviewSortType;
 import com.deliveranything.domain.review.service.ReviewService;
 import com.deliveranything.global.common.ApiResponse;
-import com.deliveranything.global.common.CursorPageResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +19,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController

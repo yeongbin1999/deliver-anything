@@ -13,11 +13,12 @@ public record ReviewResponse(
     ReviewTargetType targetType,
     Long targetId,
     LocalDateTime createdAt,
-    LocalDateTime updatedAt
+    LocalDateTime updatedAt,
+    Long likeCount
     // , UserResponse
 ) {
 
-  public static ReviewResponse from(Review review, List<String> photoUrls) {
+  public static ReviewResponse from(Review review, List<String> photoUrls, Long likeCount) {
     return new ReviewResponse(
         review.getId(),
         review.getRating(),
@@ -26,7 +27,8 @@ public record ReviewResponse(
         review.getTargetType(),
         review.getTargetId(),
         review.getCreatedAt(),
-        review.getUpdatedAt()
+        review.getUpdatedAt(),
+        likeCount
         //userResponse
     );
   }

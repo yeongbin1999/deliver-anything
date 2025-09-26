@@ -5,7 +5,7 @@ import com.deliveranything.domain.delivery.dto.request.RiderToggleStatusRequestD
 import com.deliveranything.domain.delivery.service.DeliveryService;
 import com.deliveranything.domain.review.dto.ReviewRatingAndListResponseDto;
 import com.deliveranything.domain.review.dto.ReviewResponse;
-import com.deliveranything.domain.review.enums.ReviewSortType;
+import com.deliveranything.domain.review.enums.MyReviewSortType;
 import com.deliveranything.domain.review.service.ReviewService;
 import com.deliveranything.global.common.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -53,7 +53,7 @@ public class DeliveryController {
   @GetMapping("/reviews")
   public ResponseEntity<ApiResponse<ReviewRatingAndListResponseDto>> getReviews(
       @RequestParam Long userId, // profileId 고려 -> 인증객체
-      @RequestParam(required = false, defaultValue = "LATEST") ReviewSortType sort,
+      @RequestParam(required = false, defaultValue = "LATEST") MyReviewSortType sort,
       @RequestParam(required = false) String cursor,
       @RequestParam(required = false, defaultValue = "10") Integer size
   ) {
