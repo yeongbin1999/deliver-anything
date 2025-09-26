@@ -1,8 +1,8 @@
 package com.deliveranything.domain.delivery.service;
 
+import com.deliveranything.domain.delivery.dto.OrderDetailsDto;
 import com.deliveranything.domain.delivery.event.dto.OrderDeliveryCreatedEvent;
 import com.deliveranything.domain.delivery.event.dto.RiderNotificationDto;
-import com.deliveranything.domain.order.dto.OrderDetailsDto;
 import com.deliveranything.domain.order.enums.OrderStatus;
 import java.util.ArrayList;
 import java.util.List;

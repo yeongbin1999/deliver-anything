@@ -1,4 +1,4 @@
-package com.deliveranything.domain.order.dto;
+package com.deliveranything.domain.delivery.dto;
 
 import lombok.Builder;
 

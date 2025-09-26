@@ -1,6 +1,6 @@
 package com.deliveranything.domain.delivery.event.dto;
 
-import com.deliveranything.domain.order.dto.OrderDetailsDto;
+import com.deliveranything.domain.delivery.dto.OrderDetailsDto;
 import com.deliveranything.domain.order.enums.OrderStatus;
 import lombok.Builder;
 
