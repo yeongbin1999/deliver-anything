@@ -4,7 +4,6 @@ import com.deliveranything.domain.order.dto.OrderCreateRequest;
 import com.deliveranything.domain.order.dto.OrderCreateResponse;
 import com.deliveranything.domain.order.dto.OrderItemRequest;
 import com.deliveranything.domain.order.dto.OrderResponse;
-import com.deliveranything.domain.order.dto.OrderStoreCursorResponse;
 import com.deliveranything.domain.order.entity.Order;
 import com.deliveranything.domain.order.entity.OrderItem;
 import com.deliveranything.domain.order.enums.OrderStatus;
@@ -125,7 +124,7 @@ public class OrderService {
   }
 
   @Transactional(readOnly = true)
-  public CursorPageResponse<OrderStoreCursorResponse> getStoreOrdersByCursor(
+  public CursorPageResponse<OrderResponse> getStoreOrdersByCursor(
       Long storeId,
       String nextPageToken,
       int size
@@ -147,17 +146,17 @@ public class OrderService {
     List<Order> cursorOrders = orderRepositoryCustom.findStoreOrders(storeId,
         List.of(OrderStatus.COMPLETED, OrderStatus.REJECTED), lastCreatedAt, lastOrderId, size + 1);
 
-    List<OrderStoreCursorResponse> cursorResponses = cursorOrders.stream()
+    List<OrderResponse> cursorResponses = cursorOrders.stream()
         .limit(size)
-        .map(OrderStoreCursorResponse::from)
+        .map(OrderResponse::from)
         .toList();
 
     boolean hasNext = cursorOrders.size() > size;
-    OrderStoreCursorResponse lastResponse = cursorResponses.getLast();
+    OrderResponse lastResponse = cursorResponses.getLast();
 
     return new CursorPageResponse<>(
         cursorResponses,
-        hasNext ? CursorUtil.encode(lastResponse.createdAt(), lastResponse.orderId()) : null,
+        hasNext ? CursorUtil.encode(lastResponse.createdAt(), lastResponse.id()) : null,
         hasNext
     );
   }
