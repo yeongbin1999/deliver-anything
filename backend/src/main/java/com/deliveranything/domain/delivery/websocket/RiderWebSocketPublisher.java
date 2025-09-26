@@ -12,6 +12,7 @@ public class RiderWebSocketPublisher {
 
   private final SimpMessagingTemplate messagingTemplate;
 
+  // 여기 SSE 변경 보류
   public void publishToRider(String riderId, RiderNotificationDto dto) {
     String destination = "/topic/rider/" + riderId;
     messagingTemplate.convertAndSend(destination, dto);

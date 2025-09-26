@@ -31,7 +31,7 @@ public class OrderNotificationService {
 
     return distanceKmMono.flatMap(distanceMap -> {
       double distanceKm = distanceMap.getOrDefault("distance", 0.0);
-      int expectedCharge = (int) (distanceKm * 1000); // 임시 배달료 계산
+      int expectedCharge = 1000 + (int) (distanceKm * 500); // 임시 배달료 계산
 
       // 2️⃣ 반경 내 라이더 ETA 조회
       return reactiveRiderEtaService.findNearbyRidersEta(customerLat, customerLon, 3.0)

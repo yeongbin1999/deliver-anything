@@ -43,7 +43,11 @@ public enum ErrorCode {
   STORE_CATEGORY_NOT_FOUND(HttpStatus.NOT_FOUND, "STORE-CATEGORY-404", "상점 카테고리를 찾을 수 없습니다."),
 
   // SSE 관련 오류
-  SSE_SUBSCRIBE_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, "SSE-503", "SSE 연결에 실패했습니다.");
+  SSE_SUBSCRIBE_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, "SSE-503", "SSE 연결에 실패했습니다."),
+
+  // Redis 관련 오류
+  REDIS_MESSAGE_PROCESSING_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "REDIS-500",
+      "Redis 메시지 처리 중 오류가 발생했습니다.");
 
   private final HttpStatus httpStatus;
   private final String code;
