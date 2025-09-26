@@ -40,7 +40,10 @@ public enum ErrorCode {
 
   // 상점 관련 오류
   STORE_NOT_FOUND(HttpStatus.NOT_FOUND, "STORE-404", "상점을 찾을 수 없습니다."),
-  STORE_CATEGORY_NOT_FOUND(HttpStatus.NOT_FOUND, "STORE-CATEGORY-404", "상점 카테고리를 찾을 수 없습니다.");
+  STORE_CATEGORY_NOT_FOUND(HttpStatus.NOT_FOUND, "STORE-CATEGORY-404", "상점 카테고리를 찾을 수 없습니다."),
+
+  // SSE 관련 오류
+  SSE_SUBSCRIBE_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, "SSE-503", "SSE 연결에 실패했습니다.");
 
   private final HttpStatus httpStatus;
   private final String code;
