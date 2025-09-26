@@ -54,6 +54,20 @@ public class EmitterRepository {
     }
 
     /**
+     * 특정 profileId와 deviceId에 해당하는 Emitter 조회
+     * @param profileId 사용자 프로필 ID
+     * @param deviceId  기기 ID
+     * @return 해당 SseEmitter 객체 또는 null
+     */
+    public SseEmitter get(Long profileId, String deviceId) {
+        Map<String, SseEmitter> deviceEmitters = profileEmitters.get(profileId);
+        if (deviceEmitters != null) {
+            return deviceEmitters.get(deviceId);
+        }
+        return null;
+    }
+
+    /**
      * 모든 Emitter 조회 (하트비트 발송 시 사용)
      * @return 전체 SseEmitter 맵
      */
