@@ -83,23 +83,23 @@ public class ApiV1ReviewController {
         .body(ApiResponse.success(response));
   }
 
-  @GetMapping
-  @Operation(summary = "리뷰 리스트 조회", description = "유저 id로 유저 currentActiveProfile 조회 후 해당 프로필로 리뷰를 조회합니다.")
-  public ResponseEntity<ApiResponse<CursorPageResponse<ReviewResponse>>> getReviews(
-      //      @AuthenticationPrincipal SecurityUser user,
-      //todo: 인증객체 받아와서 getReviews에 전달
-      @RequestParam(defaultValue = "LATEST") ReviewSortType sort,
-      @RequestParam(required = false) String cursor,
-      @RequestParam(defaultValue = "10") Integer size
-  ) {
-    Long userId = 1L; //임시 유저 id
-
-    CursorPageResponse<ReviewResponse> response = reviewService.getReviews(userId, sort, cursor,
-        size);
-
-    return ResponseEntity.status(HttpStatus.OK)
-        .body(ApiResponse.success(response));
-  }
+//  @GetMapping
+//  @Operation(summary = "리뷰 리스트 조회", description = "유저 id로 유저 currentActiveProfile 조회 후 해당 프로필로 리뷰를 조회합니다.")
+//  public ResponseEntity<ApiResponse<CursorPageResponse<ReviewResponse>>> getReviews(
+//      //      @AuthenticationPrincipal SecurityUser user,
+//      //todo: 인증객체 받아와서 getReviews에 전달
+//      @RequestParam(defaultValue = "LATEST") ReviewSortType sort,
+//      @RequestParam(required = false) String cursor,
+//      @RequestParam(defaultValue = "10") Integer size
+//  ) {
+//    Long userId = 1L; //임시 유저 id
+//
+//    CursorPageResponse<ReviewResponse> response = reviewService.getReviews(userId, sort, cursor,
+//        size);
+//
+//    return ResponseEntity.status(HttpStatus.OK)
+//        .body(ApiResponse.success(response));
+//  }
 
   @PostMapping("/{reviewId}/like")
   @Operation(summary = "리뷰 좋아요 등록", description = "로그인한 사용자가 특정 리뷰에 좋아요를 누릅니다. 이미 좋아요한 리뷰는 중복 등록할 수 없습니다.")
