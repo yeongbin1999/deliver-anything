@@ -21,7 +21,8 @@ public class ReviewRepositoryImpl implements ReviewRepositoryCustom {
   private final JPAQueryFactory queryFactory;
 
   @Override
-  public List<Review> findReviewsByProfile(User user, ProfileType profileType, MyReviewSortType sort,
+  public List<Review> findReviewsByProfile(User user, ProfileType profileType,
+      MyReviewSortType sort,
       String[] cursor, int pageSize) {
     QReview review = QReview.review;
     QRiderProfile riderProfile = QRiderProfile.riderProfile;
@@ -72,8 +73,36 @@ public class ReviewRepositoryImpl implements ReviewRepositoryCustom {
   }
 
   @Override
-  public List<Review> getStoreReviews(Long storeId, StoreReviewSortType sort, String[] decodedCursor, int size) {
+  public List<Review> getStoreReviews(Long storeId, StoreReviewSortType sort,
+      String[] decodedCursor, int pageSize) {
+    QReview review = QReview.review;
 
-    return List.of();
+    // 커서 조건
+    BooleanExpression cursorCondition = null;
+    if (decodedCursor != null && decodedCursor.length > 0) {
+      cursorCondition = switch (sort) {
+        case LATEST -> review.createdAt.lt(LocalDateTime.parse(decodedCursor[0]));
+        case OLDEST -> review.createdAt.gt(LocalDateTime.parse(decodedCursor[0]));
+        case RATING_DESC -> review.rating.lt(Integer.parseInt(decodedCursor[0]));
+        case RATING_ASC -> review.rating.gt(Integer.parseInt(decodedCursor[0]));
+        case LIKED_DESC -> review.likeCount.lt(Integer.parseInt(decodedCursor[0]));
+      };
+    }
+
+    // 정렬
+    OrderSpecifier<?> orderSpecifier = switch (sort) {
+      case LATEST -> review.createdAt.desc();
+      case OLDEST -> review.createdAt.asc();
+      case RATING_DESC -> review.rating.desc();
+      case RATING_ASC -> review.rating.asc();
+      case LIKED_DESC -> review.likeCount.desc();
+    };
+
+    return queryFactory
+        .selectFrom(review)
+        .where(review.targetId.eq(storeId), cursorCondition) // storeId 기준 필터링
+        .orderBy(orderSpecifier)
+        .limit(pageSize + 1) // hasNext 판단용 +1
+        .fetch();
   }
 }
