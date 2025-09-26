@@ -5,6 +5,7 @@ import com.deliveranything.domain.order.enums.OrderStatus;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
 public interface OrderRepository extends JpaRepository<Order, Long> {
 
@@ -12,11 +13,15 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
   Optional<Order> findByMerchantId(String merchantId);
 
-  Optional<Order> findByDeliveryId(Long deliveryId);
+  @Query("SELECT o FROM Order o JOIN FETCH o.store WHERE o.delivery.id = :deliveryId")
+  Optional<Order> findByDeliveryIdWithStore(Long deliveryId);
 
-  List<Order> findByStatus(OrderStatus orderStatus);
+  @Query("SELECT o FROM Order o JOIN FETCH o.store WHERE o.status = :status")
+  List<Order> findAllByStatusWithStore(OrderStatus status);
 
-  List<Order> findByDeliveryRiderProfileId(Long riderProfileId);
+  @Query("SELECT o FROM Order o JOIN FETCH o.store WHERE o.delivery.riderProfile.id = :riderProfileId")
+  List<Order> findAllByDeliveryRiderProfileIdWithStore(Long riderProfileId);
 
-  List<Order> findByStoreIdAndStatusInOrderByCreatedAtAsc(Long storeId, List<OrderStatus> statuses);
+  List<Order> findAllByStoreIdAndStatusInOrderByCreatedAtAsc(Long storeId,
+      List<OrderStatus> statuses);
 }

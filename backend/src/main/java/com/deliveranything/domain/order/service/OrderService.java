@@ -92,8 +92,10 @@ public class OrderService {
   }
 
   @Transactional(readOnly = true)
-  public List<Order> getPreparedOrders() {
-    return orderRepository.findByStatus(OrderStatus.PREPARING);
+  public List<OrderResponse> getPreparedOrders() {
+    return orderRepository.findAllByStatusWithStore(OrderStatus.PREPARING).stream()
+        .map(OrderResponse::from)
+        .toList();
   }
 
   @Transactional
@@ -102,14 +104,16 @@ public class OrderService {
   }
 
   @Transactional(readOnly = true)
-  public Order getOrderByDeliveryId(Long deliveryId) {
-    return orderRepository.findByDeliveryId(deliveryId)
-        .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND));
+  public OrderResponse getOrderByDeliveryId(Long deliveryId) {
+    return OrderResponse.from(orderRepository.findByDeliveryIdWithStore(deliveryId)
+        .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND)));
   }
 
   @Transactional(readOnly = true)
-  public List<Order> getRiderDeliveryOrders(Long riderProfileId) {
-    return orderRepository.findByDeliveryRiderProfileId(riderProfileId);
+  public List<OrderResponse> getRiderDeliveryOrders(Long riderProfileId) {
+    return orderRepository.findAllByDeliveryRiderProfileIdWithStore(riderProfileId).stream()
+        .map(OrderResponse::from)
+        .toList();
   }
 
   @Transactional(readOnly = true)
@@ -120,7 +124,7 @@ public class OrderService {
 
   @Transactional(readOnly = true)
   public List<Order> getStoreOrdersWithStatuses(Long storeId, List<OrderStatus> orderStatuses) {
-    return orderRepository.findByStoreIdAndStatusInOrderByCreatedAtAsc(storeId, orderStatuses);
+    return orderRepository.findAllByStoreIdAndStatusInOrderByCreatedAtAsc(storeId, orderStatuses);
   }
 
   @Transactional(readOnly = true)
