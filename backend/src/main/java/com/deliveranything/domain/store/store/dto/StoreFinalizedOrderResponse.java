@@ -14,7 +14,6 @@ public record StoreFinalizedOrderResponse(
     String storeNote,
     LocalDateTime createdAt
 ) {
-
   public static StoreFinalizedOrderResponse from(Order order) {
     return new StoreFinalizedOrderResponse(
         order.getId(),

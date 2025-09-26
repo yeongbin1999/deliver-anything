@@ -15,6 +15,9 @@ spring:
       port: ${REDIS_PORT}
       password: ${REDIS_PASSWORD}
 
+  elasticsearch:
+    uris: ${ELASTICSEARCH_URIS}
+
 logging:
   level:
     com.back: INFO                                     # 서비스 흐름만 기록

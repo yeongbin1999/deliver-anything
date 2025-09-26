@@ -1,26 +1,25 @@
 package com.deliveranything.domain.store.store.dto;
 
 import com.deliveranything.domain.store.store.entity.Store;
-import com.deliveranything.domain.store.store.enums.StoreStatus;
 
 public record StoreResponse(
     Long id,
     String name,
+    String description,
     String roadAddr,
-    StoreStatus status,
     boolean isOpenNow,
-    Double distance,
-    int deliveryFee
+    String imageUrl,
+    String category
 ) {
-    public StoreResponse(Store store, Double distance, int deliveryFee) {
-        this(
-            store.getId(),
-            store.getName(),
-            store.getRoadAddr(),
-            store.getStatus(),
-            store.isOpenNow(),
-            distance,
-            deliveryFee
-        );
-    }
+  public static StoreResponse from(Store store) {
+    return new StoreResponse(
+        store.getId(),
+        store.getName(),
+        store.getDescription(),
+        store.getRoadAddr(),
+        store.isOpenNow(),
+        store.getImageUrl(),
+        store.getStoreCategory().getName()
+    );
+  }
 }

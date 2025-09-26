@@ -1,7 +1,7 @@
-package com.deliveranything.domain.store.store.controller;
+package com.deliveranything.domain.store.category.controller;
 
-import com.deliveranything.domain.store.store.dto.StoreCategoryResponse;
-import com.deliveranything.domain.store.store.service.StoreCategoryService;
+import com.deliveranything.domain.store.category.dto.StoreCategoryResponse;
+import com.deliveranything.domain.store.category.service.StoreCategoryService;
 import com.deliveranything.global.common.ApiResponse;
 import java.util.List;
 import lombok.RequiredArgsConstructor;

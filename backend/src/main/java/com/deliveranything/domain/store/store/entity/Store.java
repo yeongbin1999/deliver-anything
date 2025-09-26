@@ -1,6 +1,6 @@
 package com.deliveranything.domain.store.store.entity;
 
-import com.deliveranything.domain.store.store.enums.StoreCategoryType;
+import com.deliveranything.domain.store.category.entity.StoreCategory;
 import com.deliveranything.domain.store.store.enums.StoreStatus;
 import com.deliveranything.global.entity.BaseEntity;
 import jakarta.persistence.Column;
@@ -8,11 +8,10 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
-import java.time.LocalDateTime;
-import com.deliveranything.domain.store.store.dto.StoreUpdateRequest;
-import com.deliveranything.global.util.PointUtil;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -38,17 +37,23 @@ public class Store extends BaseEntity {
   @Column(name = "seller_profile_id", nullable = false)
   private Long sellerProfileId;
 
-  @Enumerated(EnumType.STRING)
-  @Column(name = "store_category", nullable = false)
-  private StoreCategoryType storeCategory;
+  @ManyToOne
+  @JoinColumn(name = "store_category_id", nullable = false)
+  private StoreCategory storeCategory;
+
+  @Column(name = "image_url", length = 255)
+  private String imageUrl;
 
   @Column(nullable = false, length = 120)
   private String name;
 
-  @Column(name = "road_addr", length = 255)
+  @Column(columnDefinition = "TEXT")
+  private String description;
+
+  @Column(name = "road_addr", length = 255, nullable = false)
   private String roadAddr;
 
-  @Column(columnDefinition = "POINT SRID 4326")
+  @Column(columnDefinition = "POINT SRID 4326", nullable = false)
   private Point location;
 
   @Enumerated(EnumType.STRING)
@@ -58,37 +63,31 @@ public class Store extends BaseEntity {
   @Column(name = "is_open_now", nullable = false)
   private boolean isOpenNow = false;
 
-  @Column(name = "open_hours_json", columnDefinition = "TEXT") // H2/MySQL 호환을 위해 TEXT로 매핑
-  private String openHoursJson;
-
-  @Column(name = "next_change_at")
-  private LocalDateTime nextChangeAt;
-
   @Builder
-  public Store(Long sellerProfileId, StoreCategoryType storeCategory, String name, String roadAddr, Point location, String openHoursJson) {
+  public Store(Long sellerProfileId, StoreCategory storeCategory, String name, String description, String roadAddr, Point location) {
     this.sellerProfileId = sellerProfileId;
     this.storeCategory = storeCategory;
     this.name = name;
+    this.description = description;
     this.roadAddr = roadAddr;
     this.location = location;
-    this.openHoursJson = openHoursJson;
   }
 
-  public void update(StoreUpdateRequest request) {
-    if (request.storeCategory() != null) {
-      this.storeCategory = request.storeCategory();
+  public void update(StoreCategory storeCategory, String name, String description, String roadAddr, Point location) {
+    if (storeCategory != null) {
+      this.storeCategory = storeCategory;
     }
-    if (request.name() != null) {
-      this.name = request.name();
+    if (name != null) {
+      this.name = name;
     }
-    if (request.roadAddr() != null) {
-      this.roadAddr = request.roadAddr();
+    if (description != null) {
+      this.description = description;
     }
-    if (request.lat() != null && request.lng() != null) {
-      this.location = PointUtil.createPoint(request.lat(), request.lng());
+    if (roadAddr != null) {
+      this.roadAddr = roadAddr;
     }
-    if (request.openHoursJson() != null) {
-      this.openHoursJson = request.openHoursJson();
+    if (location != null) {
+      this.location = location;
     }
   }
 }
