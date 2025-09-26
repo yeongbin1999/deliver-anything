@@ -6,6 +6,7 @@ import com.deliveranything.domain.notification.service.NotificationService;
 import com.deliveranything.global.common.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -27,22 +29,26 @@ public class NotificationController {
   private final NotificationService notificationService;
   private final EmitterRepository emitterRepository;
 
-  @Operation(summary = "SSE 구독", description = "SSE를 통해 실시간 알림을 구독합니다.")
+  @Operation(summary = "SSE 구독", description = "SSE를 통해 실시간 알림을 구독합니다. 각 기기별로 고유한 deviceId를 헤더(X-Device-ID)에 담아 요청해야 합니다.")
   @GetMapping("/stream")
   public SseEmitter subscribe(
-      @Parameter(description = "구독할 사용자의 프로필 ID") @RequestParam Long profileId
+      @Parameter(description = "구독할 사용자의 프로필 ID") @RequestParam Long profileId,
+      @Parameter(description = "구독하는 기기의 고유 ID", required = true, in = ParameterIn.HEADER)
+      @RequestHeader("X-Device-ID") String deviceId
       // @AuthenticationPrincipal CustomUserDetails userDetails <-- 추후 적용
   ) {
     SseEmitter emitter = new SseEmitter(60 * 1000L);
-    emitterRepository.save(profileId, emitter);
+    emitterRepository.save(profileId, deviceId, emitter);
 
-    emitter.onCompletion(() -> emitterRepository.remove(profileId, emitter));
-    emitter.onTimeout(() -> emitterRepository.remove(profileId, emitter));
+    // 연결 종료 시 Emitter 제거
+    emitter.onCompletion(() -> emitterRepository.remove(profileId, deviceId));
+    emitter.onTimeout(() -> emitterRepository.remove(profileId, deviceId));
 
+    // 최초 연결 확인 이벤트 전송
     try {
-      emitter.send(SseEmitter.event().name("connect").data("SSE connected"));
+      emitter.send(SseEmitter.event().name("connect").data("SSE connected with deviceId: " + deviceId));
     } catch (Exception e) {
-      emitterRepository.remove(profileId, emitter);
+      emitterRepository.remove(profileId, deviceId);
     }
 
     return emitter;

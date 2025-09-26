@@ -10,25 +10,54 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 @Component
 public class EmitterRepository {
 
-  private final Map<Long, List<SseEmitter>> emitters = new ConcurrentHashMap<>();
+    // 이중 맵 구조: profileId -> (deviceId -> SseEmitter)
+    private final Map<Long, Map<String, SseEmitter>> profileEmitters = new ConcurrentHashMap<>();
 
-  public void save(Long profileId, SseEmitter emitter) {
-    emitters.computeIfAbsent(profileId, k -> new ArrayList<>()).add(emitter);
-  }
-
-  public List<SseEmitter> get(Long profileId) {
-    return emitters.getOrDefault(profileId, new ArrayList<>());
-  }
-
-  public void remove(Long profileId, SseEmitter emitter) {
-    List<SseEmitter> list = emitters.get(profileId);
-    if(list != null) {
-      list.remove(emitter);
-      if(list.isEmpty()) emitters.remove(profileId);
+    /**
+     * Emitter 저장
+     * @param profileId 사용자 프로필 ID
+     * @param deviceId 기기 ID
+     * @param emitter   SseEmitter 객체
+     */
+    public void save(Long profileId, String deviceId, SseEmitter emitter) {
+        // profileId에 해당하는 맵이 없으면 새로 생성
+        profileEmitters.computeIfAbsent(profileId, k -> new ConcurrentHashMap<>()).put(deviceId, emitter);
     }
-  }
 
-  public Map<Long, List<SseEmitter>> getAllEmitters() {
-    return emitters;
-  }
+    /**
+     * 특정 Emitter 제거
+     * @param profileId 사용자 프로필 ID
+     * @param deviceId  기기 ID
+     */
+    public void remove(Long profileId, String deviceId) {
+        Map<String, SseEmitter> deviceEmitters = profileEmitters.get(profileId);
+        if (deviceEmitters != null) {
+            deviceEmitters.remove(deviceId);
+            // 해당 profileId에 더 이상 연결된 device가 없으면 바깥쪽 맵에서도 제거
+            if (deviceEmitters.isEmpty()) {
+                profileEmitters.remove(profileId);
+            }
+        }
+    }
+
+    /**
+     * 특정 사용자의 모든 Emitter 조회 (알림 발송 시 사용)
+     * @param profileId 사용자 프로필 ID
+     * @return 해당 사용자의 모든 SseEmitter 목록
+     */
+    public List<SseEmitter> getAllForProfile(Long profileId) {
+        Map<String, SseEmitter> deviceEmitters = profileEmitters.get(profileId);
+        if (deviceEmitters != null) {
+            return new ArrayList<>(deviceEmitters.values());
+        }
+        return new ArrayList<>(); // 비어있는 리스트 반환
+    }
+
+    /**
+     * 모든 Emitter 조회 (하트비트 발송 시 사용)
+     * @return 전체 SseEmitter 맵
+     */
+    public Map<Long, Map<String, SseEmitter>> getAllEmitters() {
+        return new ConcurrentHashMap<>(profileEmitters);
+    }
 }

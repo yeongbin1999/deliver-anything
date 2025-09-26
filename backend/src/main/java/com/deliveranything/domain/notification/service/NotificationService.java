@@ -72,7 +72,7 @@ public class NotificationService {
    * 멀티 디바이스 브로드캐스트 공통 메서드
    */
   private void broadcastToEmitters(Long profileId, Object payload, String eventName) {
-    List<SseEmitter> emitters = emitterRepository.get(profileId);
+    List<SseEmitter> emitters = emitterRepository.getAllForProfile(profileId);
     for (SseEmitter emitter : emitters) {
       try {
         emitter.send(SseEmitter.event()
@@ -80,8 +80,9 @@ public class NotificationService {
             .name(eventName)
             .data(payload));
       } catch (Exception e) {
-        log.warn("SSE send failed for profileId {}: {}", profileId, e.getMessage());
-        emitterRepository.remove(profileId, emitter);
+        log.warn("SSE send failed for profileId {}: {}. Completing emitter.", profileId, e.getMessage());
+        // Emitter를 완료시켜 onCompletion 콜백이 호출되도록 함
+        emitter.complete();
       }
     }
   }
@@ -91,17 +92,19 @@ public class NotificationService {
    */
   @Scheduled(fixedRate = 30_000)
   public void sendHeartbeat() {
-    emitterRepository.getAllEmitters().forEach((profileId, emitterList) -> {
-      for (SseEmitter emitter : emitterList) {
+    // EmitterRepository의 새로운 구조에 맞게 수정
+    emitterRepository.getAllEmitters().forEach((profileId, deviceEmitters) -> {
+      deviceEmitters.forEach((deviceId, emitter) -> {
         try {
           emitter.send(SseEmitter.event()
               .name("heartbeat")
               .data("ping"));
         } catch (Exception e) {
-          log.warn("Heartbeat failed for profileId {}: {}", profileId, e.getMessage());
-          emitterRepository.remove(profileId, emitter);
+          log.warn("Heartbeat failed for profileId {}, deviceId {}: {}. Completing emitter.", profileId, deviceId, e.getMessage());
+          // Emitter를 완료시켜 onCompletion 콜백이 호출되도록 함
+          emitter.complete();
         }
-      }
+      });
     });
   }
 }
