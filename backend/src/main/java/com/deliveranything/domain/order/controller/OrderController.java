@@ -3,7 +3,6 @@ package com.deliveranything.domain.order.controller;
 import static org.springframework.http.HttpStatus.CREATED;
 
 import com.deliveranything.domain.order.dto.OrderCreateRequest;
-import com.deliveranything.domain.order.dto.OrderCreateResponse;
 import com.deliveranything.domain.order.dto.OrderResponse;
 import com.deliveranything.domain.order.service.OrderService;
 import com.deliveranything.domain.user.enums.ProfileType;
@@ -37,7 +36,7 @@ public class OrderController {
 
   @PostMapping
   @Operation(summary = "주문 생성", description = "소비자가 상점에 주문을 요청한 경우")
-  public ResponseEntity<ApiResponse<OrderCreateResponse>> create(
+  public ResponseEntity<ApiResponse<OrderResponse>> create(
       @AuthenticationPrincipal SecurityUser user,
       @Valid @RequestBody OrderCreateRequest orderCreateRequest
   ) {

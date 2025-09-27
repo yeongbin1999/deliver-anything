@@ -1,7 +1,6 @@
 package com.deliveranything.domain.order.service;
 
 import com.deliveranything.domain.order.dto.OrderCreateRequest;
-import com.deliveranything.domain.order.dto.OrderCreateResponse;
 import com.deliveranything.domain.order.dto.OrderItemRequest;
 import com.deliveranything.domain.order.dto.OrderResponse;
 import com.deliveranything.domain.order.entity.Order;
@@ -27,19 +26,19 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class OrderService {
 
-  private final StoreService storeService;
   private final CustomerProfileService customerProfileService;
   private final PaymentService paymentService;
   private final ProductService productService;
+  private final StoreService storeService;
 
   private final OrderRepository orderRepository;
   private final OrderRepositoryCustom orderRepositoryCustom;
 
   @Transactional
-  public OrderCreateResponse createOrder(Long customerId, OrderCreateRequest orderCreateRequest) {
+  public OrderResponse createOrder(Long customerId, OrderCreateRequest orderCreateRequest) {
     Order order = Order.builder()
         .customer(customerProfileService.getProfile(customerId))
-        .store(storeService.getStore(orderCreateRequest.storeId()))
+        .store(storeService.findById(orderCreateRequest.storeId()))
         .address(orderCreateRequest.address())
         .riderNote(orderCreateRequest.riderNote())
         .storeNote(orderCreateRequest.storeNote())
@@ -59,9 +58,9 @@ public class OrderService {
     }
 
     Order savedOrder = orderRepository.save(order);
+    paymentService.createPayment(savedOrder.getId(), savedOrder.getTotalPrice());
 
-    return OrderCreateResponse.of(savedOrder, paymentService.createPayment(savedOrder.getId(),
-        orderCreateRequest.totalPrice()));
+    return OrderResponse.from(savedOrder);
   }
 
   @Transactional(readOnly = true)
@@ -70,7 +69,9 @@ public class OrderService {
       Long cursor,
       int size
   ) {
-    List<Order> orders = orderRepositoryCustom.findCustomerOrders(customerId, cursor, size + 1);
+    List<Order> orders = orderRepositoryCustom.findOrdersWithStoreByCustomerId(customerId, cursor,
+        size + 1);
+
     List<OrderResponse> orderResponses = orders.stream()
         .limit(size)
         .map(OrderResponse::from)
@@ -87,13 +88,14 @@ public class OrderService {
 
   @Transactional(readOnly = true)
   public OrderResponse getCustomerOrder(Long orderId, Long customerId) {
-    return OrderResponse.from(orderRepository.findByIdAndCustomerId(orderId, customerId)
-        .orElseThrow(() -> new CustomException(ErrorCode.CUSTOMER_ORDER_NOT_FOUND)));
+    return OrderResponse.from(
+        orderRepository.findOrderWithStoreByIdAndCustomerId(orderId, customerId)
+            .orElseThrow(() -> new CustomException(ErrorCode.CUSTOMER_ORDER_NOT_FOUND)));
   }
 
   @Transactional(readOnly = true)
   public List<OrderResponse> getPreparedOrders() {
-    return orderRepository.findAllByStatusWithStore(OrderStatus.PREPARING).stream()
+    return orderRepository.findOrdersWithStoreByStatus(OrderStatus.PREPARING).stream()
         .map(OrderResponse::from)
         .toList();
   }
@@ -105,26 +107,31 @@ public class OrderService {
 
   @Transactional(readOnly = true)
   public OrderResponse getOrderByDeliveryId(Long deliveryId) {
-    return OrderResponse.from(orderRepository.findByDeliveryIdWithStore(deliveryId)
+    return OrderResponse.from(orderRepository.findOrderWithStoreByDeliveryId(deliveryId)
         .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND)));
   }
 
   @Transactional(readOnly = true)
   public List<OrderResponse> getRiderDeliveryOrders(Long riderProfileId) {
-    return orderRepository.findAllByDeliveryRiderProfileIdWithStore(riderProfileId).stream()
+    return orderRepository.findOrdersWithStoreByRiderProfile(riderProfileId).stream()
         .map(OrderResponse::from)
         .toList();
   }
 
   @Transactional(readOnly = true)
-  public Order getOrderByMerchantId(String merchantId) {
-    return orderRepository.findByMerchantId(merchantId)
-        .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND));
+  public OrderResponse getOrderByMerchantId(String merchantId) {
+    return OrderResponse.from(orderRepository.findOrderWithStoreByMerchantId(merchantId)
+        .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND)));
   }
 
   @Transactional(readOnly = true)
-  public List<Order> getStoreOrdersWithStatuses(Long storeId, List<OrderStatus> orderStatuses) {
-    return orderRepository.findAllByStoreIdAndStatusInOrderByCreatedAtAsc(storeId, orderStatuses);
+  public List<OrderResponse> getStoreOrdersWithStatuses(
+      Long storeId,
+      List<OrderStatus> orderStatuses
+  ) {
+    return orderRepository.findOrdersWithStoreByStoreAndStatusIn(storeId, orderStatuses).stream()
+        .map(OrderResponse::from)
+        .toList();
   }
 
   @Transactional(readOnly = true)
@@ -147,7 +154,7 @@ public class OrderService {
       }
     }
 
-    List<Order> cursorOrders = orderRepositoryCustom.findStoreOrders(storeId,
+    List<Order> cursorOrders = orderRepositoryCustom.findOrdersWithStoreByStoreId(storeId,
         List.of(OrderStatus.COMPLETED, OrderStatus.REJECTED), lastCreatedAt, lastOrderId, size + 1);
 
     List<OrderResponse> cursorResponses = cursorOrders.stream()
