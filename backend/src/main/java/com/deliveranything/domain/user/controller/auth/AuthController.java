@@ -14,6 +14,8 @@ import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -32,7 +34,8 @@ public class AuthController {
    * 회원가입 POST /api/v1/auth/signup
    */
   @PostMapping("/signup")
-  public ApiResponse<SignupResponse> signup(@Valid @RequestBody SignupRequest request) {
+  public ResponseEntity<ApiResponse<SignupResponse>> signup(
+      @Valid @RequestBody SignupRequest request) {
     User user = userService.signup(
         request.email(),
         request.password(),
@@ -47,14 +50,16 @@ public class AuthController {
         .isOnboardingCompleted(user.isOnboardingCompleted())
         .build();
 
-    return ApiResponse.success("회원가입이 완료되었습니다.", response);
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .body(ApiResponse.success("회원가입이 완료되었습니다.", response));
   }
 
   /**
    * 로그인 POST /api/v1/auth/login
    */
   @PostMapping("/login")
-  public ApiResponse<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
+  public ResponseEntity<ApiResponse<LoginResponse>> login(
+      @Valid @RequestBody LoginRequest request) {
     // 로그인 처리
     User user = userService.login(request.email(), request.password());
 
@@ -63,8 +68,7 @@ public class AuthController {
 
     // Refresh Token 생성
     String deviceInfo = extractDeviceInfo();
-    RefreshToken refreshToken = userService.createRefreshToken(user,
-        deviceInfo); // 일단 deviceInfo는 Web Browser로 고정
+    RefreshToken refreshToken = userService.createRefreshToken(user, deviceInfo);
 
     // 사용 가능한 프로필 목록 조회
     List<ProfileType> availableProfiles = userService.getAvailableProfiles(user.getId());
@@ -86,14 +90,11 @@ public class AuthController {
     rq.setAccessToken(accessToken);
     rq.setApiKey(refreshToken.getTokenValue());
 
-    return ApiResponse.success("로그인이 완료되었습니다.", response);
+    return ResponseEntity.ok(ApiResponse.success("로그인이 완료되었습니다.", response));
   }
 
-  /**
-   * 로그아웃 POST /api/v1/auth/logout
-   */
   @PostMapping("/logout")
-  public ApiResponse<Void> logout() {
+  public ResponseEntity<ApiResponse<Void>> logout() {
     User currentUser = rq.getActor();
     if (currentUser != null) {
       userService.invalidateAllRefreshTokens(currentUser.getId());
@@ -103,7 +104,7 @@ public class AuthController {
     rq.deleteCookie("accessToken");
     rq.deleteCookie("apiKey");
 
-    return ApiResponse.success("로그아웃이 완료되었습니다.", null);
+    return ResponseEntity.ok(ApiResponse.success("로그아웃이 완료되었습니다.", null));
   }
 
   private String extractDeviceInfo() {
