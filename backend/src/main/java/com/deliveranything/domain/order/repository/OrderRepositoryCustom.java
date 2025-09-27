@@ -3,6 +3,7 @@ package com.deliveranything.domain.order.repository;
 import com.deliveranything.domain.order.entity.Order;
 import com.deliveranything.domain.order.entity.QOrder;
 import com.deliveranything.domain.order.enums.OrderStatus;
+import com.deliveranything.domain.store.store.entity.QStore;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.time.LocalDateTime;
@@ -16,10 +17,12 @@ public class OrderRepositoryCustom {
 
   private final JPAQueryFactory queryFactory;
 
-  public List<Order> findCustomerOrders(Long customerId, Long cursor, int size) {
+  public List<Order> findOrdersWithStoreByCustomerId(Long customerId, Long cursor, int size) {
     QOrder order = QOrder.order;
+    QStore store = QStore.store;
 
     return queryFactory.selectFrom(order)
+        .join(order.store, store).fetchJoin()
         .where(
             order.customer.id.eq(customerId),
             cursor != null ? order.id.lt(cursor) : null
@@ -29,11 +32,13 @@ public class OrderRepositoryCustom {
         .fetch();
   }
 
-  public List<Order> findStoreOrders(Long storeId, List<OrderStatus> statuses,
+  public List<Order> findOrdersWithStoreByStoreId(Long storeId, List<OrderStatus> statuses,
       LocalDateTime lastCreatedAt, Long lastOrderId, int size) {
     QOrder order = QOrder.order;
+    QStore store = QStore.store;
 
     return queryFactory.selectFrom(order)
+        .join(order.store, store).fetchJoin()
         .where(
             order.store.id.eq(storeId),
             statusIn(statuses),

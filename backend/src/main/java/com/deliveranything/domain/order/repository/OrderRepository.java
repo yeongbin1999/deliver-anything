@@ -9,19 +9,28 @@ import org.springframework.data.jpa.repository.Query;
 
 public interface OrderRepository extends JpaRepository<Order, Long> {
 
-  Optional<Order> findByIdAndCustomerId(Long orderId, Long customerId);
+  @Query("SELECT o FROM Order o JOIN FETCH o.store WHERE o.id = :orderId AND o.customer.id = :customerId")
+  Optional<Order> findOrderWithStoreByIdAndCustomerId(Long orderId, Long customerId);
 
-  Optional<Order> findByMerchantId(String merchantId);
+  @Query("SELECT o FROM Order o JOIN FETCH o.store WHERE o.merchantId = :merchantId")
+  Optional<Order> findOrderWithStoreByMerchantId(String merchantId);
 
   @Query("SELECT o FROM Order o JOIN FETCH o.store WHERE o.delivery.id = :deliveryId")
-  Optional<Order> findByDeliveryIdWithStore(Long deliveryId);
+  Optional<Order> findOrderWithStoreByDeliveryId(Long deliveryId);
 
   @Query("SELECT o FROM Order o JOIN FETCH o.store WHERE o.status = :status")
-  List<Order> findAllByStatusWithStore(OrderStatus status);
+  List<Order> findOrdersWithStoreByStatus(OrderStatus status);
 
   @Query("SELECT o FROM Order o JOIN FETCH o.store WHERE o.delivery.riderProfile.id = :riderProfileId")
-  List<Order> findAllByDeliveryRiderProfileIdWithStore(Long riderProfileId);
+  List<Order> findOrdersWithStoreByRiderProfile(Long riderProfileId);
 
-  List<Order> findAllByStoreIdAndStatusInOrderByCreatedAtAsc(Long storeId,
+  @Query("""
+      SELECT o
+      FROM Order o
+      JOIN FETCH o.store s
+      WHERE s.id = :storeId AND o.status IN :statuses
+      ORDER BY o.createdAt ASC
+      """)
+  List<Order> findOrdersWithStoreByStoreAndStatusIn(Long storeId,
       List<OrderStatus> statuses);
 }

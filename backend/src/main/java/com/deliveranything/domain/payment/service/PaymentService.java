@@ -28,8 +28,9 @@ public class PaymentService {
 
   private final PaymentRepository paymentRepository;
 
-  public Long createPayment(Long orderId, BigDecimal amount) {
-    return paymentRepository.save(new Payment(orderId, amount)).getId();
+  @Transactional
+  public void createPayment(Long orderId, BigDecimal amount) {
+    paymentRepository.save(new Payment(orderId, amount));
   }
 
   @Transactional
@@ -40,7 +41,7 @@ public class PaymentService {
   @Transactional
   public void confirmPayment(Long paymentId, PaymentConfirmRequest request) {
     Payment payment = getPayment(paymentId);
-    long orderPrice = orderService.getOrderByMerchantId(request.merchantUid()).getTotalPrice()
+    long orderPrice = orderService.getOrderByMerchantId(request.merchantUid()).totalPrice()
         .longValue();
 
     if (orderPrice != request.amount()) {
