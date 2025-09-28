@@ -14,7 +14,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
 /**
- * Request/Response 처리 헬퍼 클래스 멀티 프로필 시스템에 맞게 확장
+ * Request/Response 처리 헬퍼 클래스 멀티 프로필 시스템에 맞게 확장 Profile 기반 전역 고유 ID 지원
  */
 @Component
 @RequiredArgsConstructor
@@ -40,7 +40,7 @@ public class Rq {
               .phoneNumber(null)
               .socialProvider(null)
               .socialId(null)
-              .CurrentActiveProfile(securityUser.getCurrentActiveProfile())
+              .CurrentActiveProfile(null) // Profile 엔티티는 여기서 설정하지 않음
               .currentActiveProfileId(securityUser.getCurrentActiveProfileId())
               .build();
           return user;
@@ -52,16 +52,24 @@ public class Rq {
    * 현재 활성화된 프로필 타입 조회
    */
   public ProfileType getCurrentProfile() {
-    User actor = getActor();
-    return actor != null ? actor.getCurrentActiveProfile() : null;
+    return Optional.ofNullable(SecurityContextHolder.getContext().getAuthentication())
+        .map(Authentication::getPrincipal)
+        .filter(principal -> principal instanceof SecurityUser)
+        .map(principal -> (SecurityUser) principal)
+        .map(SecurityUser::getCurrentActiveProfileType)
+        .orElse(null);
   }
 
   /**
-   * 현재 활성화된 프로필 ID 조회
+   * 현재 활성화된 프로필 ID 조회 (전역 고유 Profile ID)
    */
   public Long getCurrentProfileId() {
-    User actor = getActor();
-    return actor != null ? actor.getCurrentActiveProfileId() : null;
+    return Optional.ofNullable(SecurityContextHolder.getContext().getAuthentication())
+        .map(Authentication::getPrincipal)
+        .filter(principal -> principal instanceof SecurityUser)
+        .map(principal -> (SecurityUser) principal)
+        .map(SecurityUser::getCurrentActiveProfileId)
+        .orElse(null);
   }
 
   /**
@@ -248,5 +256,28 @@ public class Rq {
     if (profileType != null) {
       setHeader("X-Current-Profile", profileType.name());
     }
+  }
+
+  /**
+   * 현재 프로필 ID를 응답 헤더에 설정 (전역 고유 Profile ID)
+   */
+  public void setCurrentProfileIdHeader(Long profileId) {
+    if (profileId != null) {
+      setHeader("X-Current-Profile-Id", profileId.toString());
+    }
+  }
+
+  /**
+   * SSE 연결용 전역 고유 키 생성
+   */
+  public String generateGlobalProfileKey() {
+    User actor = getActor();
+    ProfileType currentProfile = getCurrentProfile();
+    Long currentProfileId = getCurrentProfileId();
+
+    if (actor != null && currentProfile != null && currentProfileId != null) {
+      return String.format("%d_%s_%d", actor.getId(), currentProfile.name(), currentProfileId);
+    }
+    return null;
   }
 }
