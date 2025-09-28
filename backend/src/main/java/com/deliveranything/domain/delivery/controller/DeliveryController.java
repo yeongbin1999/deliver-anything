@@ -1,7 +1,9 @@
 package com.deliveranything.domain.delivery.controller;
 
 import com.deliveranything.domain.delivery.dto.request.DeliveryAreaRequestDto;
+import com.deliveranything.domain.delivery.dto.request.DeliveryStatusRequestDto;
 import com.deliveranything.domain.delivery.dto.request.RiderToggleStatusRequestDto;
+import com.deliveranything.domain.delivery.enums.DeliveryStatus;
 import com.deliveranything.domain.delivery.service.DeliveryService;
 import com.deliveranything.domain.review.dto.ReviewRatingAndListResponseDto;
 import com.deliveranything.domain.review.dto.ReviewResponse;
@@ -71,5 +73,14 @@ public class DeliveryController {
   ) {
     ReviewResponse response = reviewService.getReview(reviewId);
     return ResponseEntity.ok(ApiResponse.success(response));
+  }
+
+  @PatchMapping("/{deliveryId}/delivery-status")
+  public ResponseEntity<Void> updateStatus(
+      @PathVariable Long deliveryId,
+      @RequestParam DeliveryStatusRequestDto next
+  ) {
+    deliveryService.changeStatus(deliveryId, DeliveryStatus.valueOf(next.status()));
+    return ResponseEntity.ok().build();
   }
 }

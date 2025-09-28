@@ -23,7 +23,6 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Entity
@@ -46,9 +45,11 @@ public class Delivery extends BaseEntity {
   @Enumerated(EnumType.STRING)
   private DeliveryStatus status;
 
-  @LastModifiedDate
-  @Column(name = "delivery_ended_at")
-  private LocalDateTime endedAt;
+  @Column(name = "delivery_started_at", updatable = false)
+  private LocalDateTime startedAt;
+
+  @Column(name = "delivery_completed_at")
+  private LocalDateTime completedAt;
 
   @Column(name = "delivery_charge")
   private Integer charge;
@@ -78,5 +79,17 @@ public class Delivery extends BaseEntity {
     this.requested = requested;
     this.status = status;
     this.charge = charge;
+  }
+
+  public void updateStatus(DeliveryStatus newStatus) {
+    this.status = newStatus;
+  }
+
+  public void updateStartedAt(LocalDateTime now) {
+    this.startedAt = now;
+  }
+
+  public void updateCompletedAt(LocalDateTime now) {
+    this.completedAt = now;
   }
 }
