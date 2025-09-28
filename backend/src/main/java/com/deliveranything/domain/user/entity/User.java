@@ -81,7 +81,7 @@ public class User extends BaseEntity implements UserDetails {
 
   @Builder
   public User(String email, String password, String name, String phoneNumber,
-      SocialProvider socialProvider, String socialId, Profile CurrentActiveProfile) {
+      SocialProvider socialProvider, String socialId, Profile currentActiveProfile) {
     this.email = email;
     this.password = password;
     this.name = name;
@@ -89,7 +89,7 @@ public class User extends BaseEntity implements UserDetails {
     this.socialProvider = socialProvider != null ? socialProvider : SocialProvider.LOCAL;
     this.socialId = socialId;
     this.apiKey = generateApiKey();
-    this.currentActiveProfile = CurrentActiveProfile; // 현재 프로필 아이디
+    this.currentActiveProfile = currentActiveProfile; // 현재 프로필 아이디
     this.isOnboardingCompleted = false;
     this.isEmailVerified = false;
     this.isEnabled = true;
@@ -218,12 +218,14 @@ public class User extends BaseEntity implements UserDetails {
       ProfileType currentType = currentActiveProfile.getType();
       authorities.add(new SimpleGrantedAuthority("ROLE_" + currentType.name()));
 
-      // 활성화된 다른 프로필들의 권한도 추가 (멀티프로필 지원)
-      for (Profile profile : profiles) {
-        if (profile.isActive()) {
-          authorities.add(new SimpleGrantedAuthority("PROFILE_" + profile.getType().name()));
-        }
-      }
+      /*** 
+       * 활성화된 다른 프로필들의 권한도 추가 (멀티프로필 지원) - 현재 쓸모가 없어보여서 주석처리
+       for (Profile profile : profiles) {
+       if (profile.isActive()) {
+       authorities.add(new SimpleGrantedAuthority("PROFILE_" + profile.getType().name()));
+       }
+       }
+       ***/
     }
 
     // 관리자 권한

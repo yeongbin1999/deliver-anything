@@ -1,6 +1,7 @@
 package com.deliveranything.global.rq;
 
 import com.deliveranything.domain.user.entity.User;
+import com.deliveranything.domain.user.entity.profile.Profile;
 import com.deliveranything.domain.user.enums.ProfileType;
 import com.deliveranything.global.security.SecurityUser;
 import jakarta.servlet.http.Cookie;
@@ -40,8 +41,8 @@ public class Rq {
               .phoneNumber(null)
               .socialProvider(null)
               .socialId(null)
-              .CurrentActiveProfile(null) // Profile 엔티티는 여기서 설정하지 않음
-              .currentActiveProfileId(securityUser.getCurrentActiveProfileId())
+              .currentActiveProfile(
+                  securityUser.getCurrentActiveProfile()) // Profile 엔티티는 여기서 설정하지 않음
               .build();
           return user;
         })
@@ -51,12 +52,12 @@ public class Rq {
   /**
    * 현재 활성화된 프로필 타입 조회
    */
-  public ProfileType getCurrentProfile() {
+  public Profile getCurrentProfile() {
     return Optional.ofNullable(SecurityContextHolder.getContext().getAuthentication())
         .map(Authentication::getPrincipal)
         .filter(principal -> principal instanceof SecurityUser)
         .map(principal -> (SecurityUser) principal)
-        .map(SecurityUser::getCurrentActiveProfileType)
+        .map(SecurityUser::getCurrentActiveProfile)
         .orElse(null);
   }
 
@@ -68,15 +69,14 @@ public class Rq {
         .map(Authentication::getPrincipal)
         .filter(principal -> principal instanceof SecurityUser)
         .map(principal -> (SecurityUser) principal)
-        .map(SecurityUser::getCurrentActiveProfileId)
-        .orElse(null);
+        .map(SecurityUser::getCurrentActiveProfile).get().getId();
   }
 
   /**
    * 특정 프로필이 활성화되어 있는지 확인
    */
   public boolean hasActiveProfile(ProfileType profileType) {
-    ProfileType currentProfile = getCurrentProfile();
+    ProfileType currentProfile = getCurrentProfile().getType();
     return currentProfile == profileType;
   }
 
@@ -272,8 +272,8 @@ public class Rq {
    */
   public String generateGlobalProfileKey() {
     User actor = getActor();
-    ProfileType currentProfile = getCurrentProfile();
-    Long currentProfileId = getCurrentProfileId();
+    ProfileType currentProfile = getCurrentProfile().getType();
+    Long currentProfileId = getCurrentProfile().getId();
 
     if (actor != null && currentProfile != null && currentProfileId != null) {
       return String.format("%d_%s_%d", actor.getId(), currentProfile.name(), currentProfileId);
