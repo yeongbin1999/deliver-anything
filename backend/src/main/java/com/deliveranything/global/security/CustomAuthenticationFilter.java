@@ -220,8 +220,8 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
         user.getUsername(),
         "",  // 비밀번호는 빈 문자열
         user.getName(),
-        user.getCurrentActiveProfile(),
-        user.getCurrentActiveProfileId(),
+        user.getCurrentActiveProfileType(), // 현재 활성 프로필 타입
+        user.getCurrentActiveProfileId(),   // 전역 고유 Profile ID
         user.getAuthorities()
     );
 

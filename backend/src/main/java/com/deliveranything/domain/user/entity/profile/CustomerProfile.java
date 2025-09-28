@@ -51,4 +51,4 @@ public class CustomerProfile extends BaseProfile {
   public Long getUserId() {
     return profile != null ? profile.getUser().getId() : null;
   }
-}}
+}
