@@ -23,7 +23,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class SecurityConfig {
 
   private final CustomAuthenticationFilter customAuthenticationFilter;
-
+  
   @Bean
   public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
     http
