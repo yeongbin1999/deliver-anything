@@ -1,12 +1,10 @@
 package com.deliveranything.domain.user.entity.profile;
 
-import com.deliveranything.domain.user.entity.User;
-import jakarta.persistence.AttributeOverride;
-import jakarta.persistence.AttributeOverrides;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
+import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.MapsId;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
@@ -18,42 +16,47 @@ import lombok.NoArgsConstructor;
 @Table(name = "seller_profiles")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AttributeOverrides({
-    @AttributeOverride(name = "nickname", column = @Column(name = "seller_nickname", length = 50)),
-    @AttributeOverride(name = "profileImageUrl", column = @Column(name = "seller_profile_image_url", columnDefinition = "TEXT"))
-})
-public class SellerProfile extends BaseProfile {
+public class SellerProfile {
 
-  @OneToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "user_id", nullable = false)
-  private User user;
+  @Id
+  private Long id; // Profile.id와 동일한 값
 
-  // 사업자 정보
-  @Column(name = "business_name", nullable = false, length = 100)
+  @OneToOne
+  @MapsId
+  @JoinColumn(name = "id")
+  private Profile profile;
+
+  @Column(name = "nickname", nullable = false, columnDefinition = "VARCHAR(50)")
+  private String nickname;
+
+  @Column(name = "profile_image_url", columnDefinition = "VARCHAR(500)")
+  private String profileImageUrl;
+
+  @Column(name = "business_name", nullable = false, columnDefinition = "VARCHAR(100)")
   private String businessName;
 
-  @Column(name = "business_certificate_number", nullable = false, unique = true, length = 20)
+  @Column(name = "business_certificate_number", nullable = false, unique = true, columnDefinition = "VARCHAR(20)")
   private String businessCertificateNumber;
 
-  @Column(name = "business_phone_number", nullable = false, length = 20)
+  @Column(name = "business_phone_number", nullable = false, columnDefinition = "VARCHAR(20)")
   private String businessPhoneNumber;
 
-  // 정산 정보
-  @Column(name = "seller_bank_name", nullable = false, length = 20)
+  @Column(name = "bank_name", nullable = false, columnDefinition = "VARCHAR(50)")
   private String bankName;
 
-  @Column(name = "seller_bank_account_number", nullable = false, length = 30)
+  @Column(name = "account_number", nullable = false, columnDefinition = "VARCHAR(50)")
   private String accountNumber;
 
-  @Column(name = "seller_bank_account_holder_name", nullable = false, length = 20)
+  @Column(name = "account_holder", nullable = false, columnDefinition = "VARCHAR(50)")
   private String accountHolder;
 
   @Builder
-  public SellerProfile(User user, String nickname, String profileImageUrl,
+  public SellerProfile(Profile profile, String nickname, String profileImageUrl,
       String businessName, String businessCertificateNumber, String businessPhoneNumber,
       String bankName, String accountNumber, String accountHolder) {
-    super(nickname, profileImageUrl);
-    this.user = user;
+    this.profile = profile;
+    this.nickname = nickname;
+    this.profileImageUrl = profileImageUrl;
     this.businessName = businessName;
     this.businessCertificateNumber = businessCertificateNumber;
     this.businessPhoneNumber = businessPhoneNumber;
@@ -62,20 +65,37 @@ public class SellerProfile extends BaseProfile {
     this.accountHolder = accountHolder;
   }
 
+  // 비즈니스 메서드
   public void updateProfile(String nickname, String profileImageUrl) {
-    super.updateNickname(nickname);
-    super.updateProfileImageUrl(profileImageUrl);
+    if (nickname != null && !nickname.isBlank()) {
+      this.nickname = nickname;
+    }
+    this.profileImageUrl = profileImageUrl;
   }
 
   public void updateBusinessInfo(String businessName, String businessPhoneNumber) {
-    this.businessName = businessName;
-    this.businessPhoneNumber = businessPhoneNumber;
+    if (businessName != null && !businessName.isBlank()) {
+      this.businessName = businessName;
+    }
+    if (businessPhoneNumber != null && !businessPhoneNumber.isBlank()) {
+      this.businessPhoneNumber = businessPhoneNumber;
+    }
   }
 
   public void updateBankInfo(String bankName, String accountNumber, String accountHolder) {
-    this.bankName = bankName;
-    this.accountNumber = accountNumber;
-    this.accountHolder = accountHolder;
+    if (bankName != null && !bankName.isBlank()) {
+      this.bankName = bankName;
+    }
+    if (accountNumber != null && !accountNumber.isBlank()) {
+      this.accountNumber = accountNumber;
+    }
+    if (accountHolder != null && !accountHolder.isBlank()) {
+      this.accountHolder = accountHolder;
+    }
   }
 
+  // User 정보 접근용 헬퍼 메서드
+  public Long getUserId() {
+    return profile != null ? profile.getUser().getId() : null;
+  }
 }
