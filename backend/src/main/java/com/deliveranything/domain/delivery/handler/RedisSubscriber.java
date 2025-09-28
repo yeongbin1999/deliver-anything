@@ -26,6 +26,7 @@ public class RedisSubscriber implements MessageListener {
       String channel = new String(message.getChannel());
       String body = new String(message.getBody());
 
+      // rider-notifications
       if ("order-events".equals(channel)) {
         RiderNotificationDto dto = objectMapper.readValue(body, RiderNotificationDto.class);
 //        webSocketPublisher.publishToRider(dto.riderId(), dto);
