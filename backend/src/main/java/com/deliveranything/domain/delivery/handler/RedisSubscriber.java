@@ -1,7 +1,7 @@
 package com.deliveranything.domain.delivery.handler;
 
 import com.deliveranything.domain.delivery.event.dto.RiderNotificationDto;
-import com.deliveranything.domain.notification.repository.EmitterRepository;
+import com.deliveranything.domain.notification.service.NotificationService;
 import com.deliveranything.global.exception.CustomException;
 import com.deliveranything.global.exception.ErrorCode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -18,7 +18,7 @@ public class RedisSubscriber implements MessageListener {
 
   //  private final RiderWebSocketPublisher webSocketPublisher;
   private final ObjectMapper objectMapper;
-  private final EmitterRepository emitterRepository;
+  private final NotificationService notificationService;
 
   @Override
   public void onMessage(Message message, byte[] pattern) {
@@ -30,7 +30,7 @@ public class RedisSubscriber implements MessageListener {
       if ("order-events".equals(channel)) {
         RiderNotificationDto dto = objectMapper.readValue(body, RiderNotificationDto.class);
 //        webSocketPublisher.publishToRider(dto.riderId(), dto);
-        emitterRepository.sendToAll(dto.riderId(), "RIDER_NOTIFICATION", dto);
+        notificationService.sendToAll(dto.riderId(), "RIDER_NOTIFICATION", dto);
       }
     } catch (Exception e) {
       throw new CustomException(ErrorCode.REDIS_MESSAGE_PROCESSING_ERROR);
