@@ -113,4 +113,31 @@ public class NotificationController {
 
     return emitter;
   }
+
+  @GetMapping("/riders/{riderId}/decisions")
+  public SseEmitter subscribeRiderDecisions(
+      @Parameter(description = "라이더 ID") @PathVariable String riderId,
+      @Parameter(description = "구독하는 기기의 고유 ID", required = true, in = ParameterIn.HEADER)
+      @RequestHeader("X-Device-ID") String deviceId
+  ) {
+    // 라이더 ID를 Long으로 변환 (실제 구현에서는 라이더 프로필 ID를 사용)
+    Long profileId = Long.parseLong(riderId);
+
+    SseEmitter emitter = new SseEmitter(60 * 1000L);
+    emitterRepository.save(profileId, deviceId, emitter);
+
+    // 연결 종료 시 Emitter 제거
+    emitter.onCompletion(() -> emitterRepository.remove(profileId, deviceId));
+    emitter.onTimeout(() -> emitterRepository.remove(profileId, deviceId));
+
+    // 최초 연결 확인 이벤트 전송
+    try {
+      emitter.send(SseEmitter.event().name("connect")
+          .data("Rider SSE connected with deviceId: " + deviceId));
+    } catch (Exception e) {
+      emitterRepository.remove(profileId, deviceId);
+    }
+
+    return emitter;
+  }
 }
