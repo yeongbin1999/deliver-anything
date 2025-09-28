@@ -1,6 +1,5 @@
 package com.deliveranything.domain.notification.repository;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -82,21 +81,4 @@ public class EmitterRepository {
     return new ConcurrentHashMap<>(profileEmitters);
   }
 
-  // 해당 profileId의 모든 emitter로 전송
-  public void sendToAll(Long profileId, String eventName, Object payload) {
-    Map<String, SseEmitter> map = profileEmitters.get(profileId);
-    if (map == null) {
-      return;
-    }
-    map.forEach((deviceId, emitter) -> {
-      try {
-        emitter.send(SseEmitter.event()
-            .name(eventName)
-            .id(String.valueOf(System.currentTimeMillis()))
-            .data(payload));
-      } catch (IOException e) {
-        emitter.completeWithError(e);
-      }
-    });
-  }
 }
