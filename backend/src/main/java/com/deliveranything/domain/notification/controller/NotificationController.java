@@ -114,6 +114,7 @@ public class NotificationController {
     return emitter;
   }
 
+  @Operation(summary = "라이더 주문 수락/거절 SSE 구독", description = "라이더가 주문 수락/거절 결정을 실시간으로 구독합니다.")
   @GetMapping("/riders/{riderId}/decisions")
   public SseEmitter subscribeRiderDecisions(
       @Parameter(description = "라이더 ID") @PathVariable String riderId,
