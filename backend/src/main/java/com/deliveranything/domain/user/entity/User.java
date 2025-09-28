@@ -81,8 +81,7 @@ public class User extends BaseEntity implements UserDetails {
 
   @Builder
   public User(String email, String password, String name, String phoneNumber,
-      SocialProvider socialProvider, String socialId, Profile CurrentActiveProfile,
-      Long currentActiveProfileId) {
+      SocialProvider socialProvider, String socialId, Profile CurrentActiveProfile) {
     this.email = email;
     this.password = password;
     this.name = name;
@@ -90,7 +89,7 @@ public class User extends BaseEntity implements UserDetails {
     this.socialProvider = socialProvider != null ? socialProvider : SocialProvider.LOCAL;
     this.socialId = socialId;
     this.apiKey = generateApiKey();
-    this.currentActiveProfile = CurrentActiveProfile;
+    this.currentActiveProfile = CurrentActiveProfile; // 현재 프로필 아이디
     this.isOnboardingCompleted = false;
     this.isEmailVerified = false;
     this.isEnabled = true;
