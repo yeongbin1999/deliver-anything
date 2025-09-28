@@ -79,7 +79,7 @@ public class DeliveryController {
   @Operation(summary = "배달 상태 변경", description = "배달 ID와 다음 상태를 받아 배달 상태를 변경합니다.")
   public ResponseEntity<Void> updateStatus(
       @PathVariable Long deliveryId,
-      @RequestParam DeliveryStatusRequestDto next
+      @Valid @RequestParam DeliveryStatusRequestDto next
   ) {
     deliveryService.changeStatus(deliveryId, DeliveryStatus.valueOf(next.status()));
     return ResponseEntity.ok().build();
