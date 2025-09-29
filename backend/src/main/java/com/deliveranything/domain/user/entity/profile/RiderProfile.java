@@ -10,6 +10,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.MapsId;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -93,6 +94,15 @@ public class RiderProfile extends BaseProfile {
 
   public void setToggleStatus(RiderToggleStatus status) {
     this.toggleStatus = status;
+  }
+
+  // String을 받아서 enum으로 변환하는 메서드 추가
+  public void setToggleStatus(String toggleStatus) {
+    this.toggleStatus = RiderToggleStatus.fromString(toggleStatus);
+  }
+
+  public void setDeliveryArea(@NotNull String area) {
+    this.area = area;
   }
 
   // User 정보 접근용 헬퍼 메서드
