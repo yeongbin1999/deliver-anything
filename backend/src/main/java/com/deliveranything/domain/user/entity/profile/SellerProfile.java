@@ -16,7 +16,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "seller_profiles")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class SellerProfile {
+public class SellerProfile extends BaseProfile {
 
   @Id
   private Long id; // Profile.id와 동일한 값
@@ -25,12 +25,6 @@ public class SellerProfile {
   @MapsId
   @JoinColumn(name = "id")
   private Profile profile;
-
-  @Column(name = "nickname", nullable = false, columnDefinition = "VARCHAR(50)")
-  private String nickname;
-
-  @Column(name = "profile_image_url", columnDefinition = "VARCHAR(500)")
-  private String profileImageUrl;
 
   @Column(name = "business_name", nullable = false, columnDefinition = "VARCHAR(100)")
   private String businessName;
@@ -54,9 +48,9 @@ public class SellerProfile {
   public SellerProfile(Profile profile, String nickname, String profileImageUrl,
       String businessName, String businessCertificateNumber, String businessPhoneNumber,
       String bankName, String accountNumber, String accountHolder) {
+
+    super(nickname, profileImageUrl);
     this.profile = profile;
-    this.nickname = nickname;
-    this.profileImageUrl = profileImageUrl;
     this.businessName = businessName;
     this.businessCertificateNumber = businessCertificateNumber;
     this.businessPhoneNumber = businessPhoneNumber;
@@ -68,9 +62,11 @@ public class SellerProfile {
   // 비즈니스 메서드
   public void updateProfile(String nickname, String profileImageUrl) {
     if (nickname != null && !nickname.isBlank()) {
-      this.nickname = nickname;
+      super.updateNickname(nickname); // BaseProfile의 메서드 호출
     }
-    this.profileImageUrl = profileImageUrl;
+    if (profileImageUrl != null) {
+      super.updateProfileImageUrl(profileImageUrl); // BaseProfile의 메서드 호출
+    }
   }
 
   public void updateBusinessInfo(String businessName, String businessPhoneNumber) {
@@ -96,6 +92,7 @@ public class SellerProfile {
 
   // User 정보 접근용 헬퍼 메서드
   public Long getUserId() {
-    return profile != null ? profile.getUser().getId() : null;
+    return profile != null
+        ? profile.getUser().getId() : null;
   }
 }

@@ -117,43 +117,6 @@ public class SellerProfileService {
   }
 
   /**
-   * 판매자 프로필 수정 (사용자 ID 기반)
-   */
-  @Transactional
-  public boolean updateProfile(Long userId, String nickname, String profileImageUrl) {
-    SellerProfile profile = getProfile(userId);
-    if (profile == null) {
-      log.warn("판매자 프로필을 찾을 수 없습니다: userId={}", userId);
-      return false;
-    }
-
-    profile.updateProfile(nickname, profileImageUrl);
-    sellerProfileRepository.save(profile);
-
-    log.info("판매자 프로필 수정 완료: userId={}, profileId={}, nickname={}",
-        userId, profile.getId(), nickname);
-    return true;
-  }
-
-  /**
-   * 판매자 프로필 수정 (Profile ID 기반)
-   */
-  @Transactional
-  public boolean updateProfileByProfileId(Long profileId, String nickname, String profileImageUrl) {
-    SellerProfile profile = getProfileByProfileId(profileId);
-    if (profile == null) {
-      log.warn("판매자 프로필을 찾을 수 없습니다: profileId={}", profileId);
-      return false;
-    }
-
-    profile.updateProfile(nickname, profileImageUrl);
-    sellerProfileRepository.save(profile);
-
-    log.info("판매자 프로필 수정 완료: profileId={}, nickname={}", profileId, nickname);
-    return true;
-  }
-
-  /**
    * 사업자 정보 수정
    */
   @Transactional

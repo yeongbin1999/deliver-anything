@@ -109,4 +109,11 @@ public class RiderProfile extends BaseProfile {
   public Long getUserId() {
     return profile != null ? profile.getUser().getId() : null;
   }
+
+  // 배달 가능 상태 확인 메서드 (프로필 활성화 + 토글 상태 ON) - 불필요 시 삭제
+  public boolean isAvailableForDelivery() {
+    return profile != null
+        && profile.isActive()
+        && this.toggleStatus == RiderToggleStatus.ON;
+  }
 }

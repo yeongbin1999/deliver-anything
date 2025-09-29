@@ -86,43 +86,6 @@ public class CustomerProfileService {
     return getProfile(userId) != null;
   }
 
-  /**
-   * 고객 프로필 수정
-   */
-  @Transactional
-  public boolean updateProfile(Long userId, String nickname, String profileImageUrl) {
-    CustomerProfile profile = getProfile(userId);
-    if (profile == null) {
-      log.warn("고객 프로필을 찾을 수 없습니다: userId={}", userId);
-      return false;
-    }
-
-    profile.updateProfile(nickname, profileImageUrl);
-    customerProfileRepository.save(profile);
-
-    log.info("고객 프로필 수정 완료: userId={}, profileId={}, nickname={}",
-        userId, profile.getId(), nickname);
-    return true;
-  }
-
-  /**
-   * 프로필 ID로 고객 프로필 수정
-   */
-  @Transactional
-  public boolean updateProfileByProfileId(Long profileId, String nickname, String profileImageUrl) {
-    CustomerProfile profile = getProfileByProfileId(profileId);
-    if (profile == null) {
-      log.warn("고객 프로필을 찾을 수 없습니다: profileId={}", profileId);
-      return false;
-    }
-
-    profile.updateProfile(nickname, profileImageUrl);
-    customerProfileRepository.save(profile);
-
-    log.info("고객 프로필 수정 완료: profileId={}, nickname={}", profileId, nickname);
-    return true;
-  }
-
   // ========== 배송지 관리 ==========
 
   /**
