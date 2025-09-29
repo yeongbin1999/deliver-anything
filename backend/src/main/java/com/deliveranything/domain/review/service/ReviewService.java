@@ -77,7 +77,7 @@ public class ReviewService {
     List<String> reviewPhotoUrls = getReviewPhotoUrlList(review);
     log.info("리뷰 생성 성공 - reviewId: {}, userId: {}", review.getId(), userId);
 
-    return ReviewCreateResponse.from(review, reviewPhotoUrls);
+    return ReviewCreateResponse.from(review, reviewPhotoUrls, customerProfile);
   }
 
   /* 리뷰 삭제 */
@@ -269,8 +269,8 @@ public class ReviewService {
       MyReviewSortType sort, String[] cursor, int size) {
     List<Review> reviews = reviewRepository.findReviewsByProfile(
         user,
-        profileType, // ProfileType 전달
-        sort,        // ReviewSortType 전달
+        profileType,
+        sort,
         cursor,
         size
     );
