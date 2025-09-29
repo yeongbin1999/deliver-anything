@@ -172,7 +172,7 @@ public class OrderService {
     );
   }
 
-  private Order getOrderById(Long orderId) {
+  public Order getOrderById(Long orderId) {
     return orderRepository.findById(orderId)
         .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND));
   }

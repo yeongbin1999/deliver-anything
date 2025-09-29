@@ -20,6 +20,8 @@ public enum ErrorCode {
 
   // 배달/라이더 관련 오류
   RIDER_NOT_FOUND(HttpStatus.NOT_FOUND, "RIDER-404", "라이더를 찾을 수 없습니다."),
+  DELIVERY_NOT_AVAILABLE_IN_PROGRESS(HttpStatus.CONFLICT, "DELIVERY-409",
+      "현재 배달 진행 중이므로 해당 작업을 수행할 수 없습니다."),
 
   // 리뷰 관련 오류
   REVIEW_NO_PERMISSION(HttpStatus.FORBIDDEN, "REVIEW-403", "리뷰를 관리할 권한이 없습니다."),
