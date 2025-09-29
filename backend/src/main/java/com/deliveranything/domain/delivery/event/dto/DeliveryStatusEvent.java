@@ -11,7 +11,8 @@ public record DeliveryStatusEvent(
     Long customerProfileId,
     Long sellerProfileId,
     DeliveryStatus status,
-    Long occurredAtEpochMs
+    Long occurredAtEpochMs,
+    DeliveryStatus nextStatus
 ) {
 
 }

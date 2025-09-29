@@ -1,15 +1,22 @@
 package com.deliveranything.domain.delivery.handler;
 
+import com.deliveranything.domain.delivery.entity.Delivery;
 import com.deliveranything.domain.delivery.event.dto.DeliveryStatusEvent;
 import com.deliveranything.domain.delivery.event.event.DeliveryStatusSsePublisher;
+import com.deliveranything.domain.delivery.repository.DeliveryRepository;
+import com.deliveranything.global.exception.CustomException;
+import com.deliveranything.global.exception.ErrorCode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
+import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.connection.Message;
 import org.springframework.data.redis.connection.MessageListener;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.listener.PatternTopic;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 @Component
 @RequiredArgsConstructor
@@ -20,22 +27,51 @@ public class DeliveryStatusRedisSubscriber implements MessageListener {
   private final ObjectMapper objectMapper;
   private final DeliveryStatusSsePublisher ssePublisher;
   private final RedisMessageListenerContainer container;
+  private final DeliveryRepository deliveryRepository;
+  private final RedisTemplate<String, Object> redisTemplate;
 
   @PostConstruct
   public void subscribe() {
-    // 애플리케이션 기동 시 구독 시작
     container.addMessageListener(this, new PatternTopic(CHANNEL));
   }
 
   @Override
+  @Transactional
   public void onMessage(Message message, byte[] pattern) {
     try {
-      String json = new String(message.getBody());
-      DeliveryStatusEvent event = objectMapper.readValue(json, DeliveryStatusEvent.class);
-      // 여기서 최종 SSE 푸시
+      String body = new String(message.getBody());
+      DeliveryStatusEvent event = objectMapper.readValue(body, DeliveryStatusEvent.class);
+
+      // 1️⃣ 상태 변경 처리
+      handleStatusChange(event);
+      // 2️⃣ SSE 알림 전송
       ssePublisher.publish(event);
+
     } catch (Exception e) {
-      // TODO: 로깅
+      // TODO: 로깅 및 에러 처리
+      e.printStackTrace();
     }
+  }
+
+  // 상태 변경 처리
+  private void handleStatusChange(DeliveryStatusEvent event) {
+    Delivery delivery = deliveryRepository.findById(event.deliveryId())
+        .orElseThrow(() -> new CustomException(ErrorCode.DELIVERY_NOT_FOUND));
+
+    // 상태 업데이트
+    delivery.updateStatus(event.nextStatus());
+
+    // 특정 상태에 따른 추가 처리 (시작/완료 시간 기록)
+    switch (event.nextStatus()) {
+      case IN_PROGRESS -> {
+        delivery.updateStartedAt(LocalDateTime.now());
+      }
+      case COMPLETED -> {
+        delivery.updateCompletedAt(LocalDateTime.now());
+      }
+    }
+
+    // Redis 캐시 갱신
+    redisTemplate.opsForValue().set("delivery:" + event.deliveryId(), delivery);
   }
 }

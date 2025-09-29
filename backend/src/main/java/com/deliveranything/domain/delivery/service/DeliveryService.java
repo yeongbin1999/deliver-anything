@@ -11,7 +11,6 @@ import com.deliveranything.domain.user.entity.profile.RiderProfile;
 import com.deliveranything.domain.user.enums.RiderToggleStatus;
 import com.deliveranything.domain.user.service.RiderProfileService;
 import jakarta.transaction.Transactional;
-import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -23,7 +22,7 @@ public class DeliveryService {
 
   private final RiderProfileService riderProfileService;
   private final DeliveryRepository deliveryRepository;
-  private final DeliveryStatusRedisPublisher redisPublisher;
+  private final DeliveryStatusRedisPublisher deliveryStatusRedisPublisher;
   private final RedisTemplate<String, Object> redisTemplate;
 
   public void updateRiderStatus(RiderToggleStatusRequestDto riderStatusRequestDto) {
@@ -48,23 +47,7 @@ public class DeliveryService {
     Delivery delivery = deliveryRepository.findById(deliveryId)
         .orElseThrow(() -> new IllegalArgumentException("Delivery not found"));
 
-    switch (next) {
-      case ASSIGNED -> delivery.updateStatus(DeliveryStatus.ASSIGNED);
-      case PICKED_UP -> delivery.updateStatus(DeliveryStatus.PICKED_UP);
-      case IN_PROGRESS -> {
-        delivery.updateStatus(DeliveryStatus.IN_PROGRESS);
-        delivery.updateStartedAt(LocalDateTime.now());
-      }
-      case COMPLETED -> {
-        delivery.updateStatus(DeliveryStatus.COMPLETED);
-        delivery.updateCompletedAt(LocalDateTime.now());
-      }
-      default -> delivery.updateStatus(next);
-    }
-
-    // TODO: Redis 캐시 갱신이 필요하면 여기서 GEO/Hash 업데이트
-    redisTemplate.opsForValue().set("delivery:" + deliveryId, delivery);
-
+    // 이벤트만 발행 - 실제 상태 변경은 구독자에서 처리
     DeliveryStatusEvent event = DeliveryStatusEvent.builder()
         .deliveryId(delivery.getId())
         .orderId(delivery.getStore().getId())
@@ -73,8 +56,9 @@ public class DeliveryService {
         .sellerProfileId(delivery.getStore().getSellerProfileId())
         .status(delivery.getStatus())
         .occurredAtEpochMs(System.currentTimeMillis())
+        .nextStatus(next)
         .build();
 
-    redisPublisher.publish(event);
+    deliveryStatusRedisPublisher.publish(event);
   }
 }
