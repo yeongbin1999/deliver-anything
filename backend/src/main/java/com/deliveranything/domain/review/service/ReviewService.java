@@ -77,7 +77,7 @@ public class ReviewService {
     List<String> reviewPhotoUrls = getReviewPhotoUrlList(review);
     log.info("리뷰 생성 성공 - reviewId: {}, userId: {}", review.getId(), userId);
 
-    return ReviewCreateResponse.from(review, reviewPhotoUrls);
+    return ReviewCreateResponse.from(review, reviewPhotoUrls, customerProfile);
   }
 
   /* 리뷰 삭제 */
