@@ -58,7 +58,7 @@ public class OrderService {
     }
 
     Order savedOrder = orderRepository.save(order);
-    paymentService.createPayment(savedOrder.getId(), savedOrder.getTotalPrice());
+    paymentService.createPayment(savedOrder.getMerchantId(), savedOrder.getTotalPrice());
 
     return OrderResponse.from(savedOrder);
   }
@@ -172,9 +172,13 @@ public class OrderService {
 
     order.isPayable();
 
-    paymentService.confirmPayment(paymentKey, merchantUid, order.getTotalPrice().longValue());
-
-    order.updateStatus(OrderStatus.PAID);
+    try {
+      paymentService.confirmPayment(paymentKey, merchantUid, order.getTotalPrice().longValue());
+      order.updateStatus(OrderStatus.PAID);
+    } catch (CustomException e) {
+      order.updateStatus(OrderStatus.PAYMENT_FAILED);
+      throw e;
+    }
 
     return OrderResponse.from(order);
   }
