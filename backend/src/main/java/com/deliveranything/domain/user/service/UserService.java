@@ -322,17 +322,19 @@ public class UserService {
         String nickname = (String) profileData.get("nickname");
         String licenseNumber = (String) profileData.get("licenseNumber");
         String area = (String) profileData.getOrDefault("area", "서울");
+        String profileImageUrl = (String) profileData.get("profileImageUrl"); // BaseProfile 필드
 
         RiderProfile riderProfile = RiderProfile.builder()
             .nickname(nickname)
             .toggleStatus(RiderToggleStatus.OFF)
             .area(area)
+            .profileImageUrl(profileImageUrl)
             .licenseNumber(licenseNumber)
-            .profileImageUrl(null)
             .bankName("")
             .bankAccountNumber("")
             .bankAccountHolderName("")
-            .user(profile.getUser())
+            // Profile 객체 전달 (RiderProfile의 @MapsId가 사용하는 필드)
+            .profile(profile)
             .build();
         riderProfileRepository.save(riderProfile);
       }
