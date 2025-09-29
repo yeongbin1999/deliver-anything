@@ -13,6 +13,7 @@ import com.deliveranything.global.exception.ErrorCode;
 import com.deliveranything.global.security.SecurityUser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -37,7 +38,7 @@ public class ApiV1ReviewController {
   @PostMapping
   @Operation(summary = "리뷰 생성", description = "새로운 리뷰를 생성합니다.")
   public ResponseEntity<ApiResponse<ReviewCreateResponse>> createReview(
-      @RequestBody ReviewCreateRequest request, @AuthenticationPrincipal SecurityUser user
+      @RequestBody @Valid ReviewCreateRequest request, @AuthenticationPrincipal SecurityUser user
   ) {
     if (!user.hasActiveProfile(ProfileType.CUSTOMER)) {
       throw new CustomException(ErrorCode.PROFILE_TYPE_FORBIDDEN);
