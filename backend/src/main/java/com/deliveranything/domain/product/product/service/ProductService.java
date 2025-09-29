@@ -66,10 +66,15 @@ public class ProductService {
   }
 
   @Transactional(readOnly = true)
-  public ProductDetailResponse findById(Long productId) {
-    Product product = productRepository.findById(productId)
-        .orElseThrow(() -> new CustomException(ErrorCode.PRODUCT_NOT_FOUND));
+  public ProductDetailResponse getProduct(Long productId) {
+    Product product = findById(productId);
     return ProductDetailResponse.from(product);
+  }
+
+  @Transactional(readOnly = true)
+  public Product findById(Long productId) {
+    return productRepository.findById(productId)
+        .orElseThrow(() -> new CustomException(ErrorCode.PRODUCT_NOT_FOUND));
   }
 
   @Transactional(readOnly = true)

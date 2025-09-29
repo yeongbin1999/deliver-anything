@@ -6,6 +6,7 @@ import com.deliveranything.domain.store.category.entity.StoreCategory;
 import com.deliveranything.domain.store.category.service.StoreCategoryService;
 import com.deliveranything.domain.store.store.dto.StoreCreateRequest;
 import com.deliveranything.domain.store.store.dto.StoreOrderCursorResponse;
+import com.deliveranything.domain.store.store.dto.StoreResponse;
 import com.deliveranything.domain.store.store.dto.StoreUpdateRequest;
 import com.deliveranything.domain.store.store.entity.Store;
 import com.deliveranything.domain.store.store.repository.StoreRepository;
@@ -64,10 +65,15 @@ public class StoreService {
   }
 
   @Transactional(readOnly = true)
-  public StoreResponse findById(Long storeId) {
-    Store store = storeRepository.findById(storeId)
-        .orElseThrow(() -> new CustomException(ErrorCode.STORE_NOT_FOUND));
+  public StoreResponse getStore(Long storeId) {
+    Store store = findById(storeId);
     return StoreResponse.from(store);
+  }
+
+  @Transactional(readOnly = true)
+  public Store findById(Long storeId) {
+    return storeRepository.findById(storeId)
+        .orElseThrow(() -> new CustomException(ErrorCode.STORE_NOT_FOUND));
   }
 
   @Transactional(readOnly = true)
