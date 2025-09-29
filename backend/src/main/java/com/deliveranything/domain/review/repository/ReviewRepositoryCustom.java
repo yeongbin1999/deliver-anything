@@ -8,7 +8,7 @@ import java.util.List;
 
 public interface ReviewRepositoryCustom {
 
-  public List<Review> findReviewsByProfile(Long profileId, ProfileType profileType,
+  List<Review> findReviewsByProfile(Long profileId, ProfileType profileType,
       MyReviewSortType sort, String[] cursor, int pageSize);
 
   void updateLikeCount(Long reviewId, int likeCount);
