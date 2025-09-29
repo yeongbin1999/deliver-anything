@@ -1,6 +1,8 @@
 package com.deliveranything.domain.search.store.document;
 
+import java.util.List;
 import lombok.Getter;
+import lombok.Setter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.elasticsearch.annotations.Field;
@@ -39,7 +41,8 @@ public class StoreDocument {
   @Field(type = FieldType.Boolean, name = "is_open_now")
   private boolean isOpenNow;
 
+  @Setter
   @Field(type = FieldType.Text, name = "keywords")
-  private String[] keywords;
+  private List<String> keywords;
 
 }
