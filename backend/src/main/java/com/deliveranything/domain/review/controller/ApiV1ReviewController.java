@@ -6,7 +6,10 @@ import com.deliveranything.domain.review.dto.ReviewLikeResponse;
 import com.deliveranything.domain.review.dto.ReviewResponse;
 import com.deliveranything.domain.review.dto.ReviewUpdateRequest;
 import com.deliveranything.domain.review.service.ReviewService;
+import com.deliveranything.domain.user.enums.ProfileType;
 import com.deliveranything.global.common.ApiResponse;
+import com.deliveranything.global.exception.CustomException;
+import com.deliveranything.global.exception.ErrorCode;
 import com.deliveranything.global.security.SecurityUser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -36,6 +39,10 @@ public class ApiV1ReviewController {
   public ResponseEntity<ApiResponse<ReviewCreateResponse>> createReview(
       @RequestBody ReviewCreateRequest request, @AuthenticationPrincipal SecurityUser user
   ) {
+    if (!user.hasActiveProfile(ProfileType.CUSTOMER)) {
+      throw new CustomException(ErrorCode.PROFILE_TYPE_FORBIDDEN);
+    }
+
     ReviewCreateResponse response = reviewService.createReview(request, user.getId());
     return ResponseEntity.status(HttpStatus.CREATED)
         .body(ApiResponse.success(response));
@@ -47,6 +54,10 @@ public class ApiV1ReviewController {
       @AuthenticationPrincipal SecurityUser user,
       @PathVariable Long reviewId
   ) {
+    if (!user.hasActiveProfile(ProfileType.CUSTOMER)) {
+      throw new CustomException(ErrorCode.PROFILE_TYPE_FORBIDDEN);
+    }
+
     reviewService.deleteReview(user.getId(), reviewId);
     return ResponseEntity.status(HttpStatus.NO_CONTENT)
         .body(ApiResponse.success(null));
@@ -59,6 +70,10 @@ public class ApiV1ReviewController {
       @PathVariable Long reviewId,
       @RequestBody ReviewUpdateRequest request
   ) {
+    if (!user.hasActiveProfile(ProfileType.CUSTOMER)) {
+      throw new CustomException(ErrorCode.PROFILE_TYPE_FORBIDDEN);
+    }
+
     ReviewResponse response = reviewService.updateReview(request, reviewId, user.getId());
 
     return ResponseEntity.status(HttpStatus.OK)
@@ -79,7 +94,7 @@ public class ApiV1ReviewController {
   @PostMapping("/{reviewId}/like")
   @Operation(summary = "리뷰 좋아요 등록", description = "로그인한 사용자가 특정 리뷰에 좋아요를 누릅니다. 이미 좋아요한 리뷰는 중복 등록할 수 없습니다.")
   public ResponseEntity<ApiResponse<ReviewLikeResponse>> likeReview(
-            @AuthenticationPrincipal SecurityUser user,
+      @AuthenticationPrincipal SecurityUser user,
       @PathVariable Long reviewId
   ) {
     ReviewLikeResponse response = reviewService.likeReview(reviewId, user.getId());
@@ -91,7 +106,7 @@ public class ApiV1ReviewController {
   @DeleteMapping("/{reviewId}/like")
   @Operation(summary = "리뷰 좋아요 취소", description = "로그인한 사용자가 특정 리뷰에 좋아요를 누른 상태에서 다시 좋아요를 누르면 취소됩니다.")
   public ResponseEntity<ApiResponse<ReviewLikeResponse>> unLikeReview(
-            @AuthenticationPrincipal SecurityUser user,
+      @AuthenticationPrincipal SecurityUser user,
       @PathVariable Long reviewId
   ) {
     ReviewLikeResponse response = reviewService.unlikeReview(reviewId, user.getId());
@@ -103,7 +118,7 @@ public class ApiV1ReviewController {
   @GetMapping("/{reviewId}/likes")
   @Operation(summary = "리뷰 좋아요 수 조회", description = "특정 리뷰에 달린 좋아요의 수를 조회합니다.")
   public ResponseEntity<ApiResponse<ReviewLikeResponse>> getReviewLikeCount(
-            @AuthenticationPrincipal SecurityUser user,
+      @AuthenticationPrincipal SecurityUser user,
       @PathVariable Long reviewId
   ) {
     ReviewLikeResponse response = reviewService.getReviewLikeCount(reviewId, user.getId());

@@ -259,9 +259,6 @@ public class ReviewService {
   @Transactional(readOnly = true)
   public boolean verifyReviewAuth(Review review, Long userId) {
     User user = userService.findById(userId);
-    if (user.getCurrentActiveProfile() != ProfileType.CUSTOMER) {
-      return false;
-    }
     CustomerProfile customerProfile = user.getCustomerProfile();
 
     return review.getCustomerProfile().getId().equals(customerProfile.getId());
