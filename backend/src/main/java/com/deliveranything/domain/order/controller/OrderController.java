@@ -46,7 +46,7 @@ public class OrderController {
     }
 
     return ResponseEntity.status(CREATED).body(ApiResponse.success(
-        orderService.createOrder(user.getCurrentActiveProfileId(), orderCreateRequest)));
+        orderService.createOrder(user.getCurrentActiveProfile().getId(), orderCreateRequest)));
   }
 
   @GetMapping
@@ -61,7 +61,8 @@ public class OrderController {
     }
 
     return ResponseEntity.ok().body(ApiResponse.success("소비자 전체 주문 내역 조회 성공",
-        orderService.getCustomerOrdersByCursor(user.getCurrentActiveProfileId(), cursor, size)));
+        orderService.getCustomerOrdersByCursor(user.getCurrentActiveProfile().getId(), cursor,
+            size)));
   }
 
   @GetMapping("/{orderId}")
@@ -75,7 +76,7 @@ public class OrderController {
     }
 
     return ResponseEntity.ok().body(ApiResponse.success("소비자 주문 단일 조회 성공",
-        orderService.getCustomerOrder(orderId, user.getCurrentActiveProfileId())));
+        orderService.getCustomerOrder(orderId, user.getCurrentActiveProfile().getId())));
   }
 
   @PostMapping("{merchantUid}/pay")

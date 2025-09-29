@@ -6,7 +6,6 @@ import com.deliveranything.domain.review.enums.MyReviewSortType;
 import com.deliveranything.domain.review.enums.ReviewTargetType;
 import com.deliveranything.domain.review.enums.StoreReviewSortType;
 import com.deliveranything.domain.store.store.entity.QStore;
-import com.deliveranything.domain.user.entity.User;
 import com.deliveranything.domain.user.entity.profile.QRiderProfile;
 import com.deliveranything.domain.user.enums.ProfileType;
 import com.querydsl.core.types.OrderSpecifier;
@@ -22,21 +21,32 @@ public class ReviewRepositoryImpl implements ReviewRepositoryCustom {
   private final JPAQueryFactory queryFactory;
 
   @Override
+<<<<<<< HEAD
   public List<Review> findReviewsByProfile(User user,
       ProfileType profileType,
       MyReviewSortType sort,
       String[] cursor,
       int pageSize) {
+=======
+  public List<Review> findReviewsByProfile(Long profileId, ProfileType profileType,
+      MyReviewSortType sort, String[] cursor, int pageSize) {
+>>>>>>> 365a349 (refactor(be) : Profile 구ã조 변경에 따른 Review, OrderController 에서의 프로필 참조 방식 변경)
     QReview review = QReview.review;
     QStore store = QStore.store;
 
     // profileType에 따른 조건
     BooleanExpression profileCondition = switch (profileType) {
+<<<<<<< HEAD
       case CUSTOMER -> review.customerProfile.eq(user.getCustomerProfile());
       case SELLER -> review.targetId.eq(store.id)
           .and(review.targetType.eq(ReviewTargetType.STORE));
       case RIDER -> review.targetId.eq(user.getRiderProfile().getId())
           .and(review.targetType.eq(ReviewTargetType.RIDER));
+=======
+      case CUSTOMER -> review.customerProfile.id.eq(profileId);
+      case SELLER -> review.targetId.eq(profileId);
+      case RIDER -> review.targetId.eq(profileId);
+>>>>>>> 365a349 (refactor(be) : Profile 구ã조 변경에 따른 Review, OrderController 에서의 프로필 참조 방식 변경)
     };
 
     // 커서 조건
