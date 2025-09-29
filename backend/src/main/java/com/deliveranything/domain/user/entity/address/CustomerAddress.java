@@ -23,50 +23,68 @@ public class CustomerAddress extends BaseEntity {
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "customer_profile_id", nullable = false)
-  private CustomerProfile customerProfile;
+  private CustomerProfile customerProfile; // 이제 Profile의 전역 고유 ID를 참조
 
-  @Column(name = "address_name", length = 50)
+  @Column(name = "address_name", nullable = false, columnDefinition = "VARCHAR(100)")
   private String addressName;
 
-  @Column(nullable = false, length = 100)
+  @Column(name = "address", nullable = false, columnDefinition = "VARCHAR(300)")
   private String address;
 
-  // 위도 경도를 변경 Point 객체로 변경
-  @Column(columnDefinition = "POINT SRID 4326")
+  @Column(columnDefinition = "POINT SRID 4326", nullable = false)
   private Point location;
 
   @Builder
-  public CustomerAddress(CustomerProfile customerProfile, String addressName,
-      String address, Double latitude,
-      Double longitude) {
+  public CustomerAddress(CustomerProfile customerProfile, String addressName, String address,
+      Double latitude, Double longitude) {
     this.customerProfile = customerProfile;
     this.addressName = addressName;
     this.address = address;
-    // 위도/경도를 받아서 Point 객체로 변환
     this.location = PointUtil.createPoint(latitude, longitude);
   }
 
   // 비즈니스 메서드
+  public void updateAddress(String addressName, String address, Double latitude, Double longitude) {
+    if (addressName != null && !addressName.isBlank()) {
+      this.addressName = addressName;
+    }
+    if (address != null && !address.isBlank()) {
+      this.address = address;
+    }
+    if (latitude != null && longitude != null) {
+      this.location = PointUtil.createPoint(latitude, longitude);
+    }
+  }
+
+  /**
+   * 기본 주소인지 확인 (Profile ID 기반)
+   */
   public boolean isDefault() {
-    return customerProfile.getDefaultAddressId() != null &&
-        customerProfile.getDefaultAddressId().equals(this.getId());
+    if (customerProfile == null || customerProfile.getDefaultAddressId() == null) {
+      return false;
+    }
+    return customerProfile.getDefaultAddressId().equals(this.getId());
   }
 
-  public void updateAddress(String addressName, String address,
-      Double latitude, Double longitude) {
-    this.addressName = addressName;
-    this.address = address;
-    // 위도/경도를 Point 객체로 변환
-    this.location = PointUtil.createPoint(latitude, longitude);
-
+  /**
+   * 특정 프로필의 주소인지 확인 (Profile ID 기반)
+   */
+  public boolean belongsToProfile(Long profileId) {
+    return customerProfile != null && customerProfile.getId().equals(profileId);
   }
 
-  // 편의 메서드: 위도/경도 개별 접근
-  public Double getLatitude() {
-    return location != null ? location.getY() : null;
+  /**
+   * 사용자 ID 조회 헬퍼
+   */
+  public Long getUserId() {
+    return customerProfile != null ? customerProfile.getUserId() : null;
   }
 
-  public Double getLongitude() {
-    return location != null ? location.getX() : null;
+  /**
+   * Profile ID 조회 헬퍼 (전역 고유 ID)
+   */
+  public Long getProfileId() {
+    return customerProfile != null ? customerProfile.getId() : null;
   }
-}
+}// 위도/경도를 받아서 Point 객체로 변환
+//    this.location = PointUtil.createPoint(latitude, longitude);

@@ -24,15 +24,16 @@ public class AuthTokenService {
   @Value("${custom.accessToken.expirationSeconds}")
   private int accessTokenExpirationSeconds;
 
-  // 사용자 정보를 기반으로 JWT Access Token 생성
-
+  /**
+   * 사용자 정보를 기반으로 JWT Access Token 생성 (전역 Profile ID 사용)
+   */
   public String genAccessToken(User user) {
     long id = user.getId();
     String name = user.getName();
 
-    // 멀티 프로필 정보
-    ProfileType currentActiveProfile = user.getCurrentActiveProfile();
-    Long currentActiveProfileId = user.getCurrentActiveProfileId();
+    // 멀티 프로필 정보 (이제 전역 고유 Profile ID)
+    ProfileType currentActiveProfileType = user.getCurrentActiveProfileType();
+    Long currentActiveProfileId = user.getCurrentActiveProfileId(); // 전역 고유 ID
 
     ClaimsBuilder claimsBuilder = Jwts.claims();
 
@@ -40,7 +41,7 @@ public class AuthTokenService {
     claimsBuilder.add("id", id);
     claimsBuilder.add("name", name);
     claimsBuilder.add("currentActiveProfile",
-        currentActiveProfile != null ? currentActiveProfile.name() : null);
+        currentActiveProfileType != null ? currentActiveProfileType.name() : null);
     claimsBuilder.add("currentActiveProfileId", currentActiveProfileId);
 
     Claims claims = claimsBuilder.build();
@@ -59,7 +60,7 @@ public class AuthTokenService {
   }
 
   /**
-   * JWT Access Token에서 페이로드 파싱 필수 정보 + name 추출
+   * JWT Access Token에서 페이로드 파싱 필수 정보 + name 추출 (전역 Profile ID 포함)
    */
   public Map<String, Object> payload(String accessToken) {
     SecretKey secretKey = Keys.hmacShaKeyFor(jwtSecretKey.getBytes());
@@ -76,7 +77,7 @@ public class AuthTokenService {
       Long id = claims.get("id", Long.class);
       String name = claims.get("name", String.class);
 
-      // 멀티 프로필 정보 추출
+      // 멀티 프로필 정보 추출 (전역 고유 Profile ID)
       String currentActiveProfileStr = claims.get("currentActiveProfile", String.class);
       ProfileType currentActiveProfile = currentActiveProfileStr != null ?
           ProfileType.valueOf(currentActiveProfileStr) : null;
@@ -143,9 +144,15 @@ public class AuthTokenService {
     return payload != null ? (Long) payload.get("id") : null;
   }
 
-  // JWT 토큰에서 현재 활성 프로필 추출 (권한 체크용)
+  // JWT 토큰에서 현재 활성 프로필 타입 추출 (권한 체크용)
   public ProfileType getCurrentActiveProfile(String accessToken) {
     Map<String, Object> payload = payload(accessToken);
     return payload != null ? (ProfileType) payload.get("currentActiveProfile") : null;
+  }
+
+  // JWT 토큰에서 현재 활성 프로필 ID 추출 (전역 고유 ID)
+  public Long getCurrentActiveProfileId(String accessToken) {
+    Map<String, Object> payload = payload(accessToken);
+    return payload != null ? (Long) payload.get("currentActiveProfileId") : null;
   }
 }

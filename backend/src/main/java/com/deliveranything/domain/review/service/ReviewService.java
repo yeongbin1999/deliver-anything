@@ -18,7 +18,9 @@ import com.deliveranything.domain.store.store.entity.Store;
 import com.deliveranything.domain.store.store.service.StoreService;
 import com.deliveranything.domain.user.entity.User;
 import com.deliveranything.domain.user.entity.profile.CustomerProfile;
+import com.deliveranything.domain.user.entity.profile.Profile;
 import com.deliveranything.domain.user.enums.ProfileType;
+import com.deliveranything.domain.user.service.CustomerProfileService;
 import com.deliveranything.domain.user.service.UserService;
 import com.deliveranything.global.common.CursorPageResponse;
 import com.deliveranything.global.exception.CustomException;
@@ -48,15 +50,20 @@ public class ReviewService {
   private final UserService userService;
   private final RedisTemplate<String, Object> redisTemplate;
   private final StoreService storeService;
+  private final CustomerProfileService customerProfileService;
 
   //============================메인 API 메서드==================================
   /* 리뷰 생성 */
   public ReviewCreateResponse createReview(ReviewCreateRequest request, Long userId) {
     log.info("리뷰 생성 요청 - userId: {}, request: {}", userId, request);
-    //유저 존재 여부 확인
-    User user = userService.findById(userId);
-
-    CustomerProfile customerProfile = user.getCustomerProfile();
+    /***
+     *  2025-09-29 수정 사항 - daran2
+     *  유저를 통해 프로필을 받아오는 방식 -> 프로필을 받고 프로필에서 커스터머 프로필을 받아오는 방식으로 변경
+     *  이유: 유저가 여러 프로필을 가질 수 있기 때문에, 변경된 프로필 구조에선 유저를 통해 커스터머 프로필을 바로 받아오는 것은 부적절
+     ***/
+    //커스터머 프로필 존재 여부 확인
+    Profile profile = userService.getProfileByUserAndType(userId, ProfileType.CUSTOMER);
+    CustomerProfile customerProfile = customerProfileService.getProfileByProfileId(profile.getId());
 
     //리뷰 생성 및 저장
     Review review = Review.from(request, customerProfile);
@@ -212,13 +219,19 @@ public class ReviewService {
       String cursor, Integer size) {
     log.info("내 리뷰 리스트 조회 요청 - userId: {}, sort: {}, cursor: {}, size: {}", userId, sort, cursor,
         size);
+    // 1. 유저 객체 조회 (쿼리 1)
     User user = userService.findById(userId);
+    // 2. User 객체에서 currentActiveProfile 정보를 직접 활용
+    Profile currentProfile = user.getCurrentActiveProfile();
 
-    ProfileType profileType = user.getCurrentActiveProfile();
+    ProfileType profileType = currentProfile.getType();
+    long profileId = currentProfile.getId();
+
     String[] decodedCursor = CursorUtil.decode(cursor);
 
     //실제 조회
-    List<ReviewResponse> reviewList = getReviewsByProfile(profileType, user, sort, decodedCursor,
+    List<ReviewResponse> reviewList = getReviewsByProfile(profileType, profileId, sort,
+        decodedCursor,
         size);
 
     boolean hasNext = reviewList.size() > size;
@@ -258,19 +271,19 @@ public class ReviewService {
   /* 리뷰 권한 확인 (작성자 확인) */
   @Transactional(readOnly = true)
   public boolean verifyReviewAuth(Review review, Long userId) {
-    User user = userService.findById(userId);
-    CustomerProfile customerProfile = user.getCustomerProfile();
+    Profile profile = userService.getProfileByUserAndType(userId, ProfileType.CUSTOMER);
+    CustomerProfile customerProfile = customerProfileService.getProfileByProfileId(profile.getId());
 
     return review.getCustomerProfile().getId().equals(customerProfile.getId());
   }
 
   /* 프로필에 따라 내 리뷰 조회하기 */
-  public List<ReviewResponse> getReviewsByProfile(ProfileType profileType, User user,
+  public List<ReviewResponse> getReviewsByProfile(ProfileType profileType, Long profileId,
       MyReviewSortType sort, String[] cursor, int size) {
     List<Review> reviews = reviewRepository.findReviewsByProfile(
-        user,
-        profileType,
-        sort,
+        profileId,    // 변경된 부분
+        profileType, // ProfileType 전달
+        sort,        // ReviewSortType 전달
         cursor,
         size
     );

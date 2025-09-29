@@ -11,7 +11,7 @@ public record LoginResponse(
     String name,
     String accessToken,
     String refreshToken,
-    ProfileType currentActiveProfile,
+    ProfileType currentActiveProfileType,
     Long currentActiveProfileId,
     boolean isOnboardingCompleted,
     List<ProfileType> availableProfiles

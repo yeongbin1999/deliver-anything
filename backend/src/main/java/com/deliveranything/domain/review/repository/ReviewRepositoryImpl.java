@@ -6,8 +6,6 @@ import com.deliveranything.domain.review.enums.MyReviewSortType;
 import com.deliveranything.domain.review.enums.ReviewTargetType;
 import com.deliveranything.domain.review.enums.StoreReviewSortType;
 import com.deliveranything.domain.store.store.entity.QStore;
-import com.deliveranything.domain.user.entity.User;
-import com.deliveranything.domain.user.entity.profile.QRiderProfile;
 import com.deliveranything.domain.user.enums.ProfileType;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
@@ -22,7 +20,7 @@ public class ReviewRepositoryImpl implements ReviewRepositoryCustom {
   private final JPAQueryFactory queryFactory;
 
   @Override
-  public List<Review> findReviewsByProfile(User user,
+  public List<Review> findReviewsByProfile(Long profileId,
       ProfileType profileType,
       MyReviewSortType sort,
       String[] cursor,
@@ -32,10 +30,10 @@ public class ReviewRepositoryImpl implements ReviewRepositoryCustom {
 
     // profileType에 따른 조건
     BooleanExpression profileCondition = switch (profileType) {
-      case CUSTOMER -> review.customerProfile.eq(user.getCustomerProfile());
+      case CUSTOMER -> review.customerProfile.id.eq(profileId);
       case SELLER -> review.targetId.eq(store.id)
           .and(review.targetType.eq(ReviewTargetType.STORE));
-      case RIDER -> review.targetId.eq(user.getRiderProfile().getId())
+      case RIDER -> review.targetId.eq(profileId)
           .and(review.targetType.eq(ReviewTargetType.RIDER));
     };
 

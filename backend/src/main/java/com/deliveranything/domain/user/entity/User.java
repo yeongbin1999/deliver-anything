@@ -1,9 +1,6 @@
 package com.deliveranything.domain.user.entity;
 
-import com.deliveranything.domain.user.entity.profile.CustomerProfile;
-import com.deliveranything.domain.user.entity.profile.RiderProfile;
-import com.deliveranything.domain.user.entity.profile.SellerProfile;
-import com.deliveranything.domain.user.entity.token.RefreshToken;
+import com.deliveranything.domain.user.entity.profile.Profile;
 import com.deliveranything.domain.user.enums.ProfileType;
 import com.deliveranything.domain.user.enums.SocialProvider;
 import com.deliveranything.global.entity.BaseEntity;
@@ -13,8 +10,9 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
-import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -29,172 +27,169 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-
 @Entity
 @Table(name = "users")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class User extends BaseEntity implements UserDetails {
 
-  // 기본 사용자 정보
-  @Column(unique = true, nullable = false, length = 100)
+  @Column(name = "email", unique = true, nullable = false, columnDefinition = "VARCHAR(100)")
   private String email;
 
-  @Column(nullable = false)
+  @Column(name = "password", columnDefinition = "VARCHAR(255)")
   private String password;
 
-  @Column(nullable = false, length = 50)
+  @Column(name = "name", nullable = false, columnDefinition = "VARCHAR(50)")
   private String name;
 
-  @Column(name = "phone_number", unique = true, nullable = false, length = 20)
+  @Column(name = "phone_number", unique = true, columnDefinition = "VARCHAR(20)")
   private String phoneNumber;
 
-  // 소셜 로그인 정보
   @Enumerated(EnumType.STRING)
-  @Column(name = "social_provider", nullable = false)
+  @Column(name = "social_provider", nullable = false, columnDefinition = "VARCHAR(20)")
   private SocialProvider socialProvider;
 
-  @Column(name = "social_id")
+  @Column(name = "social_id", columnDefinition = "VARCHAR(100)")
   private String socialId;
 
-  // 계정 상태
+  @Column(name = "api_key", unique = true, nullable = false, columnDefinition = "VARCHAR(255)")
+  private String apiKey;
+
+  // 현재 활성화된 프로필 (이제 Profile 테이블의 전역 고유 ID)
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "current_active_profile_id")
+  private Profile currentActiveProfile;
+
+  @Column(name = "is_onboarding_completed", nullable = false)
+  private boolean isOnboardingCompleted;
+
   @Column(name = "is_email_verified", nullable = false)
   private boolean isEmailVerified;
 
   @Column(name = "is_enabled", nullable = false)
   private boolean isEnabled;
 
-  // Spring Security UserDetails 구현을 위한 필드들
-  @Column(name = "account_non_expired", nullable = false)
-  private boolean accountNonExpired;
-
-  @Column(name = "account_non_locked", nullable = false)
-  private boolean accountNonLocked;
-
-  @Column(name = "credentials_non_expired", nullable = false)
-  private boolean credentialsNonExpired;
-
-  // 프로필 관리
-  @Enumerated(EnumType.STRING)
-  @Column(name = "current_active_profile")
-  private ProfileType currentActiveProfile;
-
-  @Column(name = "onboarding_completed", nullable = false)
-  private boolean onboardingCompleted;
-
-  @Column(name = "current_active_profile_id") // 페이로드에 포함시킬 예정
-  private Long currentActiveProfileId;
+  @Column(name = "is_admin", nullable = false)
+  private boolean isAdmin;
 
   @Column(name = "last_login_at")
   private LocalDateTime lastLoginAt;
 
-  @Column(name = "api_key", unique = true)
-  private String apiKey;
-
-  // 연관관계 매핑
-  @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-  private CustomerProfile customerProfile;
-
-  @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-  private SellerProfile sellerProfile;
-
-  @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-  private RiderProfile riderProfile;
+  // Profile과의 관계
+  @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+  private List<Profile> profiles = new ArrayList<>();
 
   @Builder
   public User(String email, String password, String name, String phoneNumber,
-      SocialProvider socialProvider, String socialId, ProfileType CurrentActiveProfile,
-      Long currentActiveProfileId) {
+      SocialProvider socialProvider, String socialId, Profile currentActiveProfile) {
     this.email = email;
     this.password = password;
     this.name = name;
     this.phoneNumber = phoneNumber;
     this.socialProvider = socialProvider != null ? socialProvider : SocialProvider.LOCAL;
     this.socialId = socialId;
-    this.currentActiveProfile = CurrentActiveProfile;
-    this.currentActiveProfileId = currentActiveProfileId;
-
-    // 계정 상태 초기값 설정
+    this.apiKey = generateApiKey();
+    this.currentActiveProfile = currentActiveProfile; // 현재 프로필 아이디
+    this.isOnboardingCompleted = false;
     this.isEmailVerified = false;
     this.isEnabled = true;
-    this.accountNonExpired = true;
-    this.accountNonLocked = true;
-    this.credentialsNonExpired = true;
-    this.onboardingCompleted = false;
-
-    // apiKey 자동 생성
-    this.apiKey = UUID.randomUUID().toString();
+    this.isAdmin = false;
   }
 
-  // Spring Security - UserDetails 구현
+  // ========== 비즈니스 메서드 ==========
 
-  @Override // UserDetails 인터페이스의 메서드 오버라이딩
-  public String getUsername() {
-    return email; // 이메일을 username으로 사용
+  /**
+   * 온보딩 완료 처리
+   */
+  public void completeOnboarding(Profile selectedProfile) {
+    this.currentActiveProfile = selectedProfile;
+    this.isOnboardingCompleted = true;
   }
 
-  @Override
-  public String getPassword() {
-    return password;
-  }
-
-  @Override
-  public Collection<? extends GrantedAuthority> getAuthorities() {
-    List<GrantedAuthority> authorities = new ArrayList<>();
-
-    // 관리자 권한 (항상 유지)
-    if (isAdmin()) {
-      authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
+  /**
+   * 프로필 전환
+   */
+  public void switchProfile(Profile targetProfile) {
+    // 해당 사용자의 프로필인지 확인
+    if (!targetProfile.belongsToUser(this.getId())) {
+      throw new IllegalStateException("해당 프로필은 현재 사용자의 프로필이 아닙니다.");
     }
 
-    // 현재 활성화된 프로필의 권한만 부여
-    if (currentActiveProfile != null) {
-      switch (currentActiveProfile) {
-        case CUSTOMER:
-          if (hasCustomerProfile()) {
-            authorities.add(new SimpleGrantedAuthority("ROLE_CUSTOMER"));
-          }
-          break;
-        case SELLER:
-          if (hasSellerProfile()) {
-            authorities.add(new SimpleGrantedAuthority("ROLE_SELLER"));
-          }
-          break;
-        case RIDER:
-          if (hasRiderProfile()) {
-            authorities.add(new SimpleGrantedAuthority("ROLE_RIDER"));
-          }
-          break;
-      }
+    // 활성 프로필인지 확인
+    if (!targetProfile.isActive()) {
+      throw new IllegalStateException("비활성화된 프로필로는 전환할 수 없습니다.");
     }
 
-    return authorities;
+    this.currentActiveProfile = targetProfile;
   }
 
-  @Override
-  public boolean isAccountNonExpired() {
-    return accountNonExpired;
+  /**
+   * 특정 타입의 프로필을 가지고 있는지 확인
+   */
+  public boolean hasProfileType(ProfileType profileType) {
+    return profiles.stream()
+        .anyMatch(profile -> profile.getType() == profileType && profile.isActive());
   }
 
-  @Override
-  public boolean isAccountNonLocked() {
-    return accountNonLocked;
+  /**
+   * 고객 프로필 보유 여부
+   */
+  public boolean hasCustomerProfile() {
+    return hasProfileType(ProfileType.CUSTOMER);
   }
 
-  @Override
-  public boolean isCredentialsNonExpired() {
-    return credentialsNonExpired;
+  /**
+   * 판매자 프로필 보유 여부
+   */
+  public boolean hasSellerProfile() {
+    return hasProfileType(ProfileType.SELLER);
   }
 
-  @Override
-  public boolean isEnabled() {
-    return isEnabled;
+  /**
+   * 라이더 프로필 보유 여부
+   */
+  public boolean hasRiderProfile() {
+    return hasProfileType(ProfileType.RIDER);
   }
 
-  // 비즈니스 메서드
+  /**
+   * 현재 활성 프로필 타입 조회
+   */
+  public ProfileType getCurrentActiveProfileType() {
+    return currentActiveProfile != null ? currentActiveProfile.getType() : null;
+  }
 
-  public void updatePassword(String newPassword) {
-    this.password = newPassword;
+  /**
+   * 현재 활성 프로필 ID 조회 (전역 고유 ID)
+   */
+  public Long getCurrentActiveProfileId() {
+    return currentActiveProfile != null ? currentActiveProfile.getId() : null;
+  }
+
+  /**
+   * 활성 프로필 목록 조회
+   */
+  public List<ProfileType> getActiveProfileTypes() {
+    return profiles.stream()
+        .filter(Profile::isActive)
+        .map(Profile::getType)
+        .toList();
+  }
+
+  /**
+   * 특정 타입의 프로필 조회
+   */
+  public Profile getProfileByType(ProfileType profileType) {
+    return profiles.stream()
+        .filter(profile -> profile.getType() == profileType && profile.isActive())
+        .findFirst()
+        .orElse(null);
+  }
+
+  // ========== 인증/인가 관련 ==========
+
+  public void updatePassword(String encodedPassword) {
+    this.password = encodedPassword;
   }
 
   public void verifyEmail() {
@@ -205,96 +200,64 @@ public class User extends BaseEntity implements UserDetails {
     this.lastLoginAt = LocalDateTime.now();
   }
 
-  public void completeOnboarding(ProfileType selectedProfile) {
-    this.currentActiveProfile = selectedProfile;
-    this.currentActiveProfileId = getProfileIdByType(selectedProfile);
-    this.onboardingCompleted = true;
+  private String generateApiKey() {
+    return UUID.randomUUID().toString();
   }
 
-  public void switchProfile(ProfileType targetProfile) {
-    if (!hasProfileForType(targetProfile)) {
-      throw new IllegalStateException(targetProfile + " 프로필이 존재하지 않습니다");
+  // ========== UserDetails 구현 ==========
+
+  @Override
+  public Collection<? extends GrantedAuthority> getAuthorities() {
+    List<GrantedAuthority> authorities = new ArrayList<>();
+
+    // 기본 사용자 권한
+    authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
+
+    // 프로필별 권한 추가
+    if (currentActiveProfile != null) {
+      ProfileType currentType = currentActiveProfile.getType();
+      authorities.add(new SimpleGrantedAuthority("ROLE_" + currentType.name()));
+
+      /*** 
+       * 활성화된 다른 프로필들의 권한도 추가 (멀티프로필 지원) - 현재 쓸모가 없어보여서 주석처리
+       for (Profile profile : profiles) {
+       if (profile.isActive()) {
+       authorities.add(new SimpleGrantedAuthority("PROFILE_" + profile.getType().name()));
+       }
+       }
+       ***/
     }
-    this.currentActiveProfile = targetProfile;
-    this.currentActiveProfileId = getProfileIdByType(targetProfile);
-  }
 
-  private boolean hasProfileForType(ProfileType profileType) {
-    return switch (profileType) {
-      case CUSTOMER -> hasCustomerProfile();
-      case SELLER -> hasSellerProfile();
-      case RIDER -> hasRiderProfile();
-    };
-  }
-
-  private Long getProfileIdByType(ProfileType profileType) {
-    return switch (profileType) {
-      case CUSTOMER -> customerProfile != null ? customerProfile.getId() : null;
-      case SELLER -> sellerProfile != null ? sellerProfile.getId() : null;
-      case RIDER -> riderProfile != null ? riderProfile.getId() : null;
-    };
-  }
-
-  public void enable() {
-    this.isEnabled = true;
-  }
-
-  public void disable() {
-    this.isEnabled = false;
-  }
-
-  public boolean hasCustomerProfile() {
-    return customerProfile != null;
-  }
-
-  public boolean hasSellerProfile() {
-    return sellerProfile != null;
-  }
-
-  public boolean hasRiderProfile() {
-    return riderProfile != null;
-  }
-
-  // 토큰 관리
-  @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
-  private List<RefreshToken> refreshTokens = new ArrayList<>();
-
-  // 사용 가능한 프로필 목록 반환 (JWT 페이로드용)
-  public List<ProfileType> getAvailableProfiles() {
-    List<ProfileType> profiles = new ArrayList<>();
-    if (hasCustomerProfile()) {
-      profiles.add(ProfileType.CUSTOMER);
+    // 관리자 권한
+    if (isAdmin) {
+      authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
     }
-    if (hasSellerProfile()) {
-      profiles.add(ProfileType.SELLER);
-    }
-    if (hasRiderProfile()) {
-      profiles.add(ProfileType.RIDER);
-    }
-    return profiles;
+
+    return authorities;
   }
 
-  // 관리자 권한 확인
-  public boolean isAdmin() {
-    // 추후 관리자 테이블 또는 권한 시스템으로 확장 예정
-    return "admin@deliveranything.com".equals(email) ||
-        "system@deliveranything.com".equals(email);
+  @Override
+  public String getUsername() {
+    return email;
   }
 
-  public void modifyApiKey(String apiKey) {
-    this.apiKey = apiKey;
+  @Override
+  public boolean isAccountNonExpired() {
+    return true;
   }
 
-  // 테스트용 임시 세터 메서드
-  public void setCustomerProfile(CustomerProfile customerProfile) {
-    this.customerProfile = customerProfile;
+  @Override
+  public boolean isAccountNonLocked() {
+    return true;
   }
 
-  public void setSellerProfile(SellerProfile sellerProfile) {
-    this.sellerProfile = sellerProfile;
+  @Override
+  public boolean isCredentialsNonExpired() {
+    return true;
   }
 
-  public void setRiderProfile(RiderProfile riderProfile) {
-    this.riderProfile = riderProfile;
+  @Override
+  public boolean isEnabled() {
+    return isEnabled;
   }
 }
