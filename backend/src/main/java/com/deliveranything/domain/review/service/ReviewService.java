@@ -259,6 +259,9 @@ public class ReviewService {
   @Transactional(readOnly = true)
   public boolean verifyReviewAuth(Review review, Long userId) {
     User user = userService.findById(userId);
+    if (user.getCurrentActiveProfile() != ProfileType.CUSTOMER) {
+      return false;
+    }
     CustomerProfile customerProfile = user.getCustomerProfile();
 
     return review.getCustomerProfile().getId().equals(customerProfile.getId());
@@ -269,8 +272,8 @@ public class ReviewService {
       MyReviewSortType sort, String[] cursor, int size) {
     List<Review> reviews = reviewRepository.findReviewsByProfile(
         user,
-        profileType, // ProfileType 전달
-        sort,        // ReviewSortType 전달
+        profileType,
+        sort,
         cursor,
         size
     );
