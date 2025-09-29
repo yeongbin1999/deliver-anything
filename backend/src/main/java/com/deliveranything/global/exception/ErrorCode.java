@@ -31,6 +31,7 @@ public enum ErrorCode {
   // 주문 관련 오류
   ORDER_NOT_FOUND(HttpStatus.NOT_FOUND, "ORDER-404", "주문 정보를 찾을 수 없습니다."),
   CUSTOMER_ORDER_NOT_FOUND(HttpStatus.NOT_FOUND, "ORDER-CUSTOMER-404", "소비자의 주문을 찾을 수 없습니다."),
+  ORDER_PAY_STATUS_UNAVAILABLE(HttpStatus.CONFLICT, "ORDER-409", "결제 대기 중인 주문이 아닙니다."),
 
   // 결제 관련 오류
   PG_PAYMENT_CONFIRM_FAILED(HttpStatus.BAD_REQUEST, "PG-PAYMENT-001",

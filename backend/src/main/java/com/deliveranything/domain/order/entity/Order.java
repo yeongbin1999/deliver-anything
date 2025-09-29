@@ -5,6 +5,8 @@ import com.deliveranything.domain.order.enums.OrderStatus;
 import com.deliveranything.domain.store.store.entity.Store;
 import com.deliveranything.domain.user.entity.profile.CustomerProfile;
 import com.deliveranything.global.entity.BaseEntity;
+import com.deliveranything.global.exception.CustomException;
+import com.deliveranything.global.exception.ErrorCode;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -96,5 +98,11 @@ public class Order extends BaseEntity {
     }
 
     this.status = status;
+  }
+
+  public void isPayable() {
+    if (this.status != OrderStatus.PENDING) {
+      throw new CustomException(ErrorCode.ORDER_PAY_STATUS_UNAVAILABLE);
+    }
   }
 }
