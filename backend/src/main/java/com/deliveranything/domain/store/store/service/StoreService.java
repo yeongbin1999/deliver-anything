@@ -64,9 +64,10 @@ public class StoreService {
   }
 
   @Transactional(readOnly = true)
-  public Store findById(Long storeId) {
-    return storeRepository.findById(storeId)
+  public StoreResponse findById(Long storeId) {
+    Store store = storeRepository.findById(storeId)
         .orElseThrow(() -> new CustomException(ErrorCode.STORE_NOT_FOUND));
+    return StoreResponse.from(store);
   }
 
   @Transactional(readOnly = true)

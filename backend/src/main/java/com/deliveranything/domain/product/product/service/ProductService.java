@@ -1,6 +1,9 @@
 package com.deliveranything.domain.product.product.service;
 
 import com.deliveranything.domain.product.product.dto.ProductCreateRequest;
+import com.deliveranything.domain.product.product.dto.ProductDetailResponse;
+import com.deliveranything.domain.product.product.dto.ProductResponse;
+import com.deliveranything.domain.product.product.dto.ProductSearchRequest;
 import com.deliveranything.domain.product.product.dto.ProductUpdateRequest;
 import com.deliveranything.domain.product.product.entity.Product;
 import com.deliveranything.domain.product.product.repository.ProductRepository;
@@ -9,6 +12,7 @@ import com.deliveranything.domain.store.store.service.StoreService;
 import com.deliveranything.global.exception.CustomException;
 import com.deliveranything.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,7 +25,7 @@ public class ProductService {
   private final KeywordGenerationService keywordGenerationService;
 
   @Transactional
-  public Product createProduct(Long storeId, ProductCreateRequest request) {
+  public ProductResponse createProduct(Long storeId, ProductCreateRequest request) {
     Store store = storeService.findById(storeId);
 
     Product product = Product.builder()
@@ -36,7 +40,7 @@ public class ProductService {
     Product saveProduct = productRepository.save(product);
     keywordGenerationService.generateAndSaveKeywords(saveProduct.getId());
 
-    return saveProduct;
+    return ProductResponse.from(saveProduct);
   }
 
   @Transactional
@@ -46,7 +50,7 @@ public class ProductService {
   }
 
   @Transactional
-  public Product updateProduct(Long productId, ProductUpdateRequest request) {
+  public ProductResponse updateProduct(Long productId, ProductUpdateRequest request) {
     Product product = findById(productId);
 
     String oldName = product.getName();
@@ -58,12 +62,22 @@ public class ProductService {
       keywordGenerationService.generateAndSaveKeywords(product.getId());
     }
 
-    return product;
+    return ProductResponse.from(product);
   }
 
   @Transactional(readOnly = true)
-  public Product findById(Long productId) {
-    return productRepository.findById(productId)
+  public ProductDetailResponse findById(Long productId) {
+    Product product = productRepository.findById(productId)
         .orElseThrow(() -> new CustomException(ErrorCode.PRODUCT_NOT_FOUND));
+    return ProductDetailResponse.from(product);
+  }
+
+  @Transactional(readOnly = true)
+  public Slice<ProductResponse> searchProducts(Long storeId, ProductSearchRequest request) {
+    storeService.findById(storeId);
+
+    Slice<Product> results = productRepository.search(storeId, request);
+
+    return results.map(ProductResponse::from);
   }
 }

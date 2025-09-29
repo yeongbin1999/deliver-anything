@@ -36,9 +36,7 @@ public class StoreController {
 
   @GetMapping("/{storeId}")
   public ResponseEntity<ApiResponse<StoreResponse>> getStore(@PathVariable Long storeId) {
-    Store store = storeService.findById(storeId);
-
-    return ResponseEntity.ok(ApiResponse.success(StoreResponse.from(store)));
+    return ResponseEntity.ok(ApiResponse.success(storeService.findById(storeId)));
   }
 
   @PutMapping("/{storeId}")
