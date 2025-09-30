@@ -83,4 +83,31 @@ public class NotificationController {
   ) {
     return ResponseEntity.ok(ApiResponse.success(notificationService.getUnreadCount(profileId)));
   }
+
+  @Operation(summary = "배달 상태 변경 알림 구독", description = "배달 상태 변경 실시간 알림을 구독합니다.")
+  @GetMapping("/delivery-status")
+  public SseEmitter subscribeToDeliveryStatus(
+      @Parameter(description = "구독할 사용자의 프로필 ID") @RequestParam Long profileId,
+      @Parameter(description = "구독하는 기기의 고유 ID", required = true, in = ParameterIn.HEADER)
+      @RequestHeader("X-Device-ID") String deviceId
+      // @AuthenticationPrincipal CustomUserDetails userDetails <-- 추후 적용
+  ) {
+    SseEmitter emitter = new SseEmitter(60 * 1000L);
+    emitterRepository.save(profileId, deviceId, emitter);
+
+    // 연결 종료 시 Emitter 제거
+    emitter.onCompletion(() -> emitterRepository.remove(profileId, deviceId));
+    emitter.onTimeout(() -> emitterRepository.remove(profileId, deviceId));
+
+    // 최초 연결 확인 이벤트 전송
+    try {
+      emitter.send(SseEmitter.event()
+          .name("connect")
+          .data("Delivery status SSE connected with deviceId: " + deviceId));
+    } catch (Exception e) {
+      emitterRepository.remove(profileId, deviceId);
+    }
+
+    return emitter;
+  }
 }
