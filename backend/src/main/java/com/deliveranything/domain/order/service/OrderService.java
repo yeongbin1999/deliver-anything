@@ -49,7 +49,7 @@ public class OrderService {
 
     for (OrderItemRequest orderItemRequest : orderCreateRequest.orderItemRequests()) {
       OrderItem orderItem = OrderItem.builder()
-          .product(productService.getProduct(orderItemRequest.productId()))
+          .product(productService.findById(orderItemRequest.productId()))
           .price(orderItemRequest.price())
           .quantity(orderItemRequest.quantity())
           .build();
