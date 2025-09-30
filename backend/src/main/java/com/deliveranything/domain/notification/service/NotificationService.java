@@ -4,12 +4,15 @@ import com.deliveranything.domain.notification.entity.Notification;
 import com.deliveranything.domain.notification.enums.NotificationType;
 import com.deliveranything.domain.notification.repository.EmitterRepository;
 import com.deliveranything.domain.notification.repository.NotificationRepository;
+import com.deliveranything.domain.user.entity.User;
+import com.deliveranything.domain.user.service.UserService;
 import jakarta.transaction.Transactional;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -20,6 +23,8 @@ public class NotificationService {
 
   private final NotificationRepository notificationRepository;
   private final EmitterRepository emitterRepository;
+  private final UserService userService;
+  private final RedisTemplate<String, Object> redisTemplate;
 
   /**
    * 프로필 ID 기준 알림 생성 및 모든 디바이스 전송
@@ -52,6 +57,9 @@ public class NotificationService {
 
       // 읽음 상태를 다른 디바이스에도 브로드캐스트
       broadcastToEmitters(profileId, notificationId, "notification-read");
+
+      // 래디스 삭제용 메서드
+      decreaseRedisCount(notificationId, profileId);
     }
   }
 
@@ -108,5 +116,17 @@ public class NotificationService {
         emitter.completeWithError(e);
       }
     });
+  }
+
+  /**
+   * 래디스를 사용하는 알림용 감소 메서드
+   */
+  public void decreaseRedisCount(Long notificationId, Long profileId) {
+    Notification notification = notificationRepository.findById(notificationId)
+        .orElseThrow(() -> new IllegalArgumentException("Notification not found"));
+    User user = userService.findByProfileId(profileId);
+    String key = "notifications:hourly:" + user.getPhoneNumber();
+    String field = notification.getType().name();
+    redisTemplate.opsForHash().increment(key, field, -1);
   }
 }

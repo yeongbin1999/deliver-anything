@@ -1,5 +1,9 @@
 package com.deliveranything.domain.review.service;
 
+import com.deliveranything.domain.notification.entity.Notification;
+import com.deliveranything.domain.notification.enums.NotificationType;
+import com.deliveranything.domain.notification.repository.NotificationRepository;
+import com.deliveranything.domain.notification.service.NotificationService;
 import com.deliveranything.domain.review.dto.ReviewCreateRequest;
 import com.deliveranything.domain.review.dto.ReviewCreateResponse;
 import com.deliveranything.domain.review.dto.ReviewLikeResponse;
@@ -29,7 +33,9 @@ import com.deliveranything.global.util.CursorUtil;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.connection.ReturnType;
@@ -51,6 +57,8 @@ public class ReviewService {
   private final RedisTemplate<String, Object> redisTemplate;
   private final StoreService storeService;
   private final CustomerProfileService customerProfileService;
+  private final NotificationService notificationService;
+  private final NotificationRepository notificationRepository;
 
   //============================메인 API 메서드==================================
   /* 리뷰 생성 */
@@ -89,6 +97,26 @@ public class ReviewService {
     String reviewNotificationKey = "notifications:hourly:" + user.getPhoneNumber();
     String targetType = review.getTargetType().name();
     redisTemplate.opsForHash().increment(reviewNotificationKey, targetType, 1);
+
+    // 2시간 후 자동 삭제
+    redisTemplate.expire(reviewNotificationKey, 2, TimeUnit.HOURS);
+
+    // 알림용 Notification 객체 저장
+    Long targetId = switch (targetType) {
+      case "STORE" -> storeService.findById(review.getTargetId()).getSellerProfileId();
+      case "RIDER" -> review.getTargetId();
+      default -> throw new CustomException(ErrorCode.REVIEW_INVALID_TARGET);
+    };
+
+    Map<String, Object> data = Map.of("reviewId", review.getId());
+
+    Notification notification = new Notification();
+    notification.setRecipientId(targetId);
+    notification.setType(NotificationType.NEW_REVIEW);
+    notification.setMessage("새 리뷰가 도착했습니다.");
+    notification.setData(data.toString());
+
+    notificationRepository.save(notification);
 
     return ReviewCreateResponse.from(review, reviewPhotoUrls, customerProfile);
   }
