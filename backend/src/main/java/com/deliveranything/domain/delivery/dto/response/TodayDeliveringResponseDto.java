@@ -5,10 +5,10 @@ import java.time.LocalDateTime;
 import lombok.Builder;
 
 @Builder
-public record TodayDeliveringDto(
+public record TodayDeliveringResponseDto(
     LocalDateTime now,
     RiderToggleStatus currentStatus,
-    Integer todayDeliveryCount,
+    Long todayDeliveryCount,
     Integer todayEarningAmount,
     Double avgDeliveryTime
 ) {

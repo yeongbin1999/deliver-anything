@@ -11,7 +11,11 @@ public record RiderDecisionRequestDto(
     @NotNull
     @Schema(description = "라이더 수락/거절")
     @Pattern(regexp = "^(RIDER_ASSIGNED|REJECTED)$")
-    String decisionStatus
+    String decisionStatus,
+
+    @NotNull
+    @Schema(description = "라이더 예상 도착 시간 (분)")
+    Double etaMinutes
 ) {
 
 }
