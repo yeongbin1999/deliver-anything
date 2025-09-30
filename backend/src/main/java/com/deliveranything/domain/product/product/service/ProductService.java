@@ -77,4 +77,9 @@ public class ProductService {
 
     return results.map(ProductResponse::from);
   }
+
+  @Transactional(readOnly = true)
+  public Product getProductById(Long productId) {
+    return productRepository.getById(productId);
+  }
 }
