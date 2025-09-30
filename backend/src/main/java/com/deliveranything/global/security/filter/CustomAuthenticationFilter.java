@@ -222,6 +222,7 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
         user.getId(),
         user.getName(),
         "",  // 비밀번호는 빈 문자열
+        user.getName(),
         user.getCurrentActiveProfile(), // 현재 활성 프로필 타입
         user.getAuthorities()
     );
