@@ -2,6 +2,7 @@ package com.deliveranything.domain.delivery.controller;
 
 import com.deliveranything.domain.delivery.dto.request.DeliveryAreaRequestDto;
 import com.deliveranything.domain.delivery.dto.request.DeliveryStatusRequestDto;
+import com.deliveranything.domain.delivery.dto.request.RiderDecisionRequestDto;
 import com.deliveranything.domain.delivery.dto.request.RiderToggleStatusRequestDto;
 import com.deliveranything.domain.delivery.enums.DeliveryStatus;
 import com.deliveranything.domain.delivery.service.DeliveryService;
@@ -10,11 +11,13 @@ import com.deliveranything.domain.review.dto.ReviewResponse;
 import com.deliveranything.domain.review.enums.MyReviewSortType;
 import com.deliveranything.domain.review.service.ReviewService;
 import com.deliveranything.global.common.ApiResponse;
+import com.deliveranything.global.security.SecurityUser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -83,5 +86,14 @@ public class DeliveryController {
   ) {
     deliveryService.changeStatus(deliveryId, DeliveryStatus.valueOf(next.status()));
     return ResponseEntity.ok().build();
+  }
+
+  @PostMapping("/decision")
+  public ResponseEntity<ApiResponse<Void>> decideOrderDelivery(
+      @Valid @RequestBody RiderDecisionRequestDto decisionRequestDto,
+      @AuthenticationPrincipal SecurityUser user
+  ) {
+    deliveryService.publishRiderDecision(decisionRequestDto, user.getCurrentActiveProfileIdSafe());
+    return ResponseEntity.ok(ApiResponse.success());
   }
 }

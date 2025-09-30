@@ -46,7 +46,8 @@ public class NotificationController {
 
     // 최초 연결 확인 이벤트 전송
     try {
-      emitter.send(SseEmitter.event().name("connect").data("SSE connected with deviceId: " + deviceId));
+      emitter.send(
+          SseEmitter.event().name("connect").data("SSE connected with deviceId: " + deviceId));
     } catch (Exception e) {
       emitterRepository.remove(profileId, deviceId);
     }
@@ -61,7 +62,8 @@ public class NotificationController {
       @Parameter(description = "읽음 상태 필터 (true: 읽음, false: 안읽음, 미포함: 전체)") @RequestParam(required = false) Boolean isRead
       // @AuthenticationPrincipal CustomUserDetails userDetails <-- 추후 적용
   ) {
-    return ResponseEntity.ok(ApiResponse.success(notificationService.getNotifications(profileId, isRead)));
+    return ResponseEntity.ok(
+        ApiResponse.success(notificationService.getNotifications(profileId, isRead)));
   }
 
   @Operation(summary = "알림 읽음 처리", description = "특정 알림을 읽음으로 표시합니다.")
@@ -104,6 +106,62 @@ public class NotificationController {
       emitter.send(SseEmitter.event()
           .name("connect")
           .data("Delivery status SSE connected with deviceId: " + deviceId));
+    } catch (Exception e) {
+      emitterRepository.remove(profileId, deviceId);
+    }
+
+    return emitter;
+  }
+
+  @Operation(summary = "라이더 주문 알림 SSE 구독", description = "라이더가 주문 알림을 실시간으로 구독합니다.")
+  @GetMapping("/riders/{riderId}/stream")
+  public SseEmitter subscribeRiderNotifications(
+      @Parameter(description = "라이더 ID") @PathVariable String riderId,
+      @Parameter(description = "구독하는 기기의 고유 ID", required = true, in = ParameterIn.HEADER)
+      @RequestHeader("X-Device-ID") String deviceId
+  ) {
+    // 라이더 ID를 Long으로 변환 (실제 구현에서는 라이더 프로필 ID를 사용)
+    Long profileId = Long.parseLong(riderId);
+
+    SseEmitter emitter = new SseEmitter(60 * 1000L);
+    emitterRepository.save(profileId, deviceId, emitter);
+
+    // 연결 종료 시 Emitter 제거
+    emitter.onCompletion(() -> emitterRepository.remove(profileId, deviceId));
+    emitter.onTimeout(() -> emitterRepository.remove(profileId, deviceId));
+
+    // 최초 연결 확인 이벤트 전송
+    try {
+      emitter.send(SseEmitter.event().name("connect")
+          .data("Rider SSE connected with deviceId: " + deviceId));
+    } catch (Exception e) {
+      emitterRepository.remove(profileId, deviceId);
+    }
+
+    return emitter;
+  }
+
+  @Operation(summary = "라이더 주문 수락/거절 SSE 구독", description = "라이더가 주문 수락/거절 결정을 실시간으로 구독합니다.")
+  @GetMapping("/riders/{riderId}/decisions")
+  public SseEmitter subscribeRiderDecisions(
+      @Parameter(description = "라이더 ID") @PathVariable String riderId,
+      @Parameter(description = "구독하는 기기의 고유 ID", required = true, in = ParameterIn.HEADER)
+      @RequestHeader("X-Device-ID") String deviceId
+  ) {
+    // 라이더 ID를 Long으로 변환 (실제 구현에서는 라이더 프로필 ID를 사용)
+    Long profileId = Long.parseLong(riderId);
+
+    SseEmitter emitter = new SseEmitter(60 * 1000L);
+    emitterRepository.save(profileId, deviceId, emitter);
+
+    // 연결 종료 시 Emitter 제거
+    emitter.onCompletion(() -> emitterRepository.remove(profileId, deviceId));
+    emitter.onTimeout(() -> emitterRepository.remove(profileId, deviceId));
+
+    // 최초 연결 확인 이벤트 전송
+    try {
+      emitter.send(SseEmitter.event().name("connect")
+          .data("Rider SSE connected with deviceId: " + deviceId));
     } catch (Exception e) {
       emitterRepository.remove(profileId, deviceId);
     }
