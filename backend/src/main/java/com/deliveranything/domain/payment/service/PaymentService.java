@@ -1,6 +1,5 @@
 package com.deliveranything.domain.payment.service;
 
-import com.deliveranything.domain.order.service.OrderService;
 import com.deliveranything.domain.payment.config.TossPaymentsConfig;
 import com.deliveranything.domain.payment.dto.PaymentConfirmRequest;
 import com.deliveranything.domain.payment.dto.PaymentConfirmResponse;
@@ -24,43 +23,35 @@ public class PaymentService {
   private final TossPaymentsConfig tossPaymentsConfig;
   private final WebClient.Builder webClientBuilder;
 
-  private final OrderService orderService;
-
   private final PaymentRepository paymentRepository;
 
   @Transactional
-  public void createPayment(Long orderId, BigDecimal amount) {
-    paymentRepository.save(new Payment(orderId, amount));
+  public void createPayment(String merchantUid, BigDecimal amount) {
+    paymentRepository.save(new Payment(merchantUid, amount));
   }
 
   @Transactional
-  public void cancelPayment(Long paymentId) {
-    getPayment(paymentId).updateStatus(PaymentStatus.CANCELED);
-  }
+  public void confirmPayment(String paymentKey, String merchantUid, long orderAmount) {
+    Payment payment = getPayment(merchantUid);
 
-  @Transactional
-  public void confirmPayment(Long paymentId, PaymentConfirmRequest request) {
-    Payment payment = getPayment(paymentId);
-    long orderPrice = orderService.getOrderByMerchantId(request.merchantUid()).totalPrice()
-        .longValue();
-
-    if (orderPrice != request.amount()) {
+    if (orderAmount != payment.getAmount().longValue()) {
       payment.updateStatus(PaymentStatus.FAILED);
-      throw new CustomException(ErrorCode.PAYMENT_AMOUNT_NOT_VALID);
+      throw new CustomException(ErrorCode.PAYMENT_AMOUNT_INVALID);
     }
 
+    // 토스페이먼츠 결제 승인 API 호출 준비
     WebClient webClient = webClientBuilder.baseUrl(tossPaymentsConfig.getTossUrl()).build();
     String encodedSecretKey = Base64.getEncoder()
         .encodeToString((tossPaymentsConfig.getSecretKey() + ":").getBytes());
 
+    // 응답 수신 확인
     PaymentConfirmResponse pgResponse = webClient.post()
         .uri("/v1/payments/confirm")
         .headers(headers -> {
           headers.setBasicAuth(encodedSecretKey);
           headers.setContentType(MediaType.APPLICATION_JSON);
         })
-        .bodyValue(new PaymentConfirmRequest(request.paymentKey(), request.merchantUid(),
-            request.amount()))
+        .bodyValue(new PaymentConfirmRequest(paymentKey, merchantUid, orderAmount))
         .retrieve()
         .bodyToMono(PaymentConfirmResponse.class)
         .block();
@@ -70,17 +61,18 @@ public class PaymentService {
       throw new CustomException(ErrorCode.PG_PAYMENT_NOT_FOUND);
     }
 
-    if (!(orderPrice == pgResponse.totalAmount() && request.paymentKey()
-        .equals(pgResponse.paymentKey()) && request.merchantUid().equals(pgResponse.orderId()))) {
+    // zero trust 검증
+    if (!(paymentKey.equals(pgResponse.paymentKey()) && merchantUid.equals(pgResponse.orderId())
+        && orderAmount == pgResponse.totalAmount())) {
       payment.updateStatus(PaymentStatus.FAILED);
       throw new CustomException(ErrorCode.PG_PAYMENT_CONFIRM_FAILED);
     }
 
-    payment.updateStatus(PaymentStatus.CANCELED);
+    payment.updateStatus(PaymentStatus.PAID);
   }
 
-  private Payment getPayment(Long paymentId) {
-    return paymentRepository.findById(paymentId)
+  private Payment getPayment(String merchantUid) {
+    return paymentRepository.findByMerchantUid(merchantUid)
         .orElseThrow(() -> new CustomException(ErrorCode.PAYMENT_NOT_FOUND));
   }
 }

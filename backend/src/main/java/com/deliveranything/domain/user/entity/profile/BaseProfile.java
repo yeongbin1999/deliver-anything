@@ -13,9 +13,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public abstract class BaseProfile extends BaseEntity {
 
-  @Column(name = "nickname", nullable = false)
+  @Column(name = "nickname", nullable = false, columnDefinition = "VARCHAR(50)")
   private String nickname;
 
+  @Column(name = "profile_image_url", columnDefinition = "VARCHAR(500)")
   private String profileImageUrl;
 
 
@@ -32,5 +33,5 @@ public abstract class BaseProfile extends BaseEntity {
   public void updateProfileImageUrl(String profileImageUrl) {
     this.profileImageUrl = profileImageUrl;
   }
-  
+
 }

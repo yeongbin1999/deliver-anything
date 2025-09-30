@@ -6,6 +6,7 @@ import com.deliveranything.domain.store.category.entity.StoreCategory;
 import com.deliveranything.domain.store.category.service.StoreCategoryService;
 import com.deliveranything.domain.store.store.dto.StoreCreateRequest;
 import com.deliveranything.domain.store.store.dto.StoreOrderCursorResponse;
+import com.deliveranything.domain.store.store.dto.StoreResponse;
 import com.deliveranything.domain.store.store.dto.StoreUpdateRequest;
 import com.deliveranything.domain.store.store.entity.Store;
 import com.deliveranything.domain.store.store.repository.StoreRepository;
@@ -61,6 +62,12 @@ public class StoreService {
   @Transactional
   public void deleteStore(Long storeId) {
     storeRepository.deleteById(storeId);
+  }
+
+  @Transactional(readOnly = true)
+  public StoreResponse getStore(Long storeId) {
+    Store store = findById(storeId);
+    return StoreResponse.from(store);
   }
 
   @Transactional(readOnly = true)

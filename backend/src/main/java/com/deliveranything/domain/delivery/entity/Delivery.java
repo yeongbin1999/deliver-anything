@@ -98,4 +98,16 @@ public class Delivery extends BaseEntity {
   public void updateCompletedAt(LocalDateTime now) {
     this.completedAt = now;
   }
+
+  public void updateStatus(DeliveryStatus newStatus) {
+    this.status = newStatus;
+  }
+
+  public void updateStartedAt(LocalDateTime now) {
+    this.startedAt = now;
+  }
+
+  public void updateCompletedAt(LocalDateTime now) {
+    this.completedAt = now;
+  }
 }

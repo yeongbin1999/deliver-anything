@@ -2,7 +2,9 @@ package com.deliveranything.domain.delivery.controller;
 
 import com.deliveranything.domain.delivery.dto.request.DeliveryAreaRequestDto;
 import com.deliveranything.domain.delivery.dto.request.RiderDecisionRequestDto;
+import com.deliveranything.domain.delivery.dto.request.DeliveryStatusRequestDto;
 import com.deliveranything.domain.delivery.dto.request.RiderToggleStatusRequestDto;
+import com.deliveranything.domain.delivery.enums.DeliveryStatus;
 import com.deliveranything.domain.delivery.service.DeliveryService;
 import com.deliveranything.domain.review.dto.ReviewRatingAndListResponseDto;
 import com.deliveranything.domain.review.dto.ReviewResponse;
@@ -54,6 +56,8 @@ public class DeliveryController {
   }
 
   @GetMapping("/reviews")
+  @Operation(summary = "배달원 리뷰 목록 조회",
+      description = "배달원에게 작성된 리뷰 목록과 함께, 전체 평점 및 별점별 개수를 조회합니다.")
   public ResponseEntity<ApiResponse<ReviewRatingAndListResponseDto>> getReviews(
       @RequestParam Long userId, // profileId 고려 -> 인증객체
       @RequestParam(required = false, defaultValue = "LATEST") MyReviewSortType sort,
@@ -66,6 +70,7 @@ public class DeliveryController {
   }
 
   @GetMapping("/reviews/{reviewId}")
+  @Operation(summary = "리뷰 상세 조회", description = "리뷰 ID로 리뷰 상세 정보를 조회합니다.")
   public ResponseEntity<ApiResponse<ReviewResponse>> getReviewDetail(
       @PathVariable Long reviewId
   ) {
@@ -80,5 +85,15 @@ public class DeliveryController {
   ) {
     deliveryService.publishRiderDecision(decisionRequestDto, user.getCurrentActiveProfileId());
     return ResponseEntity.ok(ApiResponse.success());
+  }
+
+  @PatchMapping("/{deliveryId}/delivery-status")
+  @Operation(summary = "배달 상태 변경", description = "배달 ID와 다음 상태를 받아 배달 상태를 변경합니다.")
+  public ResponseEntity<Void> updateStatus(
+      @PathVariable Long deliveryId,
+      @Valid @RequestParam DeliveryStatusRequestDto next
+  ) {
+    deliveryService.changeStatus(deliveryId, DeliveryStatus.valueOf(next.status()));
+    return ResponseEntity.ok().build();
   }
 }

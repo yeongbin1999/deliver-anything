@@ -22,6 +22,7 @@ public record StoreSearchRequest(
     Double distanceKm,
 
     @Min(value = 1, message = "limit 값은 1 이상이어야 합니다.")
+    @Max(value = 50, message = "limit 값은 50을 초과할 수 없습니다.")
     Integer limit,
 
     String nextPageToken

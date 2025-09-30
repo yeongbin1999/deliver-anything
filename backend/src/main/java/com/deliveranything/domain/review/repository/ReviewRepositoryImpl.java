@@ -3,10 +3,9 @@ package com.deliveranything.domain.review.repository;
 import com.deliveranything.domain.review.entity.QReview;
 import com.deliveranything.domain.review.entity.Review;
 import com.deliveranything.domain.review.enums.MyReviewSortType;
+import com.deliveranything.domain.review.enums.ReviewTargetType;
 import com.deliveranything.domain.review.enums.StoreReviewSortType;
 import com.deliveranything.domain.store.store.entity.QStore;
-import com.deliveranything.domain.user.entity.User;
-import com.deliveranything.domain.user.entity.profile.QRiderProfile;
 import com.deliveranything.domain.user.enums.ProfileType;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
@@ -21,46 +20,64 @@ public class ReviewRepositoryImpl implements ReviewRepositoryCustom {
   private final JPAQueryFactory queryFactory;
 
   @Override
-  public List<Review> findReviewsByProfile(User user, ProfileType profileType,
+  public List<Review> findReviewsByProfile(Long profileId,
+      ProfileType profileType,
       MyReviewSortType sort,
-      String[] cursor, int pageSize) {
+      String[] cursor,
+      int pageSize) {
     QReview review = QReview.review;
-    QRiderProfile riderProfile = QRiderProfile.riderProfile;
     QStore store = QStore.store;
 
     // profileType에 따른 조건
     BooleanExpression profileCondition = switch (profileType) {
-      case CUSTOMER -> review.customerProfile.eq(user.getCustomerProfile());
-      case SELLER -> review.targetId.eq(user.getId());
-      case RIDER -> review.targetId.eq(user.getRiderProfile().getId());
+      case CUSTOMER -> review.customerProfile.id.eq(profileId);
+      case SELLER -> review.targetId.eq(store.id)
+          .and(review.targetType.eq(ReviewTargetType.STORE));
+      case RIDER -> review.targetId.eq(profileId)
+          .and(review.targetType.eq(ReviewTargetType.RIDER));
     };
 
     // 커서 조건
     BooleanExpression cursorCondition = null;
-    if (cursor != null && cursor.length > 0) {
+    if (cursor != null && cursor.length >= 2) {
+      String cursorVal = cursor[0]; // createdAt 또는 rating 값
+      Long cursorId = Long.parseLong(cursor[1]); // tie-breaker용 id
+
       cursorCondition = switch (sort) {
-        case LATEST -> review.createdAt.lt(LocalDateTime.parse(cursor[0]));
-        case OLDEST -> review.createdAt.gt(LocalDateTime.parse(cursor[0]));
-        case RATING_DESC -> review.rating.lt(Integer.parseInt(cursor[0]));
-        case RATING_ASC -> review.rating.gt(Integer.parseInt(cursor[0]));
+        case LATEST -> review.createdAt.lt(LocalDateTime.parse(cursorVal))
+            .or(review.createdAt.eq(LocalDateTime.parse(cursorVal))
+                .and(review.id.lt(cursorId)));
+
+        case OLDEST -> review.createdAt.gt(LocalDateTime.parse(cursorVal))
+            .or(review.createdAt.eq(LocalDateTime.parse(cursorVal))
+                .and(review.id.gt(cursorId)));
+
+        case RATING_DESC -> review.rating.lt(Integer.parseInt(cursorVal))
+            .or(review.rating.eq(Integer.parseInt(cursorVal))
+                .and(review.id.lt(cursorId)));
+
+        case RATING_ASC -> review.rating.gt(Integer.parseInt(cursorVal))
+            .or(review.rating.eq(Integer.parseInt(cursorVal))
+                .and(review.id.gt(cursorId)));
       };
     }
 
-    // 정렬
-    OrderSpecifier<?> orderSpecifier = switch (sort) {
-      case LATEST -> review.createdAt.desc();
-      case OLDEST -> review.createdAt.asc();
-      case RATING_DESC -> review.rating.desc();
-      case RATING_ASC -> review.rating.asc();
+    // 정렬 조건 (항상 tie-breaker로 id 포함)
+    OrderSpecifier<?>[] orderSpecifiers = switch (sort) {
+      case LATEST -> new OrderSpecifier[]{review.createdAt.desc(), review.id.desc()};
+      case OLDEST -> new OrderSpecifier[]{review.createdAt.asc(), review.id.asc()};
+      case RATING_DESC -> new OrderSpecifier[]{review.rating.desc(), review.id.desc()};
+      case RATING_ASC -> new OrderSpecifier[]{review.rating.asc(), review.id.asc()};
     };
 
     return queryFactory
         .selectFrom(review)
         .where(profileCondition, cursorCondition)
-        .orderBy(orderSpecifier)
+        .orderBy(orderSpecifiers)
         .limit(pageSize + 1) // hasNext 판단용 +1
         .fetch();
   }
+
 
   @Override
   public void updateLikeCount(Long reviewId, int likeCount) {

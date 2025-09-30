@@ -1,6 +1,5 @@
 package com.deliveranything.domain.product.product.entity;
 
-import com.deliveranything.domain.product.product.dto.ProductCreateRequest;
 import com.deliveranything.domain.product.stock.entity.Stock;
 import com.deliveranything.domain.store.store.entity.Store;
 import com.deliveranything.global.entity.BaseEntity;
@@ -20,8 +19,10 @@ import jakarta.persistence.UniqueConstraint;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Table(
@@ -51,7 +52,7 @@ public class Product extends BaseEntity {
   @Column(nullable = false)
   private Integer price;
 
-  @Column(name = "image_url", nullable = false, length = 512)
+  @Column(name = "image_url", nullable = false, length = 256)
   private String imageUrl;
 
   @ElementCollection(fetch = FetchType.LAZY)
@@ -64,12 +65,48 @@ public class Product extends BaseEntity {
   )
   private List<String> keywords = new ArrayList<>();
 
-  @OneToOne(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+  @Setter
+  @OneToOne(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
   private Stock stock;
 
+  public void setKeywords(String trim) {
+    this.keywords.clear();
+    String[] splits = trim.split(",");
+    for (String s : splits) {
+      String keyword = s.trim();
+      if (!keyword.isEmpty()) {
+        this.keywords.add(keyword);
+      }
+    }
+  }
 
+  @Builder
+  public Product(Store store, String name, String description, Integer price, String imageUrl, Integer initialStock) {
+    if (store == null || name == null || price == null || imageUrl == null) {
+      throw new IllegalArgumentException("필수 필드 누락");
+    }
 
-  public static Product of(ProductCreateRequest request, Store store) {
-    return new Product();
+    this.store = store;
+    this.name = name;
+    this.description = description;
+    this.price = price;
+    this.imageUrl = imageUrl;
+
+    this.stock = new Stock(this, initialStock);
+  }
+
+  public void update(String name, String description, Integer price, String imageUrl) {
+    if (name != null) {
+      this.name = name;
+    }
+    if (description != null) {
+      this.description = description;
+    }
+    if (price != null) {
+      this.price = price;
+    }
+    if (imageUrl != null) {
+      this.imageUrl = imageUrl;
+    }
   }
 }

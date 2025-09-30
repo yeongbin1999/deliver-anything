@@ -3,6 +3,7 @@ package com.deliveranything.domain.order.controller;
 import static org.springframework.http.HttpStatus.CREATED;
 
 import com.deliveranything.domain.order.dto.OrderCreateRequest;
+import com.deliveranything.domain.order.dto.OrderPayRequest;
 import com.deliveranything.domain.order.dto.OrderResponse;
 import com.deliveranything.domain.order.service.OrderService;
 import com.deliveranything.domain.user.enums.ProfileType;
@@ -45,11 +46,11 @@ public class OrderController {
     }
 
     return ResponseEntity.status(CREATED).body(ApiResponse.success(
-        orderService.createOrder(user.getCurrentActiveProfileId(), orderCreateRequest)));
+        orderService.createOrder(user.getCurrentActiveProfile().getId(), orderCreateRequest)));
   }
 
   @GetMapping
-  @Operation(summary = "소비자 주문 내역 조회", description = "소비자가 주문 내역을 요청한 경우")
+  @Operation(summary = "주문 내역 조회", description = "소비자가 주문 내역을 요청한 경우")
   public ResponseEntity<ApiResponse<CursorPageResponse<OrderResponse>>> getAll(
       @AuthenticationPrincipal SecurityUser user,
       @RequestParam(required = false) Long cursor,
@@ -60,11 +61,12 @@ public class OrderController {
     }
 
     return ResponseEntity.ok().body(ApiResponse.success("소비자 전체 주문 내역 조회 성공",
-        orderService.getCustomerOrdersByCursor(user.getCurrentActiveProfileId(), cursor, size)));
+        orderService.getCustomerOrdersByCursor(user.getCurrentActiveProfile().getId(), cursor,
+            size)));
   }
 
   @GetMapping("/{orderId}")
-  @Operation(summary = "소비자 주문 단일 조회", description = "소비자가 어떤 주문의 상세 정보를 요청한 경우")
+  @Operation(summary = "주문 단일 조회", description = "소비자가 어떤 주문의 상세 정보를 요청한 경우")
   public ResponseEntity<ApiResponse<OrderResponse>> get(
       @AuthenticationPrincipal SecurityUser user,
       @PathVariable Long orderId
@@ -74,6 +76,21 @@ public class OrderController {
     }
 
     return ResponseEntity.ok().body(ApiResponse.success("소비자 주문 단일 조회 성공",
-        orderService.getCustomerOrder(orderId, user.getCurrentActiveProfileId())));
+        orderService.getCustomerOrder(orderId, user.getCurrentActiveProfile().getId())));
+  }
+
+  @PostMapping("{merchantUid}/pay")
+  @Operation(summary = "주문 결제", description = "소비자가 생성한 주문의 결제 시도")
+  public ResponseEntity<ApiResponse<OrderResponse>> pay(
+      @AuthenticationPrincipal SecurityUser user,
+      @PathVariable String merchantUid,
+      @Valid @RequestBody OrderPayRequest orderPayRequest
+  ) {
+    if (!user.hasActiveProfile(ProfileType.CUSTOMER)) {
+      throw new CustomException(ErrorCode.PROFILE_TYPE_FORBIDDEN);
+    }
+
+    return ResponseEntity.ok().body(ApiResponse.success("소비자 결제 승인 성공",
+        orderService.payOrder(merchantUid, orderPayRequest.paymentKey()));
   }
 }

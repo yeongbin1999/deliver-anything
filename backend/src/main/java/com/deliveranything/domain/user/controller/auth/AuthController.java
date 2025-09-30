@@ -80,7 +80,7 @@ public class AuthController {
         .name(user.getName())
         .accessToken(accessToken)
         .refreshToken(refreshToken.getTokenValue())
-        .currentActiveProfile(user.getCurrentActiveProfile())
+        .currentActiveProfileType(user.getCurrentActiveProfileType())
         .currentActiveProfileId(user.getCurrentActiveProfileId())
         .isOnboardingCompleted(user.isOnboardingCompleted())
         .availableProfiles(availableProfiles)

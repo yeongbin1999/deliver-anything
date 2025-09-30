@@ -21,7 +21,9 @@ public class StoreSearchController {
   private final StoreSearchService storeSearchService;
 
   @GetMapping
-  public ResponseEntity<ApiResponse<CursorPageResponse<StoreSearchResponse>>> searchStores(@Valid @ModelAttribute StoreSearchRequest request) {
+  public ResponseEntity<ApiResponse<CursorPageResponse<StoreSearchResponse>>> searchStores(
+      @Valid @ModelAttribute StoreSearchRequest request
+  ) {
     CursorPageResponse<StoreSearchResponse> results = storeSearchService.search(request);
 
     return ResponseEntity.ok(ApiResponse.success(results));

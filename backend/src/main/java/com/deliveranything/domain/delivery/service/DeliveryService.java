@@ -9,12 +9,15 @@ import com.deliveranything.domain.delivery.event.dto.OrderStatusUpdateEvent;
 import com.deliveranything.domain.delivery.event.event.OrderDeliveryStatusRedisPublisher;
 import com.deliveranything.domain.delivery.repository.DeliveryRepository;
 import com.deliveranything.domain.order.entity.Order;
+import com.deliveranything.domain.delivery.event.dto.DeliveryStatusEvent;
+import com.deliveranything.domain.delivery.event.event.DeliveryStatusRedisPublisher;
 import com.deliveranything.domain.user.entity.profile.RiderProfile;
 import com.deliveranything.domain.user.enums.RiderToggleStatus;
 import com.deliveranything.domain.user.service.RiderProfileService;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -24,7 +27,8 @@ public class DeliveryService {
 
   private final RiderProfileService riderProfileService;
   private final OrderDeliveryStatusRedisPublisher orderDeliveryStatusRedisPublisher;
-  private final DeliveryRepository deliveryRepository;
+  private final DeliveryStatusRedisPublisher deliveryStatusRedisPublisher;
+  private final RedisTemplate<String, Object> redisTemplate;
 
   public void updateRiderStatus(RiderToggleStatusRequestDto riderStatusRequestDto) {
     // 라이더 상태 업데이트 로직 구현
@@ -43,6 +47,7 @@ public class DeliveryService {
 
     riderProfile.setDeliveryArea(deliveryAreaRequestDto.deliveryArea());
   }
+
 
   // 라이더 배달 수락/거절 처리 및 상태 이벤트 발행
   public void publishRiderDecision(@Valid RiderDecisionRequestDto decisionRequestDto,
@@ -66,5 +71,24 @@ public class DeliveryService {
         .customer(order.getCustomer())
         .riderProfile(riderProfileService.getRiderProfileById(riderProfileId))
         .build();
+  }
+  
+  public void changeStatus(Long deliveryId, DeliveryStatus next) {
+    Delivery delivery = deliveryRepository.findById(deliveryId)
+        .orElseThrow(() -> new IllegalArgumentException("Delivery not found"));
+
+    // 이벤트만 발행 - 실제 상태 변경은 구독자에서 처리
+    DeliveryStatusEvent event = DeliveryStatusEvent.builder()
+        .deliveryId(delivery.getId())
+        .orderId(delivery.getStore().getId())
+        .riderProfileId(delivery.getRiderProfile().getId())
+        .customerProfileId(delivery.getCustomer().getId())
+        .sellerProfileId(delivery.getStore().getSellerProfileId())
+        .status(delivery.getStatus())
+        .occurredAtEpochMs(System.currentTimeMillis())
+        .nextStatus(next)
+        .build();
+
+    deliveryStatusRedisPublisher.publish(event);
   }
 }

@@ -58,7 +58,7 @@ public class OrderService {
     }
 
     Order savedOrder = orderRepository.save(order);
-    paymentService.createPayment(savedOrder.getId(), savedOrder.getTotalPrice());
+    paymentService.createPayment(savedOrder.getMerchantId(), savedOrder.getTotalPrice());
 
     return OrderResponse.from(savedOrder);
   }
@@ -94,8 +94,8 @@ public class OrderService {
   }
 
   @Transactional(readOnly = true)
-  public List<OrderResponse> getPreparedOrders() {
-    return orderRepository.findOrdersWithStoreByStatus(OrderStatus.PREPARING).stream()
+  public List<OrderResponse> getPaidOrders() {
+    return orderRepository.findOrdersWithStoreByStatus(OrderStatus.PAID).stream()
         .map(OrderResponse::from)
         .toList();
   }
@@ -116,12 +116,6 @@ public class OrderService {
     return orderRepository.findOrdersWithStoreByRiderProfile(riderProfileId).stream()
         .map(OrderResponse::from)
         .toList();
-  }
-
-  @Transactional(readOnly = true)
-  public OrderResponse getOrderByMerchantId(String merchantId) {
-    return OrderResponse.from(orderRepository.findOrderWithStoreByMerchantId(merchantId)
-        .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND)));
   }
 
   @Transactional(readOnly = true)
@@ -172,7 +166,29 @@ public class OrderService {
     );
   }
 
-  public Order getOrderById(Long orderId) {
+  @Transactional
+  public OrderResponse payOrder(String merchantUid, String paymentKey) {
+    Order order = getOrderByMerchantId(merchantUid);
+
+    order.isPayable();
+
+    try {
+      paymentService.confirmPayment(paymentKey, merchantUid, order.getTotalPrice().longValue());
+      order.updateStatus(OrderStatus.PAID);
+    } catch (CustomException e) {
+      order.updateStatus(OrderStatus.PAYMENT_FAILED);
+      throw e;
+    }
+
+    return OrderResponse.from(order);
+  }
+
+  public Order getOrderByMerchantId(String merchantId) {
+    return orderRepository.findOrderWithStoreByMerchantId(merchantId)
+        .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND));
+  }
+
+  private Order getOrderById(Long orderId) {
     return orderRepository.findById(orderId)
         .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND));
   }

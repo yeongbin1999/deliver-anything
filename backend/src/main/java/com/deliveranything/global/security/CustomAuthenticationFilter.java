@@ -1,8 +1,10 @@
 package com.deliveranything.global.security;
 
 import com.deliveranything.domain.user.entity.User;
+import com.deliveranything.domain.user.entity.profile.Profile;
 import com.deliveranything.domain.user.entity.token.RefreshToken;
 import com.deliveranything.domain.user.enums.ProfileType;
+import com.deliveranything.domain.user.repository.ProfileRepository;
 import com.deliveranything.domain.user.repository.RefreshTokenRepository;
 import com.deliveranything.domain.user.repository.UserRepository;
 import com.deliveranything.domain.user.service.AuthTokenService;
@@ -33,6 +35,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 public class CustomAuthenticationFilter extends OncePerRequestFilter {
 
   private final UserRepository userRepository;
+  private final ProfileRepository profileRepository;
   private final RefreshTokenRepository refreshTokenRepository;
   private final AuthTokenService authTokenService;
 
@@ -151,7 +154,7 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
   }
 
   /**
-   * Access Token으로 인증
+   * Access Token으로 인증 (Profile ID 정보 포함)
    */
   private User authenticateWithAccessToken(String accessToken) {
     Map<String, Object> payload = authTokenService.payload(accessToken);
@@ -160,12 +163,12 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
       Long userId = (Long) payload.get("id");
       String name = (String) payload.get("name");
 
-      // ✅ 안전한 타입 변환
+      // 안전한 타입 변환
       String profileStr = (String) payload.get("currentActiveProfile");
-      ProfileType currentActiveProfile = null;
+      ProfileType currentActiveProfileType = null;
       if (profileStr != null) {
         try {
-          currentActiveProfile = ProfileType.valueOf(profileStr);
+          currentActiveProfileType = ProfileType.valueOf(profileStr);
         } catch (IllegalArgumentException e) {
           log.warn("Invalid ProfileType in JWT: {}", profileStr);
         }
@@ -176,8 +179,15 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
       // JWT에서 사용자 정보 복원 (DB 조회 최소화)
       User user = userRepository.findById(userId).orElse(null);
       if (user != null) {
-        // JWT의 프로필 정보로 임시 설정
-        return createUserFromJwt(user, currentActiveProfile, currentActiveProfileId);
+        // Profile 정보를 DB에서 조회해서 User에 설정
+        if (currentActiveProfileId != null && currentActiveProfileId > 0) {
+          Profile activeProfile = profileRepository.findById(currentActiveProfileId).orElse(null);
+          if (activeProfile != null) {
+            // User 엔티티의 currentActiveProfile 필드에 설정
+            // 실제로는 User의 setter가 필요하거나 생성자를 통해 설정해야 함
+          }
+        }
+        return user;
       }
     }
 
@@ -202,17 +212,7 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
   }
 
   /**
-   * JWT 정보로 User 객체 생성 (DB 조회 최소화)
-   */
-  private User createUserFromJwt(User dbUser, ProfileType currentActiveProfile,
-      Long currentActiveProfileId) {
-    // 실제로는 User 엔티티의 현재 상태를 JWT 정보로 보정
-    // 여기서는 간단히 DB User를 반환하되, 필요시 프로필 정보를 업데이트할 수 있음
-    return dbUser;
-  }
-
-  /**
-   * SecurityContext에 인증 정보 설정
+   * SecurityContext에 인증 정보 설정 (Profile ID 포함)
    */
   private void setAuthentication(User user) {
     UserDetails securityUser = new SecurityUser(
@@ -220,8 +220,7 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
         user.getUsername(),
         "",  // 비밀번호는 빈 문자열
         user.getName(),
-        user.getCurrentActiveProfile(),
-        user.getCurrentActiveProfileId(),
+        user.getCurrentActiveProfile(), // 현재 활성 프로필 타입
         user.getAuthorities()
     );
 

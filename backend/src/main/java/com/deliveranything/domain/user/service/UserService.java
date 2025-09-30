@@ -2,6 +2,7 @@ package com.deliveranything.domain.user.service;
 
 import com.deliveranything.domain.user.entity.User;
 import com.deliveranything.domain.user.entity.profile.CustomerProfile;
+import com.deliveranything.domain.user.entity.profile.Profile;
 import com.deliveranything.domain.user.entity.profile.RiderProfile;
 import com.deliveranything.domain.user.entity.profile.SellerProfile;
 import com.deliveranything.domain.user.entity.token.RefreshToken;
@@ -9,6 +10,7 @@ import com.deliveranything.domain.user.enums.ProfileType;
 import com.deliveranything.domain.user.enums.RiderToggleStatus;
 import com.deliveranything.domain.user.enums.SocialProvider;
 import com.deliveranything.domain.user.repository.CustomerProfileRepository;
+import com.deliveranything.domain.user.repository.ProfileRepository;
 import com.deliveranything.domain.user.repository.RefreshTokenRepository;
 import com.deliveranything.domain.user.repository.RiderProfileRepository;
 import com.deliveranything.domain.user.repository.SellerProfileRepository;
@@ -16,7 +18,6 @@ import com.deliveranything.domain.user.repository.UserRepository;
 import com.deliveranything.global.exception.CustomException;
 import com.deliveranything.global.exception.ErrorCode;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -33,6 +34,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserService {
 
   private final UserRepository userRepository;
+  private final ProfileRepository profileRepository;
   private final CustomerProfileRepository customerProfileRepository;
   private final SellerProfileRepository sellerProfileRepository;
   private final RiderProfileRepository riderProfileRepository;
@@ -143,10 +145,44 @@ public class UserService {
     return authTokenService.payload(accessToken);
   }
 
+  /**
+   * RefreshToken으로 사용자 조회
+   */
+  public User getUserByRefreshToken(String refreshTokenValue) {
+    RefreshToken refreshToken = refreshTokenRepository
+        .findByTokenValueAndIsActiveTrue(refreshTokenValue)
+        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+    if (!refreshToken.isValid()) {
+      throw new CustomException(ErrorCode.USER_NOT_FOUND);
+    }
+
+    return refreshToken.getUser();
+  }
+
+  /**
+   * 비밀번호 변경 (현재 비밀번호 검증 포함)
+   */
+  @Transactional
+  public void changePassword(Long userId, String currentPassword, String newPassword) {
+    User user = findById(userId);
+
+    // 현재 비밀번호 검증
+    if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
+      throw new CustomException(ErrorCode.USER_NOT_FOUND);
+    }
+
+    String encodedNewPassword = passwordEncoder.encode(newPassword);
+    user.updatePassword(encodedNewPassword);
+    userRepository.save(user);
+
+    log.info("사용자 비밀번호 변경 완료: userId={}", userId);
+  }
+
   // ========== 멀티 프로필 온보딩 ==========
 
   /**
-   * 온보딩 완료 처리
+   * 온보딩 완료 처리 (Profile 기반)
    */
   @Transactional
   public boolean completeOnboarding(Long userId, ProfileType selectedProfile,
@@ -159,18 +195,22 @@ public class UserService {
       return false;
     }
 
-    // 프로필 생성
-    boolean profileCreated = createProfileByType(user, selectedProfile, profileData);
+    // 1단계: Profile 먼저 생성
+    Profile profile = createProfile(user, selectedProfile);
+
+    // 2단계: 세부 프로필 생성
+    boolean profileCreated = createDetailedProfile(profile, selectedProfile, profileData);
     if (!profileCreated) {
-      log.warn("프로필 생성 실패: userId={}, selectedProfile={}", userId, selectedProfile);
+      log.warn("세부 프로필 생성 실패: userId={}, selectedProfile={}", userId, selectedProfile);
       return false;
     }
 
-    // 온보딩 완료 처리
-    user.completeOnboarding(selectedProfile);
+    // 3단계: 온보딩 완료 처리
+    user.completeOnboarding(profile);
     userRepository.save(user);
 
-    log.info("온보딩 완료: userId={}, selectedProfile={}", userId, selectedProfile);
+    log.info("온보딩 완료: userId={}, selectedProfile={}, profileId={}",
+        userId, selectedProfile, profile.getId());
     return true;
   }
 
@@ -186,19 +226,30 @@ public class UserService {
       return false;
     }
 
-    if (user.getCurrentActiveProfile() == targetProfile) {
+    // 타겟 프로필 조회
+    Profile targetProfileEntity = profileRepository
+        .findByUserIdAndType(userId, targetProfile)
+        .orElse(null);
+
+    if (targetProfileEntity == null) {
+      log.warn("해당 프로필을 찾을 수 없습니다: userId={}, targetProfile={}", userId, targetProfile);
+      return false;
+    }
+
+    if (user.getCurrentActiveProfileType() == targetProfile) {
       log.info("이미 활성화된 프로필입니다: userId={}, targetProfile={}", userId, targetProfile);
       return true;
     }
 
     try {
-      user.switchProfile(targetProfile);
+      user.switchProfile(targetProfileEntity);
       userRepository.save(user);
-      log.info("프로필 전환 완료: userId={}, newActiveProfile={}", userId, targetProfile);
+      log.info("프로필 전환 완료: userId={}, newActiveProfile={}, profileId={}",
+          userId, targetProfile, targetProfileEntity.getId());
       return true;
     } catch (IllegalStateException e) {
-      log.warn("프로필 전환 실패: userId={}, targetProfile={}, error={}", userId, targetProfile,
-          e.getMessage());
+      log.warn("프로필 전환 실패: userId={}, targetProfile={}, error={}",
+          userId, targetProfile, e.getMessage());
       return false;
     }
   }
@@ -208,20 +259,91 @@ public class UserService {
    */
   public List<ProfileType> getAvailableProfiles(Long userId) {
     User user = findById(userId);
+    return user.getActiveProfileTypes();
+  }
 
-    List<ProfileType> profiles = new ArrayList<>();
+  // ========== Profile 관리 헬퍼 메서드 ==========
 
-    if (user.hasCustomerProfile()) {
-      profiles.add(ProfileType.CUSTOMER);
-    }
-    if (user.hasSellerProfile()) {
-      profiles.add(ProfileType.SELLER);
-    }
-    if (user.hasRiderProfile()) {
-      profiles.add(ProfileType.RIDER);
-    }
+  /**
+   * Profile 엔티티 생성 (전역 고유 ID 할당)
+   */
+  @Transactional
+  public Profile createProfile(User user, ProfileType profileType) {
+    Profile profile = Profile.builder()
+        .user(user)
+        .type(profileType)
+        .build();
 
-    return profiles;
+    Profile savedProfile = profileRepository.save(profile);
+    log.info("Profile 생성 완료: userId={}, profileType={}, profileId={}",
+        user.getId(), profileType, savedProfile.getId());
+
+    return savedProfile;
+  }
+
+  /**
+   * 프로필 타입별 세부 프로필 생성
+   */
+  private boolean createDetailedProfile(Profile profile, ProfileType profileType,
+      Map<String, Object> profileData) {
+    switch (profileType) {
+      case CUSTOMER -> {
+        String nickname = (String) profileData.get("nickname");
+        CustomerProfile customerProfile = CustomerProfile.builder()
+            .profile(profile)
+            .nickname(nickname)
+            .profileImageUrl(null)
+            .build();
+        customerProfileRepository.save(customerProfile);
+      }
+      case SELLER -> {
+        String nickname = (String) profileData.get("nickname");
+        String businessName = (String) profileData.get("businessName");
+        String businessCertificateNumber = (String) profileData.get("businessCertificateNumber");
+        String businessPhoneNumber = (String) profileData.get("businessPhoneNumber");
+        String bankName = (String) profileData.get("bankName");
+        String accountNumber = (String) profileData.get("accountNumber");
+        String accountHolder = (String) profileData.get("accountHolder");
+
+        SellerProfile sellerProfile = SellerProfile.builder()
+            .profile(profile)
+            .nickname(nickname)
+            .profileImageUrl(null)
+            .businessName(businessName)
+            .businessCertificateNumber(businessCertificateNumber)
+            .businessPhoneNumber(businessPhoneNumber)
+            .bankName(bankName)
+            .accountNumber(accountNumber)
+            .accountHolder(accountHolder)
+            .build();
+        sellerProfileRepository.save(sellerProfile);
+      }
+      case RIDER -> {
+        String nickname = (String) profileData.get("nickname");
+        String licenseNumber = (String) profileData.get("licenseNumber");
+        String area = (String) profileData.getOrDefault("area", "서울");
+        String profileImageUrl = (String) profileData.get("profileImageUrl"); // BaseProfile 필드
+
+        RiderProfile riderProfile = RiderProfile.builder()
+            .nickname(nickname)
+            .toggleStatus(RiderToggleStatus.OFF)
+            .area(area)
+            .profileImageUrl(profileImageUrl)
+            .licenseNumber(licenseNumber)
+            .bankName("")
+            .bankAccountNumber("")
+            .bankAccountHolderName("")
+            // Profile 객체 전달 (RiderProfile의 @MapsId가 사용하는 필드)
+            .profile(profile)
+            .build();
+        riderProfileRepository.save(riderProfile);
+      }
+      default -> {
+        log.error("지원하지 않는 프로필 타입: {}", profileType);
+        return false;
+      }
+    }
+    return true;
   }
 
   // ========== RefreshToken 관리 ==========
@@ -280,64 +402,20 @@ public class UserService {
     log.info("이메일 인증 완료: userId={}", userId);
   }
 
-  // ========== Private Helper Methods ==========
+  // ========== 프로필 조회 헬퍼 ==========
 
   /**
-   * 프로필 타입별 생성 로직
+   * 특정 사용자의 특정 프로필 타입 조회
    */
-  private boolean createProfileByType(User user, ProfileType profileType,
-      Map<String, Object> profileData) {
-    switch (profileType) {
-      case CUSTOMER -> {
-        String nickname = (String) profileData.get("nickname");
-        CustomerProfile profile = CustomerProfile.builder()
-            .user(user)
-            .nickname(nickname)
-            .profileImageUrl(null)
-            .build();
-        customerProfileRepository.save(profile);
-      }
-      case SELLER -> {
-        String nickname = (String) profileData.get("nickname");
-        String businessName = (String) profileData.get("businessName");
-        String businessCertificateNumber = (String) profileData.get("businessCertificateNumber");
-        String businessPhoneNumber = (String) profileData.get("businessPhoneNumber");
-        String bankName = (String) profileData.get("bankName");
-        String accountNumber = (String) profileData.get("accountNumber");
-        String accountHolder = (String) profileData.get("accountHolder");
+  public Profile getProfileByUserAndType(Long userId, ProfileType profileType) {
+    return profileRepository.findByUserIdAndType(userId, profileType).orElse(null);
+  }
 
-        SellerProfile profile = SellerProfile.builder()
-            .user(user)
-            .nickname(nickname)
-            .profileImageUrl(null)
-            .businessName(businessName)
-            .businessCertificateNumber(businessCertificateNumber)
-            .businessPhoneNumber(businessPhoneNumber)
-            .bankName(bankName)
-            .accountNumber(accountNumber)
-            .accountHolder(accountHolder)
-            .build();
-        sellerProfileRepository.save(profile);
-      }
-      case RIDER -> {
-        String nickname = (String) profileData.get("nickname");
-        String licenseNumber = (String) profileData.get("licenseNumber");
-        String area = (String) profileData.getOrDefault("area", "서울");
-
-        RiderProfile profile = RiderProfile.builder()
-            .nickname(nickname)
-            .toggleStatus(RiderToggleStatus.OFF)
-            .area(area)
-            .licenseNumber(licenseNumber)
-            .profileImageUrl(null)
-            .bankName("")
-            .bankAccountNumber("")
-            .bankAccountHolderName("")
-            .user(user)
-            .build();
-        riderProfileRepository.save(profile);
-      }
-    }
-    return true;
+  /**
+   * 사용자의 모든 활성 프로필 조회
+   */
+  public List<Profile> getActiveProfilesByUser(Long userId) {
+    User user = findById(userId);
+    return profileRepository.findActiveProfilesByUser(user);
   }
 }
