@@ -43,7 +43,7 @@ public class StoreController {
   }
 
   @PutMapping("/{storeId}")
-  public ResponseEntity<ApiResponse<Long>> updateStore(
+  public ResponseEntity<ApiResponse<StoreResponse>> updateStore(
       @PathVariable Long storeId,
       @Valid @RequestBody StoreUpdateRequest request
   ) {

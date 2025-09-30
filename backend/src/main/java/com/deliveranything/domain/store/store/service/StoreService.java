@@ -49,7 +49,7 @@ public class StoreService {
   }
 
   @Transactional
-  public Long updateStore(Long storeId, StoreUpdateRequest request) {
+  public StoreResponse updateStore(Long storeId, StoreUpdateRequest request) {
     Store store = storeRepository.getById(storeId);
 
     StoreCategory storeCategory = null;
@@ -63,7 +63,7 @@ public class StoreService {
 
     eventPublisher.publishEvent(new StoreSavedEvent(store.getId()));
 
-    return store.getId();
+    return StoreResponse.from(store);
   }
 
   @Transactional
