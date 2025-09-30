@@ -31,20 +31,14 @@ public class DeliveryService {
   private final OrderDeliveryStatusRedisPublisher orderDeliveryStatusRedisPublisher;
   private final RedisTemplate<String, Object> redisTemplate;
 
-  public void updateRiderStatus(RiderToggleStatusRequestDto riderStatusRequestDto) {
-    // 라이더 상태 업데이트 로직 구현
-    // 추후 JWT에서 사용자 정보-Profile ID가 넘어오면 파라미터 변경 예정
-    RiderProfile riderProfile = riderProfileService
-        .getRiderProfileById(riderStatusRequestDto.riderProfileId());
+  public void updateRiderStatus(Long riderId, RiderToggleStatusRequestDto riderStatusRequestDto) {
+    RiderProfile riderProfile = riderProfileService.getRiderProfileById(riderId);
 
     riderProfile.setToggleStatus(RiderToggleStatus.fromString(riderStatusRequestDto.riderStatus()));
   }
 
-  public void updateDeliveryArea(DeliveryAreaRequestDto deliveryAreaRequestDto) {
-    // 배달 가능 지역 설정 로직 구현
-    // 추후 JWT에서 사용자 정보-Profile ID가 넘어오면 파라마터 변경 예정
-    RiderProfile riderProfile = riderProfileService
-        .getRiderProfileById(deliveryAreaRequestDto.riderProfileId());
+  public void updateDeliveryArea(Long riderId, DeliveryAreaRequestDto deliveryAreaRequestDto) {
+    RiderProfile riderProfile = riderProfileService.getRiderProfileById(riderId);
 
     riderProfile.setDeliveryArea(deliveryAreaRequestDto.deliveryArea());
   }
