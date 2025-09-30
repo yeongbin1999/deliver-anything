@@ -60,8 +60,13 @@ public class Store extends BaseEntity {
   @Column(nullable = false, length = 12)
   private StoreStatus status = StoreStatus.DRAFT;
 
-  @Column(name = "is_open_now", nullable = false)
-  private boolean isOpenNow = false;
+  public void updateStatus(StoreStatus storeStatus) {
+    status = storeStatus;
+  }
+
+  public boolean isOpenNow() {
+    return status == StoreStatus.OPEN;
+  }
 
   @Builder
   public Store(Long sellerProfileId, StoreCategory storeCategory, String name, String description, String roadAddr, Point location) {

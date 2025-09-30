@@ -9,6 +9,7 @@ import com.deliveranything.domain.store.store.dto.StoreOrderCursorResponse;
 import com.deliveranything.domain.store.store.dto.StoreResponse;
 import com.deliveranything.domain.store.store.dto.StoreUpdateRequest;
 import com.deliveranything.domain.store.store.entity.Store;
+import com.deliveranything.domain.store.store.enums.StoreStatus;
 import com.deliveranything.domain.store.store.event.StoreDeletedEvent;
 import com.deliveranything.domain.store.store.event.StoreSavedEvent;
 import com.deliveranything.domain.store.store.repository.StoreRepository;
@@ -42,6 +43,8 @@ public class StoreService {
         .location(PointUtil.createPoint(request.lat(), request.lng()))
         .build();
     storeRepository.save(store);
+
+    store.updateStatus(StoreStatus.CLOSED);
 
     eventPublisher.publishEvent(new StoreSavedEvent(store.getId()));
 
