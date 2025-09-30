@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class DeliveryStatusRedisPublisher {
 
+  // 배달 상태 변경 이벤트 채널
   private static final String CHANNEL = "delivery-status-events";
   private final StringRedisTemplate redisTemplate;
   private final ObjectMapper objectMapper;

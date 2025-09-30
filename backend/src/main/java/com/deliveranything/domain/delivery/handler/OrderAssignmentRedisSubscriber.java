@@ -14,10 +14,16 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class RedisSubscriber implements MessageListener {
+public class OrderAssignmentRedisSubscriber implements MessageListener {
 
+  private static final String CHANNEL = "order-events";
   private final RiderWebSocketPublisher webSocketPublisher;
   private final ObjectMapper objectMapper;
+
+  @PostConstruct
+  public void subscribe() {
+    container.addMessageListener(this, new PatternTopic(CHANNEL));
+  }
 
   @Override
   public void onMessage(Message message, byte[] pattern) {
@@ -25,7 +31,7 @@ public class RedisSubscriber implements MessageListener {
       String channel = new String(message.getChannel());
       String body = new String(message.getBody());
 
-      if ("order-events".equals(channel)) {
+      if (CHANNEL.equals(channel)) {
         RiderNotificationDto dto = objectMapper.readValue(body, RiderNotificationDto.class);
         webSocketPublisher.publishToRider(dto.riderId(), dto);
       }
