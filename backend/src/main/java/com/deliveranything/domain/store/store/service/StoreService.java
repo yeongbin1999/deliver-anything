@@ -9,10 +9,13 @@ import com.deliveranything.domain.store.store.dto.StoreOrderCursorResponse;
 import com.deliveranything.domain.store.store.dto.StoreResponse;
 import com.deliveranything.domain.store.store.dto.StoreUpdateRequest;
 import com.deliveranything.domain.store.store.entity.Store;
+import com.deliveranything.domain.store.store.event.StoreDeletedEvent;
+import com.deliveranything.domain.store.store.event.StoreSavedEvent;
 import com.deliveranything.domain.store.store.repository.StoreRepository;
 import com.deliveranything.global.common.CursorPageResponse;
 import com.deliveranything.global.util.PointUtil;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +27,7 @@ public class StoreService {
   private final OrderService orderService;
   private final StoreRepository storeRepository;
   private final StoreCategoryService storeCategoryService;
+  private final ApplicationEventPublisher eventPublisher;
 
   @Transactional
   public Long createStore(StoreCreateRequest request) {
@@ -37,7 +41,11 @@ public class StoreService {
         .roadAddr(request.roadAddr())
         .location(PointUtil.createPoint(request.lat(), request.lng()))
         .build();
-    return storeRepository.save(store).getId();
+    storeRepository.save(store);
+
+    eventPublisher.publishEvent(new StoreSavedEvent(store.getId()));
+
+    return store.getId();
   }
 
   @Transactional
@@ -53,12 +61,16 @@ public class StoreService {
         request.lat() != null && request.lng() != null ? PointUtil.createPoint(request.lat(),
             request.lng()) : null);
 
+    eventPublisher.publishEvent(new StoreSavedEvent(store.getId()));
+
     return store.getId();
   }
 
   @Transactional
   public void deleteStore(Long storeId) {
-    storeRepository.deleteById(storeId);
+    Store store = storeRepository.getById(storeId);
+    storeRepository.delete(store);
+    eventPublisher.publishEvent(new StoreDeletedEvent(store.getId()));
   }
 
   @Transactional(readOnly = true)

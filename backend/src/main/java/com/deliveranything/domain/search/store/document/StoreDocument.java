@@ -1,6 +1,9 @@
 package com.deliveranything.domain.search.store.document;
 
+import com.deliveranything.domain.store.store.entity.Store;
+import java.util.ArrayList;
 import java.util.List;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.annotation.Id;
@@ -10,6 +13,7 @@ import org.springframework.data.elasticsearch.annotations.FieldType;
 import org.springframework.data.elasticsearch.core.geo.GeoPoint;
 
 @Getter
+@Builder
 @Document(indexName = "stores")
 public class StoreDocument {
 
@@ -42,7 +46,21 @@ public class StoreDocument {
   private boolean isOpenNow;
 
   @Setter
+  @Builder.Default
   @Field(type = FieldType.Text, name = "keywords")
-  private List<String> keywords;
+  private List<String> keywords = new ArrayList<>();
 
+  public static StoreDocument from(Store store) {
+    return StoreDocument.builder()
+        .id(store.getId())
+        .name(store.getName())
+        .description(store.getDescription())
+        .categoryName(store.getStoreCategory().getName())
+        .location(new GeoPoint(store.getLocation().getY(), store.getLocation().getX()))
+        .isOpenNow(store.isOpenNow())
+        .categoryId(store.getStoreCategory().getId())
+        .roadAddress(store.getRoadAddr())
+        .imageUrl(store.getImageUrl())
+        .build();
+  }
 }

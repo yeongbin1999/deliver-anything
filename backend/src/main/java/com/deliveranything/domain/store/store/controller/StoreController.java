@@ -27,7 +27,9 @@ public class StoreController {
 
   @PostMapping
   public ResponseEntity<ApiResponse<Long>> createStore(
-      @Valid @RequestBody StoreCreateRequest request) {
+      @Valid @RequestBody StoreCreateRequest request
+  ) {
+
     Long storeId = storeService.createStore(request);
     return ResponseEntity.created(URI.create("/api/v1/stores/" + storeId))
         .body(ApiResponse.success(storeId));
