@@ -2,9 +2,10 @@ package com.deliveranything.domain.delivery.enums;
 
 public enum DeliveryStatus {
   PENDING,
-  ASSIGNED,
+  RIDER_ASSIGNED,
   PICKED_UP,
   IN_PROGRESS,
   COMPLETED,
-  CANCELED
+  CANCELED,
+  REJECTED
 }

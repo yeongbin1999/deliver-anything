@@ -1,4 +1,4 @@
-package com.deliveranything.domain.delivery.event.event;
+package com.deliveranything.domain.delivery.event.event.redis;
 
 import com.deliveranything.domain.delivery.event.dto.DeliveryStatusEvent;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class DeliveryStatusRedisPublisher {
 
+  // 배달 상태 변경 이벤트 채널
   private static final String CHANNEL = "delivery-status-events";
   private final StringRedisTemplate redisTemplate;
   private final ObjectMapper objectMapper;
