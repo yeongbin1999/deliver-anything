@@ -11,9 +11,11 @@ import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Getter
+@Setter
 @Table(name = "stocks")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Stock extends BaseEntity {
@@ -24,6 +26,23 @@ public class Stock extends BaseEntity {
   @OneToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "product_id", nullable = false)
   private Product product;
+
+  public void increaseQuantity(int amount) {
+    if (amount < 0) {
+      throw new IllegalArgumentException("음수로 증가 시킬 수 없습니다.");
+    }
+    this.quantity += amount;
+  }
+
+  public void decreaseQuantity(int amount) {
+    if (amount < 0) {
+      throw new IllegalArgumentException("음수로 감소 시킬 수 없습니다.");
+    }
+    if (this.quantity < amount) {
+      throw new IllegalArgumentException("재고 수량이 부족합니다.");
+    }
+    this.quantity -= amount;
+  }
 
   public Stock(Product product, Integer quantity) {
     this.product = product;

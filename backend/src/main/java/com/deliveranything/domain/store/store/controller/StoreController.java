@@ -3,7 +3,6 @@ package com.deliveranything.domain.store.store.controller;
 import com.deliveranything.domain.store.store.dto.StoreCreateRequest;
 import com.deliveranything.domain.store.store.dto.StoreResponse;
 import com.deliveranything.domain.store.store.dto.StoreUpdateRequest;
-import com.deliveranything.domain.store.store.entity.Store;
 import com.deliveranything.domain.store.store.service.StoreService;
 import com.deliveranything.global.common.ApiResponse;
 import jakarta.validation.Valid;
@@ -35,18 +34,24 @@ public class StoreController {
   }
 
   @GetMapping("/{storeId}")
-  public ResponseEntity<ApiResponse<StoreResponse>> getStore(@PathVariable Long storeId) {
+  public ResponseEntity<ApiResponse<StoreResponse>> getStore(
+      @PathVariable Long storeId
+  ) {
     return ResponseEntity.ok(ApiResponse.success(storeService.getStore(storeId)));
   }
 
   @PutMapping("/{storeId}")
   public ResponseEntity<ApiResponse<Long>> updateStore(
-      @PathVariable Long storeId, @Valid @RequestBody StoreUpdateRequest request) {
+      @PathVariable Long storeId,
+      @Valid @RequestBody StoreUpdateRequest request
+  ) {
     return ResponseEntity.ok(ApiResponse.success(storeService.updateStore(storeId, request)));
   }
 
   @DeleteMapping("/{storeId}")
-  public ResponseEntity<ApiResponse<Void>> deleteStore(@PathVariable Long storeId) {
+  public ResponseEntity<ApiResponse<Void>> deleteStore(
+      @PathVariable Long storeId
+  ) {
     storeService.deleteStore(storeId);
     return ResponseEntity.status(204).body(ApiResponse.success());
   }
