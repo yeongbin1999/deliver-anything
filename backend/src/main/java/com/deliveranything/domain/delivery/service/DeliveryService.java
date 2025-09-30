@@ -5,6 +5,8 @@ import com.deliveranything.domain.delivery.dto.request.RiderDecisionRequestDto;
 import com.deliveranything.domain.delivery.dto.request.RiderToggleStatusRequestDto;
 import com.deliveranything.domain.delivery.dto.response.CurrentDeliveringDetailsDto;
 import com.deliveranything.domain.delivery.dto.response.CurrentDeliveringResponseDto;
+import com.deliveranything.domain.delivery.dto.response.DeliveredDetailsDto;
+import com.deliveranything.domain.delivery.dto.response.DeliveredSummaryResponseDto;
 import com.deliveranything.domain.delivery.dto.response.DeliveringCustomerDetailsDto;
 import com.deliveranything.domain.delivery.dto.response.DeliveringStoreDetailsDto;
 import com.deliveranything.domain.delivery.dto.response.TodayDeliveringResponseDto;
@@ -170,6 +172,34 @@ public class DeliveryService {
         .build();
   }
 
+  // 총 배달 내역 요약 조회 + 배달 완료 리스트 조회
+  public DeliveredSummaryResponseDto getDeliveredSummary(Long riderProfileId) {
+    RiderProfile riderProfile = riderProfileService.getRiderProfileById(riderProfileId);
+
+    List<Delivery> completedDeliveries = deliveryRepository
+        .findByRiderProfileId(riderProfileId);
+
+    // Delivery → DeliveredDetailsDto 변환
+    List<DeliveredDetailsDto> deliveredDetails = completedDeliveries.stream()
+        .map(d -> DeliveredDetailsDto.builder()
+            .completedAt(d.getCompletedAt())
+            .storeName(d.getStore().getName())
+            .orderId(d.getId()) // 또는 실제 Order ID 조회
+            .customerAddress(getCustomerDefaultAddress(d.getCustomer().getDefaultAddressId()))
+            .settlementStatus("PENDING") // TODO: 정산 도메인 구현 후 실제 상태로 변경
+            .deliveryCharge(d.getCharge())
+            .build())
+        .toList();
+
+    return DeliveredSummaryResponseDto.builder()
+        .thisWeekDeliveredCount(getThisWeekCompletedCount(riderProfileId))
+        .totalDeliveryCharges(getTotalDeliveryCharges(riderProfileId))
+        .waitingSettlementAmount(0) // TODO: 정산 도메인 구현 후 수정
+        .completedSettlementAmount(0) // TODO: 정산 도메인 구현 후 수정
+        .deliveredDetails(deliveredDetails)
+        .build();
+  }
+
   // === 편의 메서드 ===
 
   // 오늘 배달 건 수
@@ -178,7 +208,7 @@ public class DeliveryService {
   }
 
   // 이번 주 배달 건 수
-  public Long getThisWeekCompletedCount() {
+  public Long getThisWeekCompletedCount(Long riderProfileId) {
     // 이번 주 시작일 계산 (월요일 기준)
     LocalDateTime weekStart = LocalDateTime.now()
         .with(DayOfWeek.MONDAY)
@@ -187,7 +217,8 @@ public class DeliveryService {
         .withSecond(0)
         .withNano(0);
 
-    return deliveryRepository.countThisWeekCompletedDeliveries(weekStart);
+    return deliveryRepository.countThisWeekCompletedDeliveriesByRiderProfileId(riderProfileId,
+        weekStart);
   }
 
   // 오늘 정산 금액 합계
@@ -225,5 +256,9 @@ public class DeliveryService {
   // 고객 기본 주소 조회
   private String getCustomerDefaultAddress(Long defaultAddressId) {
     return customerProfileService.getCurrentAddress(defaultAddressId).getAddress();
+  }
+
+  private Long getTotalDeliveryCharges(Long riderProfileId) {
+    return deliveryRepository.sumTotalDeliveryChargesByRider(riderProfileId);
   }
 }
