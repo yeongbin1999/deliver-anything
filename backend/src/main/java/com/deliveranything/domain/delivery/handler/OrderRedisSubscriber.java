@@ -19,7 +19,7 @@ import org.springframework.stereotype.Component;
 public class OrderRedisSubscriber implements MessageListener {
 
   // 주문 도메인에서 주문 생성을 발행한 redis 채널
-  private static final String CHANNEL = "order-delivery-created";
+  private static final String CHANNEL = "order-created";
   private final ObjectMapper objectMapper;
   private final RedisMessageListenerContainer container;
   private final OrderNotificationService orderNotificationService;
