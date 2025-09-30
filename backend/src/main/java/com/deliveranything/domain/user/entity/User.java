@@ -16,15 +16,12 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 @Entity
 @Table(name = "users")
@@ -202,49 +199,4 @@ public class User extends BaseEntity {
   private String generateApiKey() {
     return UUID.randomUUID().toString();
   }
-
-
-  public Collection<? extends GrantedAuthority> getAuthorities() {
-    List<GrantedAuthority> authorities = new ArrayList<>();
-
-    // 기본 사용자 권한
-    authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
-
-    // currentActiveProfile 기반 권한 추가
-    if (currentActiveProfile != null) {
-      ProfileType currentType = currentActiveProfile.getType();
-      authorities.add(new SimpleGrantedAuthority("ROLE_" + currentType.name()));
-
-      /***
-       * 활성화된 다른 프로필들의 권한도 추가 (멀티프로필 지원) - 현재 쓸모가 없어보여서 주석처리
-       for (Profile profile : profiles) {
-       if (profile.isActive()) {
-       authorities.add(new SimpleGrantedAuthority("PROFILE_" + profile.getType().name()));
-       }
-       }
-       ***/
-    }
-
-    // 관리자 권한
-    if (isAdmin) {
-      authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
-    }
-
-    return authorities;
-  }
-  
-  public boolean isAccountNonExpired() {
-    return true;
-  }
-
-
-  public boolean isAccountNonLocked() {
-    return true;
-  }
-
-
-  public boolean isCredentialsNonExpired() {
-    return true;
-  }
-
 }

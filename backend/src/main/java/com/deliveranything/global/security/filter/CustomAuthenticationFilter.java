@@ -18,6 +18,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +26,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
@@ -214,16 +217,51 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
     return userRepository.findByApiKey(token).orElse(null);
   }
 
+  // 권한 생성 로직 (User 엔티티에서 이동)
+
+  private List<GrantedAuthority> buildAuthorities(User user) {
+    List<GrantedAuthority> authorities = new ArrayList<>();
+
+    // 기본 사용자 권한
+    authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
+
+    // currentActiveProfile 기반 권한 추가
+    if (user.getCurrentActiveProfile() != null) {
+      ProfileType currentType = user.getCurrentActiveProfile().getType();
+      authorities.add(new SimpleGrantedAuthority("ROLE_" + currentType.name()));
+
+      /***
+       * 활성화된 다른 프로필들의 권한도 추가 (멀티프로필 지원) - 현재 쓸모가 없어보여서 주석처리
+       for (Profile profile : profiles) {
+       if (profile.isActive()) {
+       authorities.add(new SimpleGrantedAuthority("PROFILE_" + profile.getType().name()));
+       }
+       }
+       ***/
+    }
+
+    // 관리자 권한
+    if (user.isAdmin()) {
+      authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
+    }
+
+    return authorities;
+  }
+
+
   /**
    * SecurityContext에 인증 정보 설정 (Profile ID 포함)
    */
   private void setAuthentication(User user) {
+    // 권한 생성
+    List<GrantedAuthority> authorities = buildAuthorities(user);
+
     UserDetails securityUser = new SecurityUser(
         user.getId(),
         user.getName(),
         "",  // 비밀번호는 빈 문자열
         user.getCurrentActiveProfile(), // 현재 활성 프로필 타입
-        user.getAuthorities()
+        authorities
     );
 
     Authentication authentication = new UsernamePasswordAuthenticationToken(
