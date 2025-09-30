@@ -1,7 +1,5 @@
 package com.deliveranything.domain.product.stock.service;
 
-import com.deliveranything.domain.product.product.repository.ProductRepository;
-import com.deliveranything.domain.product.product.service.ProductService;
 import com.deliveranything.domain.product.stock.dto.StockResponse;
 import com.deliveranything.domain.product.stock.dto.StockUpdateRequest;
 import com.deliveranything.domain.product.stock.entity.Stock;
@@ -17,32 +15,21 @@ import org.springframework.transaction.annotation.Transactional;
 public class StockService {
 
   private final StockRepository stockRepository;
-  private final ProductRepository productRepository;
-  private final ProductService productService;
 
   @Transactional(readOnly = true)
   public StockResponse getProductStock(Long productId) {
-    productService.findById(productId);
-
-    Stock stock = findById(productId);
-
+    Stock stock = stockRepository.findByProductId(productId)
+        .orElseThrow(() -> new CustomException(ErrorCode.PRODUCT_NOT_FOUND));
     return StockResponse.from(stock);
   }
 
   @Transactional
-  public StockResponse updateProductStock(Long productId, StockUpdateRequest stockUpdateRequest) {
-    productService.findById(productId);
+  public StockResponse updateProductStock(Long productId, StockUpdateRequest request) {
+    Stock stock = stockRepository.findByProductId(productId)
+        .orElseThrow(() -> new CustomException(ErrorCode.PRODUCT_NOT_FOUND));
 
-    Stock stock = findById(productId);
-
-    stock.setQuantity(stockUpdateRequest.stockChange());
+    stock.setQuantity(request.stockChange());
 
     return StockResponse.from(stock);
-  }
-
-  @Transactional(readOnly = true)
-  public Stock findById(Long productId) {
-    return stockRepository.findById(productId)
-        .orElseThrow(() -> new CustomException(ErrorCode.PRODUCT_NOT_FOUND));
   }
 }

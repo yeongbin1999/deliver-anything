@@ -25,19 +25,14 @@ public class StockController {
   public ResponseEntity<ApiResponse<StockResponse>> getProductStock(
       @PathVariable Long productId
   ) {
-
-    StockResponse stockResponse = stockService.getProductStock(productId);
-
-    return ResponseEntity.ok(ApiResponse.success(stockResponse));
+    return ResponseEntity.ok(ApiResponse.success(stockService.getProductStock(productId)));
   }
 
   @PutMapping("/products/{productId}/stock")
-  public ResponseEntity<ApiResponse<Void>> updateProductStock(
+  public ResponseEntity<ApiResponse<StockResponse>> updateProductStock(
       @PathVariable Long productId,
-      @Valid @RequestBody StockUpdateRequest stockUpdateRequest) {
-
-    StockResponse stockResponse = stockService.updateProductStock(productId, stockUpdateRequest);
-
-    return ResponseEntity.ok(ApiResponse.success());
+      @Valid @RequestBody StockUpdateRequest request
+  ) {
+    return ResponseEntity.ok(ApiResponse.success(stockService.updateProductStock(productId, request)));
   }
 }
