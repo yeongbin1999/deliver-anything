@@ -183,13 +183,33 @@ public class OrderService {
     return OrderResponse.from(order);
   }
 
-  public Order getOrderByMerchantId(String merchantId) {
+  @Transactional
+  public OrderResponse cancelOrder(Long orderId, String cancelReason) {
+    Order order = getOrderWithStoreById(orderId);
+
+    try {
+      paymentService.cancelPayment(order.getMerchantId(), cancelReason);
+      order.updateStatus(OrderStatus.CANCELED);
+    } catch (CustomException e) {
+      order.updateStatus(OrderStatus.CANCELLATION_FAILED);
+      throw e;
+    }
+
+    return OrderResponse.from(order);
+  }
+
+  private Order getOrderByMerchantId(String merchantId) {
     return orderRepository.findOrderWithStoreByMerchantId(merchantId)
         .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND));
   }
 
   private Order getOrderById(Long orderId) {
     return orderRepository.findById(orderId)
+        .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND));
+  }
+
+  private Order getOrderWithStoreById(Long orderId) {
+    return orderRepository.findOrderWithStoreById(orderId)
         .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND));
   }
 }

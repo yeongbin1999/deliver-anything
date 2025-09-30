@@ -36,8 +36,10 @@ public enum ErrorCode {
 
   // 결제 관련 오류
   PG_PAYMENT_CONFIRM_FAILED(HttpStatus.BAD_REQUEST, "PG-PAYMENT-001",
-      "결제 검증 실패: 결제 ID, 주문 번호, 결제 금액 중 하나 이상 불일치합니다."),
+      "결제 검증 실패: 결제 번호, 주문 번호, 결제 금액 중 하나 이상 불일치합니다."),
   PG_PAYMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "PG-PAYMENT-404", "PG사에서 주문의 결제 이력을 찾을 수 없습니다."),
+  PG_PAYMENT_CANCEL_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "PG-PAYMENT-CANCEL-500",
+      "일시적인 서버 오류입니다. 계속 실패한다면 관리자에게 문의 바랍니다."),
 
   PAYMENT_AMOUNT_INVALID(HttpStatus.BAD_REQUEST, "PAYMENT-001", "결제 금액이 주문의 가격과 다릅니다."),
   PAYMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "PAYMENT-404", "결제 이력을 찾을 수 없습니다."),
@@ -57,6 +59,8 @@ public enum ErrorCode {
   // Redis 관련 오류
   REDIS_MESSAGE_PROCESSING_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "REDIS-500",
       "Redis 메시지 처리 중 오류가 발생했습니다.");
+
+  //
 
   private final HttpStatus httpStatus;
   private final String code;
