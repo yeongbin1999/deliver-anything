@@ -44,7 +44,7 @@ public class OrderItem {
     this.quantity = quantity;
   }
 
-  protected void setOrder(Order order) {
+  void setOrder(Order order) {
     this.order = order;
   }
 }

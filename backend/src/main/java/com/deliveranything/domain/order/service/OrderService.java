@@ -38,7 +38,7 @@ public class OrderService {
   public OrderResponse createOrder(Long customerId, OrderCreateRequest orderCreateRequest) {
     Order order = Order.builder()
         .customer(customerProfileService.getProfile(customerId))
-        .store(storeService.findById(orderCreateRequest.storeId()))
+        .store(storeService.getById(orderCreateRequest.storeId()))
         .address(orderCreateRequest.address())
         .riderNote(orderCreateRequest.riderNote())
         .storeNote(orderCreateRequest.storeNote())
@@ -49,7 +49,7 @@ public class OrderService {
 
     for (OrderItemRequest orderItemRequest : orderCreateRequest.orderItemRequests()) {
       OrderItem orderItem = OrderItem.builder()
-          .product(productService.findById(orderItemRequest.productId()))
+          .product(productService.getProductById(orderItemRequest.productId()))
           .price(orderItemRequest.price())
           .quantity(orderItemRequest.quantity())
           .build();
@@ -212,7 +212,7 @@ public class OrderService {
     return orderRepository.findOrderWithStoreById(orderId)
         .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND));
   }
-  
+
   public Long getCustomerIdByOrderId(Long orderId) {
     return getOrderById(orderId).getCustomer().getId();
   }
