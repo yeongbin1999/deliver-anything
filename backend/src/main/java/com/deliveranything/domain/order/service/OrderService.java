@@ -49,7 +49,7 @@ public class OrderService {
 
     for (OrderItemRequest orderItemRequest : orderCreateRequest.orderItemRequests()) {
       OrderItem orderItem = OrderItem.builder()
-          .product(productService.getProduct(orderItemRequest.productId()))
+          .product(productService.findById(orderItemRequest.productId()))
           .price(orderItemRequest.price())
           .quantity(orderItemRequest.quantity())
           .build();
@@ -183,7 +183,22 @@ public class OrderService {
     return OrderResponse.from(order);
   }
 
-  public Order getOrderByMerchantId(String merchantId) {
+  @Transactional
+  public OrderResponse cancelOrder(Long orderId, String cancelReason) {
+    Order order = getOrderWithStoreById(orderId);
+
+    try {
+      paymentService.cancelPayment(order.getMerchantId(), cancelReason);
+      order.updateStatus(OrderStatus.CANCELED);
+    } catch (CustomException e) {
+      order.updateStatus(OrderStatus.CANCELLATION_FAILED);
+      throw e;
+    }
+
+    return OrderResponse.from(order);
+  }
+
+  private Order getOrderByMerchantId(String merchantId) {
     return orderRepository.findOrderWithStoreByMerchantId(merchantId)
         .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND));
   }
@@ -193,6 +208,11 @@ public class OrderService {
         .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND));
   }
 
+  private Order getOrderWithStoreById(Long orderId) {
+    return orderRepository.findOrderWithStoreById(orderId)
+        .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND));
+  }
+  
   public Long getCustomerIdByOrderId(Long orderId) {
     return getOrderById(orderId).getCustomer().getId();
   }

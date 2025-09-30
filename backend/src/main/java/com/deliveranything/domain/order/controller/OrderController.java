@@ -2,6 +2,7 @@ package com.deliveranything.domain.order.controller;
 
 import static org.springframework.http.HttpStatus.CREATED;
 
+import com.deliveranything.domain.order.dto.OrderCancelRequest;
 import com.deliveranything.domain.order.dto.OrderCreateRequest;
 import com.deliveranything.domain.order.dto.OrderPayRequest;
 import com.deliveranything.domain.order.dto.OrderResponse;
@@ -79,7 +80,7 @@ public class OrderController {
         orderService.getCustomerOrder(orderId, user.getCurrentActiveProfile().getId())));
   }
 
-  @PostMapping("{merchantUid}/pay")
+  @PostMapping("/{merchantUid}/pay")
   @Operation(summary = "주문 결제", description = "소비자가 생성한 주문의 결제 시도")
   public ResponseEntity<ApiResponse<OrderResponse>> pay(
       @AuthenticationPrincipal SecurityUser user,
@@ -91,6 +92,21 @@ public class OrderController {
     }
 
     return ResponseEntity.ok().body(ApiResponse.success("소비자 결제 승인 성공",
-        orderService.payOrder(merchantUid, orderPayRequest.paymentKey()));
+        orderService.payOrder(merchantUid, orderPayRequest.paymentKey())));
+  }
+
+  @PostMapping("/{orderId}/cancel")
+  @Operation(summary = "주문 취소", description = "소비자가 상점에서 주문 수락 전인 주문을 취소하는 경우")
+  public ResponseEntity<ApiResponse<OrderResponse>> cancel(
+      @AuthenticationPrincipal SecurityUser user,
+      @PathVariable Long orderId,
+      @RequestBody OrderCancelRequest orderCancelRequest
+  ) {
+    if (!user.hasActiveProfile(ProfileType.CUSTOMER)) {
+      throw new CustomException(ErrorCode.PROFILE_TYPE_FORBIDDEN);
+    }
+
+    return ResponseEntity.ok().body(ApiResponse.success("소비자 주문 취소 성공",
+        orderService.cancelOrder(orderId, orderCancelRequest.cancelReason())));
   }
 }

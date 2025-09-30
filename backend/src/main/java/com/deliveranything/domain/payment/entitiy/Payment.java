@@ -12,9 +12,11 @@ import jakarta.persistence.Table;
 import java.math.BigDecimal;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
 
 @Getter
 @NoArgsConstructor
+@RequiredArgsConstructor
 @Entity
 @Table(name = "payments")
 public class Payment extends BaseEntity {
@@ -36,6 +38,13 @@ public class Payment extends BaseEntity {
     this.merchantUid = merchantUid;
     this.amount = amount;
     this.status = PaymentStatus.READY;
+  }
+
+  public Payment(String merchantUid, String paymentKey, BigDecimal amount, PaymentStatus status) {
+    this.merchantUid = merchantUid;
+    this.paymentKey = paymentKey;
+    this.amount = amount;
+    this.status = status;
   }
 
   public void updateStatus(PaymentStatus status) {

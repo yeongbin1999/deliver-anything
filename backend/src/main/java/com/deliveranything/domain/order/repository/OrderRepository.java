@@ -9,6 +9,9 @@ import org.springframework.data.jpa.repository.Query;
 
 public interface OrderRepository extends JpaRepository<Order, Long> {
 
+  @Query("SELECT o FROM Order o JOIN FETCH o.store WHERE o.id = :orderId")
+  Optional<Order> findOrderWithStoreById(Long orderId);
+
   @Query("SELECT o FROM Order o JOIN FETCH o.store WHERE o.id = :orderId AND o.customer.id = :customerId")
   Optional<Order> findOrderWithStoreByIdAndCustomerId(Long orderId, Long customerId);
 
