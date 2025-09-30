@@ -36,4 +36,6 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
       """)
   List<Order> findOrdersWithStoreByStoreAndStatusIn(Long storeId,
       List<OrderStatus> statuses);
+
+  Optional<Order> findByDeliveryId(Long deliveryId);
 }

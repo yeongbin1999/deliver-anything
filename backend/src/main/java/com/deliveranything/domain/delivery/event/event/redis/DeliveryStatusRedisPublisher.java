@@ -1,6 +1,8 @@
 package com.deliveranything.domain.delivery.event.event.redis;
 
 import com.deliveranything.domain.delivery.event.dto.DeliveryStatusEvent;
+import com.deliveranything.global.exception.CustomException;
+import com.deliveranything.global.exception.ErrorCode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -20,7 +22,7 @@ public class DeliveryStatusRedisPublisher {
       String payload = objectMapper.writeValueAsString(event);
       redisTemplate.convertAndSend(CHANNEL, payload);
     } catch (Exception e) {
-      // TODO: 로깅
+      throw new CustomException(ErrorCode.REDIS_MESSAGE_PROCESSING_ERROR);
     }
   }
 }

@@ -67,7 +67,7 @@ public class OrderDeliveryStatusRedisSubscriber implements MessageListener {
       order.updateStatus(OrderStatus.RIDER_ASSIGNED);
 
       // Delivery 생성
-      Delivery delivery = deliveryService.createDelivery(order, riderId);
+      Delivery delivery = deliveryService.createDelivery(order, riderId, event.eta());
       deliveryRepository.save(delivery);
     }
   }

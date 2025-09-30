@@ -36,7 +36,7 @@ public class Delivery extends BaseEntity {
 //  private Integer remainingTime;
 
   @Column(name = "delivery_expected_time", nullable = false)
-  private Integer expectedTime;
+  private Double expectedTime;
 
   @Column(name = "delivery_requested")
   private String requested;
@@ -72,7 +72,7 @@ public class Delivery extends BaseEntity {
 
 
   @Builder
-  public Delivery(Integer expectedTime, String requested, DeliveryStatus status,
+  public Delivery(Double expectedTime, String requested, DeliveryStatus status,
       LocalDateTime startedAt, LocalDateTime completedAt, Integer charge,
       Store store, Review review, RiderProfile riderProfile, CustomerProfile customer) {
     this.expectedTime = expectedTime;

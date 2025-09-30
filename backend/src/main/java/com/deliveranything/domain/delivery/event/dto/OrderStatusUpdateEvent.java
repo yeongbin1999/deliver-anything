@@ -5,7 +5,8 @@ import com.deliveranything.domain.delivery.enums.DeliveryStatus;
 public record OrderStatusUpdateEvent(
     String orderId,
     Long riderId,
-    DeliveryStatus status
+    DeliveryStatus status,
+    Double eta
 ) {
 
 }

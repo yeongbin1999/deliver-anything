@@ -48,8 +48,7 @@ public class DeliveryStatusRedisSubscriber implements MessageListener {
       deliveryStatusSsePublisher.publish(event);
 
     } catch (Exception e) {
-      // TODO: 로깅 및 에러 처리
-      e.printStackTrace();
+      throw new CustomException(ErrorCode.REDIS_MESSAGE_PROCESSING_ERROR);
     }
   }
 

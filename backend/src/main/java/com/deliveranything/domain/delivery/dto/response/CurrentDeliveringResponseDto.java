@@ -3,11 +3,11 @@ package com.deliveranything.domain.delivery.dto.response;
 import lombok.Builder;
 
 @Builder
-public record CurrentDeliveringDto(
+public record CurrentDeliveringResponseDto(
     Long orderId,
     String storeName,
     String customerAddress,
-    double remainingTime
+    Double remainingTime
 ) {
 
 }

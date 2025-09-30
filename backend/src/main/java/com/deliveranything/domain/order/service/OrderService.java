@@ -220,4 +220,9 @@ public class OrderService {
   public Long getSellerIdByOrderId(Long orderId) {
     return getOrderById(orderId).getStore().getSellerProfileId();
   }
+
+  public Order getCurrentOrderByDeliveryId(Long deliveryId) {
+    return orderRepository.findByDeliveryId(deliveryId)
+        .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND));
+  }
 }
