@@ -2,7 +2,7 @@ package com.deliveranything.domain.delivery.handler;
 
 import com.deliveranything.domain.delivery.entity.Delivery;
 import com.deliveranything.domain.delivery.event.dto.DeliveryStatusEvent;
-import com.deliveranything.domain.delivery.event.event.DeliveryStatusSsePublisher;
+import com.deliveranything.domain.delivery.event.event.sse.DeliveryStatusSsePublisher;
 import com.deliveranything.domain.delivery.repository.DeliveryRepository;
 import com.deliveranything.global.exception.CustomException;
 import com.deliveranything.global.exception.ErrorCode;
@@ -25,7 +25,7 @@ public class DeliveryStatusRedisSubscriber implements MessageListener {
   private static final String CHANNEL = "delivery-status-events";
 
   private final ObjectMapper objectMapper;
-  private final DeliveryStatusSsePublisher ssePublisher;
+  private final DeliveryStatusSsePublisher deliveryStatusSsePublisher;
   private final RedisMessageListenerContainer container;
   private final DeliveryRepository deliveryRepository;
   private final RedisTemplate<String, Object> redisTemplate;
@@ -45,7 +45,7 @@ public class DeliveryStatusRedisSubscriber implements MessageListener {
       // 1️⃣ 상태 변경 처리
       handleStatusChange(event);
       // 2️⃣ SSE 알림 전송
-      ssePublisher.publish(event);
+      deliveryStatusSsePublisher.publish(event);
 
     } catch (Exception e) {
       // TODO: 로깅 및 에러 처리

@@ -1,4 +1,4 @@
-package com.deliveranything.domain.delivery.event.event;
+package com.deliveranything.domain.delivery.event.event.redis;
 
 import com.deliveranything.domain.delivery.event.dto.RiderNotificationDto;
 import com.deliveranything.global.exception.CustomException;

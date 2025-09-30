@@ -5,7 +5,7 @@ import com.deliveranything.domain.delivery.dto.request.RiderToggleStatusRequestD
 import com.deliveranything.domain.delivery.entity.Delivery;
 import com.deliveranything.domain.delivery.enums.DeliveryStatus;
 import com.deliveranything.domain.delivery.event.dto.DeliveryStatusEvent;
-import com.deliveranything.domain.delivery.event.event.DeliveryStatusRedisPublisher;
+import com.deliveranything.domain.delivery.event.event.redis.DeliveryStatusRedisPublisher;
 import com.deliveranything.domain.delivery.repository.DeliveryRepository;
 import com.deliveranything.domain.user.entity.profile.RiderProfile;
 import com.deliveranything.domain.user.enums.RiderToggleStatus;

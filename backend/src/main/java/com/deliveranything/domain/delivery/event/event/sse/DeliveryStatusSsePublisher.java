@@ -1,4 +1,4 @@
-package com.deliveranything.domain.delivery.event.event;
+package com.deliveranything.domain.delivery.event.event.sse;
 
 import com.deliveranything.domain.delivery.event.dto.DeliveryStatusEvent;
 import com.deliveranything.domain.notification.service.NotificationService;
