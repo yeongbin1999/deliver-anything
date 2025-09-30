@@ -9,6 +9,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import lombok.Builder;
 import lombok.NoArgsConstructor;
 
 @NoArgsConstructor
@@ -26,9 +27,23 @@ public class SettlementBatch extends BaseEntity {
   @Column(nullable = false, precision = 19, scale = 2)
   private BigDecimal targetTotalAmount;
 
+  @Column(nullable = false)
+  private Integer transactionCount;
+
   @Column(nullable = false, precision = 19, scale = 2)
   private BigDecimal totalPlatformFee;
 
   @Column(nullable = false)
   private LocalDate settlementDate;
+
+  @Builder
+  public SettlementBatch(TargetType targetType, Long targetId, BigDecimal targetTotalAmount,
+      Integer transactionCount, BigDecimal totalPlatformFee, LocalDate settlementDate) {
+    this.targetType = targetType;
+    this.targetId = targetId;
+    this.targetTotalAmount = targetTotalAmount;
+    this.transactionCount = transactionCount;
+    this.totalPlatformFee = totalPlatformFee;
+    this.settlementDate = settlementDate;
+  }
 }
