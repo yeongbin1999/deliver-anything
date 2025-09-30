@@ -32,8 +32,8 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Delivery extends BaseEntity {
 
-  @Column(name = "delivery_remaining_time", nullable = false)
-  private Integer remainingTime;
+//  @Column(name = "delivery_remaining_time", nullable = false)
+//  private Integer remainingTime;
 
   @Column(name = "delivery_expected_time", nullable = false)
   private Integer expectedTime;
@@ -45,7 +45,7 @@ public class Delivery extends BaseEntity {
   @Enumerated(EnumType.STRING)
   private DeliveryStatus status;
 
-  @Column(name = "delivery_started_at", updatable = false)
+  @Column(name = "delivery_started_at")
   private LocalDateTime startedAt;
 
   @Column(name = "delivery_completed_at")
@@ -72,13 +72,19 @@ public class Delivery extends BaseEntity {
 
 
   @Builder
-  public Delivery(Integer remainingTime, Integer expectedTime, String requested,
-      DeliveryStatus status, Integer charge) {
-    this.remainingTime = remainingTime;
+  public Delivery(Integer expectedTime, String requested, DeliveryStatus status,
+      LocalDateTime startedAt, LocalDateTime completedAt, Integer charge,
+      Store store, Review review, RiderProfile riderProfile, CustomerProfile customer) {
     this.expectedTime = expectedTime;
     this.requested = requested;
     this.status = status;
+    this.startedAt = startedAt;
+    this.completedAt = completedAt;
     this.charge = charge;
+    this.store = store;
+    this.review = review;
+    this.riderProfile = riderProfile;
+    this.customer = customer;
   }
 
   public void updateStatus(DeliveryStatus newStatus) {

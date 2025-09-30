@@ -67,7 +67,7 @@ public class ProductController {
   public ResponseEntity<ApiResponse<ProductDetailResponse>> getProduct(
       @PathVariable Long productId
   ) {
-    ProductDetailResponse productResponse = productService.findById(productId);
+    ProductDetailResponse productResponse = productService.getProduct(productId);
     return ResponseEntity.ok(ApiResponse.success(productResponse));
   }
 

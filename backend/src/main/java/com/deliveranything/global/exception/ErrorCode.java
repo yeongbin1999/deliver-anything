@@ -20,6 +20,8 @@ public enum ErrorCode {
 
   // 배달/라이더 관련 오류
   RIDER_NOT_FOUND(HttpStatus.NOT_FOUND, "RIDER-404", "라이더를 찾을 수 없습니다."),
+  DELIVERY_NOT_AVAILABLE_IN_PROGRESS(HttpStatus.CONFLICT, "DELIVERY-409",
+      "현재 배달 진행 중이므로 해당 작업을 수행할 수 없습니다."),
   DELIVERY_NOT_FOUND(HttpStatus.NOT_FOUND, "DELIVERY-404", "배달을 찾을 수 없습니다."),
 
   // 리뷰 관련 오류
@@ -49,9 +51,11 @@ public enum ErrorCode {
   STORE_NOT_FOUND(HttpStatus.NOT_FOUND, "STORE-404", "상점을 찾을 수 없습니다."),
   STORE_CATEGORY_NOT_FOUND(HttpStatus.NOT_FOUND, "STORE-CATEGORY-404", "상점 카테고리를 찾을 수 없습니다."),
 
-  // 상품 관련 오류
+  // 상품, 재고 관련 오류
   PRODUCT_NOT_FOUND(HttpStatus.NOT_FOUND, "PRODUCT-404", "상품을 찾을 수 없습니다."),
   PRODUCT_OUT_OF_STOCK(HttpStatus.BAD_REQUEST, "PRODUCT-400", "상품의 재고가 부족합니다."),
+  STOCK_CHANGE_INVALID(HttpStatus.BAD_REQUEST, "STOCK-400", "재고 변경 수량이 유효하지 않습니다."),
+  STOCK_CHANGE_CONFLICT(HttpStatus.CONFLICT, "STOCK-409", "재고 변경 충돌이 발생했습니다. 다시 시도해주세요."),
 
   // SSE 관련 오류
   SSE_SUBSCRIBE_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, "SSE-503", "SSE 연결에 실패했습니다."),

@@ -2,6 +2,7 @@ package com.deliveranything.domain.delivery.controller;
 
 import com.deliveranything.domain.delivery.dto.request.DeliveryAreaRequestDto;
 import com.deliveranything.domain.delivery.dto.request.DeliveryStatusRequestDto;
+import com.deliveranything.domain.delivery.dto.request.RiderDecisionRequestDto;
 import com.deliveranything.domain.delivery.dto.request.RiderToggleStatusRequestDto;
 import com.deliveranything.domain.delivery.enums.DeliveryStatus;
 import com.deliveranything.domain.delivery.service.DeliveryService;
@@ -10,11 +11,13 @@ import com.deliveranything.domain.review.dto.ReviewResponse;
 import com.deliveranything.domain.review.enums.MyReviewSortType;
 import com.deliveranything.domain.review.service.ReviewService;
 import com.deliveranything.global.common.ApiResponse;
+import com.deliveranything.global.security.SecurityUser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -36,9 +39,11 @@ public class DeliveryController {
   @PatchMapping("/status")
   @Operation(summary = "라이더 토글 전환", description = "라이더 토글 전환으로 상태를 전환합니다.")
   public ResponseEntity<ApiResponse<Void>> updateRiderStatus(
+      @AuthenticationPrincipal SecurityUser user,
       @Valid @RequestBody RiderToggleStatusRequestDto riderStatusRequestDto
   ) {
-    deliveryService.updateRiderStatus(riderStatusRequestDto);
+    deliveryService.updateRiderStatus(user.getCurrentActiveProfileIdSafe(),
+        riderStatusRequestDto);
     return ResponseEntity.ok(ApiResponse.success());
   }
 
@@ -46,9 +51,11 @@ public class DeliveryController {
   @Operation(summary = "배달 가능 지역 설정",
       description = "배달 가능 지역을 설정합니다 (현재는 1군데만, 자유로운 형식으로 가능).")
   public ResponseEntity<ApiResponse<Void>> updateDeliveryArea(
+      @AuthenticationPrincipal SecurityUser user,
       @Valid @RequestBody DeliveryAreaRequestDto deliveryAreaRequestDto
   ) {
-    deliveryService.updateDeliveryArea(deliveryAreaRequestDto);
+    deliveryService.updateDeliveryArea(user.getCurrentActiveProfileIdSafe(),
+        deliveryAreaRequestDto);
     return ResponseEntity.ok(ApiResponse.success());
   }
 
@@ -56,13 +63,13 @@ public class DeliveryController {
   @Operation(summary = "배달원 리뷰 목록 조회",
       description = "배달원에게 작성된 리뷰 목록과 함께, 전체 평점 및 별점별 개수를 조회합니다.")
   public ResponseEntity<ApiResponse<ReviewRatingAndListResponseDto>> getReviews(
-      @RequestParam Long userId, // profileId 고려 -> 인증객체
+      @AuthenticationPrincipal SecurityUser user,
       @RequestParam(required = false, defaultValue = "LATEST") MyReviewSortType sort,
       @RequestParam(required = false) String cursor,
       @RequestParam(required = false, defaultValue = "10") Integer size
   ) {
     ReviewRatingAndListResponseDto response = reviewService.getReviewRatingAndList(
-        userId, sort, cursor, size);
+        user.getCurrentActiveProfileIdSafe(), sort, cursor, size);
     return ResponseEntity.ok(ApiResponse.success(response));
   }
 
@@ -83,5 +90,14 @@ public class DeliveryController {
   ) {
     deliveryService.changeStatus(deliveryId, DeliveryStatus.valueOf(next.status()));
     return ResponseEntity.ok().build();
+  }
+
+  @PostMapping("/decision")
+  public ResponseEntity<ApiResponse<Void>> decideOrderDelivery(
+      @Valid @RequestBody RiderDecisionRequestDto decisionRequestDto,
+      @AuthenticationPrincipal SecurityUser user
+  ) {
+    deliveryService.publishRiderDecision(decisionRequestDto, user.getCurrentActiveProfileIdSafe());
+    return ResponseEntity.ok(ApiResponse.success());
   }
 }

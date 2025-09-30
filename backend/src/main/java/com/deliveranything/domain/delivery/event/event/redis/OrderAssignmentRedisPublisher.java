@@ -1,4 +1,4 @@
-package com.deliveranything.domain.delivery.event.event;
+package com.deliveranything.domain.delivery.event.event.redis;
 
 import com.deliveranything.domain.delivery.event.dto.RiderNotificationDto;
 import com.deliveranything.global.exception.CustomException;
@@ -11,17 +11,18 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class RedisPublisher {
+public class OrderAssignmentRedisPublisher {
 
+  // 반경 내 라이더에게 주문 전달 이벤트
+  private static final String CHANNEL = "order-assignment-events";
   private final StringRedisTemplate redisTemplate;
   private final ObjectMapper objectMapper;
 
   public void publish(List<RiderNotificationDto> dtoList) {
     dtoList.forEach(dto -> {
       try {
-        String channel = "order-events";
         String message = objectMapper.writeValueAsString(dto);
-        redisTemplate.convertAndSend(channel, message);
+        redisTemplate.convertAndSend(CHANNEL, message);
       } catch (Exception e) {
         throw new CustomException(ErrorCode.REDIS_MESSAGE_PROCESSING_ERROR);
       }
