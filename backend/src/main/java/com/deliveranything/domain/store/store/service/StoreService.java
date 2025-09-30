@@ -33,11 +33,11 @@ public class StoreService {
   private final ApplicationEventPublisher eventPublisher;
 
   @Transactional
-  public Long createStore(StoreCreateRequest request) {
+  public Long createStore(StoreCreateRequest request, Long sellerProfileId) {
     StoreCategory storeCategory = storeCategoryService.getById(request.storeCategoryId());
 
     Store store = Store.builder()
-//        .sellerProfileId()
+        .sellerProfileId(sellerProfileId)
         .storeCategory(storeCategory)
         .name(request.name())
         .description(request.description())
