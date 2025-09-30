@@ -47,6 +47,7 @@ public enum ErrorCode {
   STORE_NOT_FOUND(HttpStatus.NOT_FOUND, "STORE-404", "상점을 찾을 수 없습니다."),
   STORE_CATEGORY_NOT_FOUND(HttpStatus.NOT_FOUND, "STORE-CATEGORY-404", "상점 카테고리를 찾을 수 없습니다."),
   STORE_NOT_READY_FOR_OPENING(HttpStatus.BAD_REQUEST, "STORE-400", "상점이 아직 모든 정보가 입력된 상태가 아닙니다."),
+  STORE_OWNER_MISMATCH(HttpStatus.FORBIDDEN, "STORE-403", "요청 사용자는 해당 상점의 주인이 아닙니다."),
 
   // 상품, 재고 관련 오류
   PRODUCT_NOT_FOUND(HttpStatus.NOT_FOUND, "PRODUCT-404", "상품을 찾을 수 없습니다."),

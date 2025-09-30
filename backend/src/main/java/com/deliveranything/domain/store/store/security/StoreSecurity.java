@@ -2,6 +2,8 @@ package com.deliveranything.domain.store.store.security;
 
 import com.deliveranything.domain.store.store.entity.Store;
 import com.deliveranything.domain.store.store.service.StoreService;
+import com.deliveranything.global.exception.CustomException;
+import com.deliveranything.global.exception.ErrorCode;
 import com.deliveranything.global.security.SecurityUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -14,6 +16,11 @@ public class StoreSecurity {
 
   public boolean isOwner(Long storeId, SecurityUser user) {
     Store store = storeService.getById(storeId);
-    return store.getSellerProfileId().equals(user.getCurrentActiveProfile().getId());
+
+    if (!store.getSellerProfileId().equals(user.getCurrentActiveProfile().getId())) {
+      throw new CustomException(ErrorCode.STORE_OWNER_MISMATCH);
+    }
+
+    return true;
   }
 }
