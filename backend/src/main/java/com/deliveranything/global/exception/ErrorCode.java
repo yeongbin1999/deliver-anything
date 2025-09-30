@@ -46,11 +46,9 @@ public enum ErrorCode {
   STORE_NOT_FOUND(HttpStatus.NOT_FOUND, "STORE-404", "상점을 찾을 수 없습니다."),
   STORE_CATEGORY_NOT_FOUND(HttpStatus.NOT_FOUND, "STORE-CATEGORY-404", "상점 카테고리를 찾을 수 없습니다."),
 
-  // 상품 관련 오류
+  // 상품, 재고 관련 오류
   PRODUCT_NOT_FOUND(HttpStatus.NOT_FOUND, "PRODUCT-404", "상품을 찾을 수 없습니다."),
   PRODUCT_OUT_OF_STOCK(HttpStatus.BAD_REQUEST, "PRODUCT-400", "상품의 재고가 부족합니다."),
-
-  // 재고 관련 오류
   STOCK_CHANGE_INVALID(HttpStatus.BAD_REQUEST, "STOCK-400", "재고 변경 수량이 유효하지 않습니다."),
   STOCK_CHANGE_CONFLICT(HttpStatus.CONFLICT, "STOCK-409", "재고 변경 충돌이 발생했습니다. 다시 시도해주세요."),
 

@@ -42,7 +42,7 @@ public class Stock extends BaseEntity {
   // 주문시 재고 감소
   public void decreaseQuantity(int amount) {
     if (amount < 0) throw new CustomException(ErrorCode.STOCK_CHANGE_INVALID);
-    if (this.quantity < amount) throw new IllegalArgumentException("재고가 부족합니다.");
+    if (this.quantity < amount) throw new CustomException(ErrorCode.PRODUCT_OUT_OF_STOCK);
     this.quantity -= amount;
   }
 
