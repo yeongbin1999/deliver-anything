@@ -67,10 +67,12 @@ public class ReviewService {
      *  2025-09-29 수정 사항 - daran2
      *  유저를 통해 프로필을 받아오는 방식 -> 프로필을 받고 프로필에서 커스터머 프로필을 받아오는 방식으로 변경
      *  이유: 유저가 여러 프로필을 가질 수 있기 때문에, 변경된 프로필 구조에선 유저를 통해 커스터머 프로필을 바로 받아오는 것은 부적절
+     *
+     *  2025 09-29 수정2 - daran2
+     *  customerProfileService에 getProfile(userId) 메서드를 이용해 더 간결하게 변경!
      ***/
     //커스터머 프로필 존재 여부 확인
-    Profile profile = userService.getProfileByUserAndType(userId, ProfileType.CUSTOMER);
-    CustomerProfile customerProfile = customerProfileService.getProfileByProfileId(profile.getId());
+    CustomerProfile customerProfile = customerProfileService.getProfile(userId);
 
     //리뷰 생성 및 저장
     Review review = Review.from(request, customerProfile);
