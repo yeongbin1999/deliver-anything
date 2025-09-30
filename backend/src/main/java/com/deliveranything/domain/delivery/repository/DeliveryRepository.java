@@ -44,7 +44,7 @@ public interface DeliveryRepository extends JpaRepository<Delivery, Long> {
       "JOIN FETCH d.order o " +
       "WHERE d.riderProfile.id = :riderProfileId AND d.status = :status")
   List<Delivery> findByRiderProfileIdAndStatus(
-      @Param("riderProfileId") Long riderProfileId, 
+      @Param("riderProfileId") Long riderProfileId,
       @Param("status") DeliveryStatus status
   );
 }
