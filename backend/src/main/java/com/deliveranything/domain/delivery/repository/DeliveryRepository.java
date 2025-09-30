@@ -16,15 +16,23 @@ public interface DeliveryRepository extends JpaRepository<Delivery, Long> {
       "AND DATE(d.completedAt) = CURRENT_DATE")
   Long countTodayCompletedDeliveriesByRider(Long riderProfileId);
 
-  @Query("SELECT COUNT(d) FROM Delivery d WHERE d.status = 'COMPLETED' " +
-      "AND d.completedAt >= :weekStart")
-  Long countThisWeekCompletedDeliveries(LocalDateTime weekStart);
+  @Query("SELECT COUNT(d) FROM Delivery d WHERE d.riderProfile.id = :riderProfileId " +
+      "AND d.status = 'COMPLETED' AND d.completedAt >= :weekStart")
+  Long countThisWeekCompletedDeliveriesByRiderProfileId(
+      @Param("riderProfileId") Long riderProfileId,
+      @Param("weekStart") LocalDateTime weekStart
+  );
 
   @Query("SELECT d FROM Delivery d WHERE d.riderProfile.id = :riderProfileId " +
-      "AND d.status = 'COMPLETED' " +
-      "AND DATE(d.completedAt) = CURRENT_DATE")
+      "AND d.status = 'COMPLETED' AND DATE(d.completedAt) = CURRENT_DATE")
   List<Delivery> findTodayCompletedDeliveriesByRider(@Param("riderProfileId") Long riderProfileId);
 
   Optional<Delivery> findByRiderProfileIdAndStatus(Long riderProfileId,
       DeliveryStatus deliveryStatus);
+
+  @Query("SELECT SUM(d.charge) FROM Delivery d WHERE d.riderProfile.id = :riderProfileId " +
+      "AND d.status = 'COMPLETED'")
+  Long sumTotalDeliveryChargesByRider(Long riderProfileId);
+
+  List<Delivery> findByRiderProfileId(Long riderProfileId);
 }
