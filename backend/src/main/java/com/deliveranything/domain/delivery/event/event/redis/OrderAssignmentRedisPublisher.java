@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
 public class OrderAssignmentRedisPublisher {
 
   // 반경 내 라이더에게 주문 전달 이벤트
-  private static final String CHANNEL = "order-events";
+  private static final String CHANNEL = "order-assignment-events";
   private final StringRedisTemplate redisTemplate;
   private final ObjectMapper objectMapper;
 

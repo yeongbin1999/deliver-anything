@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class OrderAssignmentSsePublisher {
 
-  private static final String EVENT_NAME = "order-events";
+  private static final String EVENT_NAME = "order-assignment-events";
   private final NotificationService notificationService;
 
   // 프로필 단위 전체 전송 (해당 프로필의 모든 emitter로 전송)

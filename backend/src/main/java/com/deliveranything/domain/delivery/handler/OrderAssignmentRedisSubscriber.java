@@ -21,7 +21,7 @@ import org.springframework.stereotype.Component;
 // OrderDeliveryEventHandler 는 더 간단한 방법이나 현재 상황에서는 일시 삭제
 public class OrderAssignmentRedisSubscriber implements MessageListener {
 
-  private static final String CHANNEL = "order-events";
+  private static final String CHANNEL = "order-assignment-events";
   private final ObjectMapper objectMapper;
   private final RedisMessageListenerContainer container;
   private final OrderAssignmentSsePublisher orderAssignmentSsePublisher;
