@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -91,28 +90,6 @@ public class NotificationService {
         emitter.complete();
       }
     }
-  }
-
-  /**
-   * 서버와 클라이언트 간 유휴 연결 유지 (30초마다)
-   */
-  @Scheduled(fixedRate = 30_000)
-  public void sendHeartbeat() {
-    // EmitterRepository의 새로운 구조에 맞게 수정
-    emitterRepository.getAllEmitters().forEach((profileId, deviceEmitters) -> {
-      deviceEmitters.forEach((deviceId, emitter) -> {
-        try {
-          emitter.send(SseEmitter.event()
-              .name("heartbeat")
-              .data("ping"));
-        } catch (Exception e) {
-          log.warn("Heartbeat failed for profileId {}, deviceId {}: {}. Completing emitter.",
-              profileId, deviceId, e.getMessage());
-          // Emitter를 완료시켜 onCompletion 콜백이 호출되도록 함
-          emitter.complete();
-        }
-      });
-    });
   }
 
   // 해당 profileId의 모든 emitter로 전송
