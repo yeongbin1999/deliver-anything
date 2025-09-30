@@ -2,6 +2,7 @@ package com.deliveranything.domain.delivery.handler;
 
 import com.deliveranything.domain.delivery.entity.Delivery;
 import com.deliveranything.domain.delivery.event.dto.OrderStatusUpdateEvent;
+import com.deliveranything.domain.delivery.event.event.sse.OrderDeliveryStatusSsePublisher;
 import com.deliveranything.domain.delivery.repository.DeliveryRepository;
 import com.deliveranything.domain.delivery.service.DeliveryService;
 import com.deliveranything.domain.notification.service.NotificationService;
@@ -31,6 +32,7 @@ public class OrderDeliveryStatusRedisSubscriber implements MessageListener {
   private final DeliveryRepository deliveryRepository;
   private final RiderProfileService riderProfileService;
   private final DeliveryService deliveryService;
+  private final OrderDeliveryStatusSsePublisher orderDeliveryStatusSsePublisher;
 
   @PostConstruct
   public void subscribe() {
@@ -73,18 +75,18 @@ public class OrderDeliveryStatusRedisSubscriber implements MessageListener {
   // 알림 전송
   private void sendNotifications(OrderStatusUpdateEvent event) {
     // 1) 라이더 본인에게 전송
-    notificationService.sendToAll(event.riderId(), "ORDER_STATUS", event);
+    orderDeliveryStatusSsePublisher.publish(event.riderId(), event);
 
     // 2) 관련 주문자에게 전송
     Long customerId = getCustomerIdByOrderId(event.orderId());
     if (customerId != null) {
-      notificationService.sendToAll(customerId, "ORDER_STATUS", event);
+      orderDeliveryStatusSsePublisher.publish(customerId, event);
     }
 
     // 3) 관련 상점에게 전송
-    Long storeId = getStoreIdByOrderId(event.orderId());
+    Long sellerId = getStoreIdByOrderId(event.orderId());
     if (storeId != null) {
-      notificationService.sendToAll(storeId, "ORDER_STATUS", event);
+      orderDeliveryStatusSsePublisher.publish(sellerId, event);
     }
   }
 
@@ -94,6 +96,6 @@ public class OrderDeliveryStatusRedisSubscriber implements MessageListener {
   }
 
   private Long getStoreIdByOrderId(String orderId) { /* ... */
-    return orderService.getStoreIdByOrderId(Long.parseLong(orderId));
+    return orderService.getSellerIdByOrderId(Long.parseLong(orderId));
   }
 }

@@ -197,7 +197,7 @@ public class OrderService {
     return getOrderById(orderId).getCustomer().getId();
   }
 
-  public Long getStoreIdByOrderId(Long orderId) {
-    return getOrderById(orderId).getStore().getId();
+  public Long getSellerIdByOrderId(Long orderId) {
+    return getOrderById(orderId).getStore().getSellerProfileId();
   }
 }
