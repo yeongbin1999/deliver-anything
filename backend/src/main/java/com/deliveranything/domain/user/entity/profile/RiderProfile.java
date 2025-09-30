@@ -52,10 +52,14 @@ public class RiderProfile extends BaseProfile {
   @Column(name = "bank_account_holder_name", columnDefinition = "VARCHAR(50)")
   private String bankAccountHolderName;
 
+  @Column(name = "rider_phone_number", columnDefinition = "VARCHAR(20)")
+  private String riderPhoneNumber;
+
   @Builder
   public RiderProfile(Profile profile, String nickname, String profileImageUrl,
       RiderToggleStatus toggleStatus, String area, String licenseNumber,
-      String bankName, String bankAccountNumber, String bankAccountHolderName) {
+      String bankName, String bankAccountNumber, String bankAccountHolderName,
+      String riderPhoneNumber) {
 
     // 부모 클래스(BaseProfile)의 생성자 호출 (공통 필드 초기화)
     super(nickname, profileImageUrl);
@@ -67,6 +71,7 @@ public class RiderProfile extends BaseProfile {
     this.bankName = bankName;
     this.bankAccountNumber = bankAccountNumber;
     this.bankAccountHolderName = bankAccountHolderName;
+    this.riderPhoneNumber = riderPhoneNumber;
   }
 
   // 비즈니스 메서드

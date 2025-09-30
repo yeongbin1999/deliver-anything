@@ -29,10 +29,15 @@ public class CustomerProfile extends BaseProfile {
   @Column(name = "default_address_id")
   private Long defaultAddressId;
 
+  @Column(name = "customer_phone_number", columnDefinition = "VARCHAR(20)")
+  private String customerPhoneNumber;
+
   @Builder
-  public CustomerProfile(Profile profile, String nickname, String profileImageUrl) {
+  public CustomerProfile(Profile profile, String nickname, String profileImageUrl
+      , String customerPhoneNumber) {
     super(nickname, profileImageUrl);
     this.profile = profile;
+    this.customerPhoneNumber = customerPhoneNumber;
   }
 
   // 비즈니스 메서드
