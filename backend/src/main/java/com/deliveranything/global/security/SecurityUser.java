@@ -16,13 +16,12 @@ public class SecurityUser extends User {
 
   public SecurityUser(
       Long id,
-      String username,
-      String password,
       String name,
+      String password,
       Profile currentActiveProfile,
       Collection<? extends GrantedAuthority> authorities
   ) {
-    super(username, password, authorities);
+    super(name, password, authorities);
     this.id = id;
     this.name = name;
     this.currentActiveProfile = currentActiveProfile;
