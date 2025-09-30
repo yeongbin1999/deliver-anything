@@ -33,6 +33,6 @@ public class StockController {
       @PathVariable Long productId,
       @Valid @RequestBody StockUpdateRequest request
   ) {
-    return ResponseEntity.ok(ApiResponse.success(stockService.updateProductStock(productId, request)));
+    return ResponseEntity.ok(ApiResponse.success(stockService.updateStockByAdmin(productId, request.stockChange())));
   }
 }

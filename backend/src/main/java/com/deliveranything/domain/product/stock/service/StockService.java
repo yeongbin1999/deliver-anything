@@ -1,11 +1,11 @@
 package com.deliveranything.domain.product.stock.service;
 
 import com.deliveranything.domain.product.stock.dto.StockResponse;
-import com.deliveranything.domain.product.stock.dto.StockUpdateRequest;
 import com.deliveranything.domain.product.stock.entity.Stock;
 import com.deliveranything.domain.product.stock.repository.StockRepository;
 import com.deliveranything.global.exception.CustomException;
 import com.deliveranything.global.exception.ErrorCode;
+import jakarta.persistence.OptimisticLockException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,7 +14,10 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class StockService {
 
+  private final StockTransactionalService stockTransactionalService;
   private final StockRepository stockRepository;
+
+  private static final int MAX_RETRIES = 3;
 
   @Transactional(readOnly = true)
   public StockResponse getProductStock(Long productId) {
@@ -23,13 +26,31 @@ public class StockService {
     return StockResponse.from(stock);
   }
 
-  @Transactional
-  public StockResponse updateProductStock(Long productId, StockUpdateRequest request) {
-    Stock stock = stockRepository.findByProductId(productId)
-        .orElseThrow(() -> new CustomException(ErrorCode.PRODUCT_NOT_FOUND));
+  // 주문용: 증감
+  public StockResponse changeStockByOrder(Long productId, int change) {
+    int retries = 0;
+    while (true) {
+      try {
+        return stockTransactionalService.changeStockTransactional(productId, change);
+      } catch (OptimisticLockException e) {
+        if (++retries >= MAX_RETRIES) {
+          throw new CustomException(ErrorCode.STOCK_CHANGE_CONFLICT);
+        }
+      }
+    }
+  }
 
-    stock.setQuantity(request.stockChange());
-
-    return StockResponse.from(stock);
+  // 관리자용: 직접 세팅
+  public StockResponse updateStockByAdmin(Long productId, int newQuantity) {
+    int retries = 0;
+    while (true) {
+      try {
+        return stockTransactionalService.setStockTransactional(productId, newQuantity);
+      } catch (OptimisticLockException e) {
+        if (++retries >= MAX_RETRIES) {
+          throw new CustomException(ErrorCode.STOCK_CHANGE_CONFLICT);
+        }
+      }
+    }
   }
 }

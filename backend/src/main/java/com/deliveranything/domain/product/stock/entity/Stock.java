@@ -2,6 +2,8 @@ package com.deliveranything.domain.product.stock.entity;
 
 import com.deliveranything.domain.product.product.entity.Product;
 import com.deliveranything.global.entity.BaseEntity;
+import com.deliveranything.global.exception.CustomException;
+import com.deliveranything.global.exception.ErrorCode;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -12,6 +14,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import jakarta.persistence.Version;
 
 @Entity
 @Getter
@@ -27,21 +30,26 @@ public class Stock extends BaseEntity {
   @JoinColumn(name = "product_id", nullable = false)
   private Product product;
 
+  @Version
+  private Integer version;
+
+  // 환불시 재고 증가
   public void increaseQuantity(int amount) {
-    if (amount < 0) {
-      throw new IllegalArgumentException("음수로 증가 시킬 수 없습니다.");
-    }
+    if (amount < 0) throw new CustomException(ErrorCode.STOCK_CHANGE_INVALID);
     this.quantity += amount;
   }
 
+  // 주문시 재고 감소
   public void decreaseQuantity(int amount) {
-    if (amount < 0) {
-      throw new IllegalArgumentException("음수로 감소 시킬 수 없습니다.");
-    }
-    if (this.quantity < amount) {
-      throw new IllegalArgumentException("재고 수량이 부족합니다.");
-    }
+    if (amount < 0) throw new CustomException(ErrorCode.STOCK_CHANGE_INVALID);
+    if (this.quantity < amount) throw new IllegalArgumentException("재고가 부족합니다.");
     this.quantity -= amount;
+  }
+
+  // 관리자용 재고 직접 세팅
+  public void setQuantity(int newQuantity) {
+    if (newQuantity < 0) throw new CustomException(ErrorCode.STOCK_CHANGE_INVALID);
+    this.quantity = newQuantity;
   }
 
   public Stock(Product product, Integer quantity) {
