@@ -30,7 +30,7 @@ public class StoreSearchService {
               doc.getId(),
               doc.getName(),
               doc.getRoadAddress(),
-              doc.isOpenNow(),
+              doc.getStatus(),
               doc.getImageUrl(),
               doc.getCategoryName(),
               distanceKm,

@@ -1,6 +1,7 @@
 package com.deliveranything.domain.search.store.document;
 
 import com.deliveranything.domain.store.store.entity.Store;
+import com.deliveranything.domain.store.store.enums.StoreStatus;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.Builder;
@@ -42,8 +43,8 @@ public class StoreDocument {
   @Field(type = FieldType.Object, name = "location")
   private GeoPoint location;
 
-  @Field(type = FieldType.Boolean, name = "is_open_now")
-  private boolean isOpenNow;
+  @Field(type = FieldType.Keyword, name = "status")
+  private StoreStatus status;
 
   @Setter
   @Builder.Default
@@ -57,7 +58,7 @@ public class StoreDocument {
         .description(store.getDescription())
         .categoryName(store.getStoreCategory().getName())
         .location(new GeoPoint(store.getLocation().getY(), store.getLocation().getX()))
-        .isOpenNow(store.isOpenNow())
+        .status(store.getStatus())
         .categoryId(store.getStoreCategory().getId())
         .roadAddress(store.getRoadAddr())
         .imageUrl(store.getImageUrl())

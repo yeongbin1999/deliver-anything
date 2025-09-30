@@ -14,6 +14,8 @@ import com.deliveranything.domain.store.store.event.StoreDeletedEvent;
 import com.deliveranything.domain.store.store.event.StoreSavedEvent;
 import com.deliveranything.domain.store.store.repository.StoreRepository;
 import com.deliveranything.global.common.CursorPageResponse;
+import com.deliveranything.global.exception.CustomException;
+import com.deliveranything.global.exception.ErrorCode;
 import com.deliveranything.global.util.PointUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -41,10 +43,11 @@ public class StoreService {
         .description(request.description())
         .roadAddr(request.roadAddr())
         .location(PointUtil.createPoint(request.lat(), request.lng()))
+        .imageUrl(request.imageUrl())
         .build();
     storeRepository.save(store);
 
-    store.updateStatus(StoreStatus.CLOSED);
+    store.updateStatus(StoreStatus.CLOSED); // 생성 시 초기 상태를 CLOSED로 설정
 
     eventPublisher.publishEvent(new StoreSavedEvent(store.getId()));
 
@@ -62,7 +65,7 @@ public class StoreService {
 
     store.update(storeCategory, request.name(), request.description(), request.roadAddr(),
         request.lat() != null && request.lng() != null ? PointUtil.createPoint(request.lat(),
-            request.lng()) : null);
+            request.lng()) : null, request.imageUrl());
 
     eventPublisher.publishEvent(new StoreSavedEvent(store.getId()));
 
@@ -79,6 +82,21 @@ public class StoreService {
   @Transactional(readOnly = true)
   public StoreResponse getStore(Long storeId) {
     Store store = storeRepository.getById(storeId);
+    return StoreResponse.from(store);
+  }
+
+  @Transactional
+  public StoreResponse toggleStoreStatus(Long storeId) {
+    Store store = storeRepository.getById(storeId);
+
+    if (store.getStatus() == StoreStatus.DRAFT) {
+      throw new CustomException(ErrorCode.STORE_NOT_READY_FOR_OPENING);
+    }
+
+    StoreStatus newStatus = (store.getStatus() == StoreStatus.OPEN) ? StoreStatus.CLOSED : StoreStatus.OPEN;
+    store.updateStatus(newStatus);
+
+    eventPublisher.publishEvent(new StoreSavedEvent(store.getId()));
     return StoreResponse.from(store);
   }
 
