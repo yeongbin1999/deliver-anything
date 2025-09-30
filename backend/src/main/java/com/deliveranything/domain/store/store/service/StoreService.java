@@ -11,8 +11,6 @@ import com.deliveranything.domain.store.store.dto.StoreUpdateRequest;
 import com.deliveranything.domain.store.store.entity.Store;
 import com.deliveranything.domain.store.store.repository.StoreRepository;
 import com.deliveranything.global.common.CursorPageResponse;
-import com.deliveranything.global.exception.CustomException;
-import com.deliveranything.global.exception.ErrorCode;
 import com.deliveranything.global.util.PointUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -29,7 +27,7 @@ public class StoreService {
 
   @Transactional
   public Long createStore(StoreCreateRequest request) {
-    StoreCategory storeCategory = storeCategoryService.findById(request.storeCategoryId());
+    StoreCategory storeCategory = storeCategoryService.getById(request.storeCategoryId());
 
     Store store = Store.builder()
 //        .sellerProfileId()
@@ -44,12 +42,11 @@ public class StoreService {
 
   @Transactional
   public Long updateStore(Long storeId, StoreUpdateRequest request) {
-    Store store = storeRepository.findById(storeId)
-        .orElseThrow(() -> new CustomException(ErrorCode.STORE_NOT_FOUND));
+    Store store = storeRepository.getById(storeId);
 
     StoreCategory storeCategory = null;
     if (request.storeCategoryId() != null) {
-      storeCategory = storeCategoryService.findById(request.storeCategoryId());
+      storeCategory = storeCategoryService.getById(request.storeCategoryId());
     }
 
     store.update(storeCategory, request.name(), request.description(), request.roadAddr(),
@@ -66,14 +63,13 @@ public class StoreService {
 
   @Transactional(readOnly = true)
   public StoreResponse getStore(Long storeId) {
-    Store store = findById(storeId);
+    Store store = storeRepository.getById(storeId);
     return StoreResponse.from(store);
   }
 
   @Transactional(readOnly = true)
-  public Store findById(Long storeId) {
-    return storeRepository.findById(storeId)
-        .orElseThrow(() -> new CustomException(ErrorCode.STORE_NOT_FOUND));
+  public Store getById(Long storeId) {
+    return storeRepository.getById(storeId);
   }
 
   @Transactional(readOnly = true)

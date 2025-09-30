@@ -3,8 +3,6 @@ package com.deliveranything.domain.store.category.service;
 import com.deliveranything.domain.store.category.dto.StoreCategoryResponse;
 import com.deliveranything.domain.store.category.entity.StoreCategory;
 import com.deliveranything.domain.store.category.repository.StoreCategoryRepository;
-import com.deliveranything.global.exception.CustomException;
-import com.deliveranything.global.exception.ErrorCode;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -21,8 +19,7 @@ public class StoreCategoryService {
         .toList();
   }
 
-  public StoreCategory findById(Long categoryId) {
-    return storeCategoryRepository.findById(categoryId)
-        .orElseThrow(() -> new CustomException(ErrorCode.STORE_CATEGORY_NOT_FOUND));
+  public StoreCategory getById(Long categoryId) {
+    return storeCategoryRepository.getById(categoryId);
   }
 }

@@ -9,8 +9,6 @@ import com.deliveranything.domain.product.product.entity.Product;
 import com.deliveranything.domain.product.product.repository.ProductRepository;
 import com.deliveranything.domain.store.store.entity.Store;
 import com.deliveranything.domain.store.store.service.StoreService;
-import com.deliveranything.global.exception.CustomException;
-import com.deliveranything.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
@@ -26,7 +24,7 @@ public class ProductService {
 
   @Transactional
   public ProductResponse createProduct(Long storeId, ProductCreateRequest request) {
-    Store store = storeService.findById(storeId);
+    Store store = storeService.getById(storeId);
 
     Product product = Product.builder()
         .store(store)
@@ -45,13 +43,13 @@ public class ProductService {
 
   @Transactional
   public void deleteProduct(Long productId) {
-    Product product = findById(productId);
+    Product product = productRepository.getById(productId);
     productRepository.delete(product);
   }
 
   @Transactional
   public ProductResponse updateProduct(Long productId, ProductUpdateRequest request) {
-    Product product = findById(productId);
+    Product product = productRepository.getById(productId);
 
     String oldName = product.getName();
     String oldDescription = product.getDescription();
@@ -67,19 +65,13 @@ public class ProductService {
 
   @Transactional(readOnly = true)
   public ProductDetailResponse getProduct(Long productId) {
-    Product product = findById(productId);
+    Product product = productRepository.getById(productId);
     return ProductDetailResponse.from(product);
   }
 
   @Transactional(readOnly = true)
-  public Product findById(Long productId) {
-    return productRepository.findById(productId)
-        .orElseThrow(() -> new CustomException(ErrorCode.PRODUCT_NOT_FOUND));
-  }
-
-  @Transactional(readOnly = true)
   public Slice<ProductResponse> searchProducts(Long storeId, ProductSearchRequest request) {
-    storeService.findById(storeId);
+    storeService.getById(storeId);
 
     Slice<Product> results = productRepository.search(storeId, request);
 
