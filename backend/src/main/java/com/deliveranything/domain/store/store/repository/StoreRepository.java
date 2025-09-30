@@ -1,8 +1,10 @@
 package com.deliveranything.domain.store.store.repository;
 
 import com.deliveranything.domain.store.store.entity.Store;
+import com.deliveranything.domain.user.entity.profile.SellerProfile;
 import com.deliveranything.global.exception.CustomException;
 import com.deliveranything.global.exception.ErrorCode;
+import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface StoreRepository extends JpaRepository<Store, Long> {
@@ -13,4 +15,6 @@ public interface StoreRepository extends JpaRepository<Store, Long> {
     return findById(storeId)
         .orElseThrow(() -> new CustomException(ErrorCode.STORE_NOT_FOUND));
   }
+
+  Optional<SellerProfile> findSellerProfileById(Long sellerProfileId);
 }
