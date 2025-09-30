@@ -85,7 +85,7 @@ public class OrderDeliveryStatusRedisSubscriber implements MessageListener {
 
     // 3) 관련 상점에게 전송
     Long sellerId = getStoreIdByOrderId(event.orderId());
-    if (storeId != null) {
+    if (sellerId != null) {
       orderDeliveryStatusSsePublisher.publish(sellerId, event);
     }
   }
