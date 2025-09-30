@@ -47,7 +47,7 @@ public class StoreService {
         .build();
     storeRepository.save(store);
 
-    store.updateStatus(StoreStatus.CLOSED); // 생성 시 초기 상태를 CLOSED로 설정
+    store.updateStatus(StoreStatus.CLOSED);
 
     eventPublisher.publishEvent(new StoreSavedEvent(store.getId()));
 
@@ -56,7 +56,7 @@ public class StoreService {
 
   @Transactional
   public StoreResponse updateStore(Long storeId, StoreUpdateRequest request) {
-    Store store = storeRepository.getById(storeId);
+    Store store = this.getById(storeId);
 
     StoreCategory storeCategory = null;
     if (request.storeCategoryId() != null) {
@@ -74,20 +74,20 @@ public class StoreService {
 
   @Transactional
   public void deleteStore(Long storeId) {
-    Store store = storeRepository.getById(storeId);
+    Store store = this.getById(storeId);
     storeRepository.delete(store);
     eventPublisher.publishEvent(new StoreDeletedEvent(store.getId()));
   }
 
   @Transactional(readOnly = true)
   public StoreResponse getStore(Long storeId) {
-    Store store = storeRepository.getById(storeId);
+    Store store = this.getById(storeId);
     return StoreResponse.from(store);
   }
 
   @Transactional
   public StoreResponse toggleStoreStatus(Long storeId) {
-    Store store = storeRepository.getById(storeId);
+    Store store = this.getById(storeId);
 
     if (store.getStatus() == StoreStatus.DRAFT) {
       throw new CustomException(ErrorCode.STORE_NOT_READY_FOR_OPENING);
