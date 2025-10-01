@@ -298,8 +298,8 @@ public class ReviewService {
   /* 리뷰 권한 확인 (작성자 확인) */
   @Transactional(readOnly = true)
   public boolean verifyReviewAuth(Review review, Long userId) {
-    Profile profile = userService.getProfileByUserAndType(userId, ProfileType.CUSTOMER);
-    CustomerProfile customerProfile = customerProfileService.getProfileByProfileId(profile.getId());
+    CustomerProfile customerProfile = customerProfileService.getProfile(
+        userId); // daran2 - 이렇게 userId로 프로필 조회할 수 있도록 변경했습니당
 
     return review.getCustomerProfile().getId().equals(customerProfile.getId());
   }
