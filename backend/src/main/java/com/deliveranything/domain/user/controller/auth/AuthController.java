@@ -78,8 +78,6 @@ public class AuthController {
         .userId(user.getId())
         .email(user.getEmail())
         .name(user.getName())
-        .accessToken(accessToken)
-        .refreshToken(refreshToken.getTokenValue())
         .currentActiveProfileType(user.getCurrentActiveProfileType())
         .currentActiveProfileId(user.getCurrentActiveProfileId())
         .isOnboardingCompleted(user.isOnboardingCompleted())

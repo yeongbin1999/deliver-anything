@@ -1,5 +1,6 @@
 package com.deliveranything.domain.user.service;
 
+import com.deliveranything.domain.user.dto.profile.SwitchProfileResponse;
 import com.deliveranything.domain.user.entity.User;
 import com.deliveranything.domain.user.entity.profile.CustomerProfile;
 import com.deliveranything.domain.user.entity.profile.Profile;
@@ -417,5 +418,75 @@ public class UserService {
   public List<Profile> getActiveProfilesByUser(Long userId) {
     User user = findById(userId);
     return profileRepository.findActiveProfilesByUser(user);
+  }
+
+  /**
+   * 프로필 전환 + 토큰 재발급
+   */
+
+  @Transactional
+  public SwitchProfileResponse switchProfileWithTokenReissue(
+      Long userId,
+      ProfileType targetProfileType) {
+
+    User user = findById(userId);
+
+    if (!user.isOnboardingCompleted()) {
+      log.warn("온보딩이 완료되지 않은 사용자입니다: userId={}", userId);
+      throw new CustomException(ErrorCode.USER_NOT_FOUND);
+    }
+
+    // 현재 프로필 정보 저장
+    ProfileType previousProfileType = user.getCurrentActiveProfileType();
+    Long previousProfileId = user.getCurrentActiveProfileId();
+
+    // 타겟 프로필 조회
+    Profile targetProfile = profileRepository
+        .findByUserIdAndType(userId, targetProfileType)
+        .orElseThrow(() -> {
+          log.warn("해당 프로필을 찾을 수 없습니다: userId={}, targetProfile={}",
+              userId, targetProfileType);
+          return new CustomException(ErrorCode.USER_NOT_FOUND);
+        });
+
+    // 이미 활성화된 프로필인 경우
+    if (user.getCurrentActiveProfileType() == targetProfileType) {
+      log.info("이미 활성화된 프로필입니다: userId={}, targetProfile={}",
+          userId, targetProfileType);
+
+      // 그래도 토큰은 재발급
+      String newAccessToken = genAccessToken(user);
+
+      return SwitchProfileResponse.builder()
+          .userId(userId)
+          .previousProfileType(previousProfileType)
+          .previousProfileId(previousProfileId)
+          .currentProfileType(targetProfileType)
+          .currentProfileId(targetProfile.getId())
+          .accessToken(newAccessToken)
+          .build();
+    }
+
+    // 프로필 전환 시도
+    try {
+      user.switchProfile(targetProfile);
+      userRepository.save(user);  // 변경사항 저장
+    } catch (IllegalStateException e) {
+      log.warn("프로필 전환 실패: userId={}, targetProfile={}, error={}",
+          userId, targetProfileType, e.getMessage());
+      throw new CustomException(ErrorCode.USER_NOT_FOUND);
+    }
+    // 전환된 user로 새 토큰 생성
+    String newAccessToken = genAccessToken(user);
+
+    // 내부 DTO로 반환 (토큰 포함)
+    return SwitchProfileResponse.builder()
+        .userId(userId)
+        .previousProfileType(previousProfileType)
+        .previousProfileId(previousProfileId)
+        .currentProfileType(targetProfileType)
+        .currentProfileId(targetProfile.getId())
+        .accessToken(newAccessToken)        // Controller로 전달
+        .build();
   }
 }
