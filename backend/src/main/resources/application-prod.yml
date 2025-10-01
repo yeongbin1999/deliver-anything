@@ -16,7 +16,7 @@ spring:
       password: ${REDIS_PASSWORD}
 
   elasticsearch:
-    uris: ${ELASTICSEARCH_URIS}
+    uris: http://${ELASTICSEARCH_HOST}:${ELASTICSEARCH_PORT}
 
 logging:
   level:
