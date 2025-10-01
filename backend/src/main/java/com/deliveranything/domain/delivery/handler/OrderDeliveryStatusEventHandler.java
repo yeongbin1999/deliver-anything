@@ -13,7 +13,7 @@ public class OrderDeliveryStatusEventHandler {
 
   private final OrderDeliveryStatusRedisPublisher orderDeliveryStatusRedisPublisher; // Kafka → Redis 변경
 
-  // 주문 도메인에서 발행한 이벤트 수신
+  // 배달 수락-거절 이벤트 발행
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
   public void handleOrderDeliveryStatus(OrderStatusUpdateEvent orderEvent) {
     orderDeliveryStatusRedisPublisher.publish(orderEvent);
