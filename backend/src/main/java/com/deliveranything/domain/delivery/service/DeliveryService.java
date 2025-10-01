@@ -126,22 +126,28 @@ public class DeliveryService {
   }
 
   // 진행 중인 배달 정보 조회
-  public CurrentDeliveringResponseDto getCurrentDeliveringInfo(Long riderProfileId) {
-    Delivery currentDelivery = getInProgressDeliveryByRiderId(riderProfileId);
+  public List<CurrentDeliveringResponseDto> getCurrentDeliveringInfo(Long riderProfileId) {
+    List<Delivery> currentDeliveries = deliveryRepository.findByRiderProfileIdAndStatus(
+        riderProfileId, DeliveryStatus.IN_PROGRESS);
 
-    Order currentOrder = orderService.getCurrentOrderByDeliveryId(currentDelivery.getId());
-
-    return CurrentDeliveringResponseDto.builder()
-        .orderId(currentDelivery.getId())
-        .storeName(currentDelivery.getStore().getName())
-        .customerAddress(currentOrder.getAddress())
-        .remainingTime(getRemainingTime(currentDelivery))
-        .build();
+    return currentDeliveries.stream()
+        .map(delivery -> {
+          Order currentOrder = orderService.getCurrentOrderByDeliveryId(delivery.getId());
+          return CurrentDeliveringResponseDto.builder()
+              .orderId(delivery.getId())
+              .deliveryId(delivery.getId())
+              .storeName(delivery.getStore().getName())
+              .customerAddress(currentOrder.getAddress())
+              .remainingTime(getRemainingTime(delivery))
+              .build();
+        })
+        .toList();
   }
 
   // 진행 중인 배달 정보 상세 조회
-  public CurrentDeliveringDetailsDto getCurrentDeliveringDetails(Long riderProfileId) {
-    Delivery currentDelivery = getInProgressDeliveryByRiderId(riderProfileId);
+  public CurrentDeliveringDetailsDto getCurrentDeliveringDetails(Long deliveryId) {
+    Delivery currentDelivery = deliveryRepository.findById(deliveryId)
+        .orElseThrow(() -> new CustomException(ErrorCode.DELIVERY_NOT_FOUND));
 
     OrderResponse currentOrder = orderService.getOrderByDeliveryId(currentDelivery.getId());
     Store currentStore = currentDelivery.getStore();
