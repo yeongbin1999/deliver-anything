@@ -4,6 +4,9 @@ import com.deliveranything.domain.product.stock.dto.StockResponse;
 import com.deliveranything.domain.product.stock.dto.StockUpdateRequest;
 import com.deliveranything.domain.product.stock.service.StockService;
 import com.deliveranything.global.common.ApiResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+@Tag(name = "상품 재고 관련 API", description = "상품 재고 관련 API입니다.")
 @RestController
 @RequestMapping("/api/v1")
 @RequiredArgsConstructor
@@ -21,16 +25,18 @@ public class StockController {
 
   private final StockService stockService;
 
+  @Operation(summary = "상품 재고 조회", description = "특정 상품의 재고 정보를 조회합니다.")
   @GetMapping("/products/{productId}/stock")
   public ResponseEntity<ApiResponse<StockResponse>> getProductStock(
-      @PathVariable Long productId
+      @Parameter(description = "재고를 조회할 상품 ID") @PathVariable Long productId
   ) {
     return ResponseEntity.ok(ApiResponse.success(stockService.getProductStock(productId)));
   }
 
+  @Operation(summary = "상품 재고 수정", description = "특정 상품의 재고를 수정합니다.")
   @PutMapping("/products/{productId}/stock")
   public ResponseEntity<ApiResponse<StockResponse>> updateProductStock(
-      @PathVariable Long productId,
+      @Parameter(description = "재고를 수정할 상품 ID") @PathVariable Long productId,
       @Valid @RequestBody StockUpdateRequest request
   ) {
     return ResponseEntity.ok(ApiResponse.success(stockService.updateStockByAdmin(productId, request.stockChange())));
