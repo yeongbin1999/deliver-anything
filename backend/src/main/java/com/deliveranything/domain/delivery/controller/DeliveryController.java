@@ -93,7 +93,7 @@ public class DeliveryController {
       @PathVariable Long deliveryId,
       @Valid @RequestParam DeliveryStatusRequestDto next
   ) {
-    deliveryService.changeStatus(deliveryId, DeliveryStatus.valueOf(next.status()));
+    deliveryService.changeDeliveryStatus(deliveryId, DeliveryStatus.valueOf(next.status()));
     return ResponseEntity.ok().build();
   }
 
@@ -146,12 +146,16 @@ public class DeliveryController {
 
   @GetMapping("/total")
   @Operation(summary = "총 배달 내역 요약 조회 + 배달 완료 리스트 조회",
-      description = "라이더의 총 배달 내역 요약과 배달 완료 리스트를 조회합니다.")
+      description = "라이더의 총 배달 내역 요약과 배달 완료 리스트를 조회합니다. cursor 기반 페이징을 지원합니다.")
   public ResponseEntity<ApiResponse<DeliveredSummaryResponseDto>> getTotalDeliveries(
-      @AuthenticationPrincipal SecurityUser user
+      @AuthenticationPrincipal SecurityUser user,
+      @RequestParam(required = false) String cursor,
+      @RequestParam(required = false, defaultValue = "10") Integer size
   ) {
     DeliveredSummaryResponseDto response = deliveryService.getDeliveredSummary(
-        user.getCurrentActiveProfileIdSafe()
+        user.getCurrentActiveProfileIdSafe(),
+        cursor,
+        size
     );
     return ResponseEntity.ok(ApiResponse.success(response));
   }
