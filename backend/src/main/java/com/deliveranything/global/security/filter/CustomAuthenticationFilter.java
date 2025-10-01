@@ -5,7 +5,11 @@ import com.deliveranything.domain.auth.repository.RefreshTokenRepository;
 import com.deliveranything.domain.auth.service.AuthTokenService;
 import com.deliveranything.domain.user.profile.entity.Profile;
 import com.deliveranything.domain.user.profile.enums.ProfileType;
+<<<<<<< HEAD
 import com.deliveranything.domain.user.profile.repository.ProfileRepository;
+=======
+import com.deliveranything.domain.user.profile.rerpository.ProfileRepository;
+>>>>>>> 2511efe (refactor(be) : 기존 user 패키지를 auth 와 user/user , user/profile 로 분리)
 import com.deliveranything.domain.user.user.entity.User;
 import com.deliveranything.domain.user.user.repository.UserRepository;
 import com.deliveranything.global.common.ApiResponse;

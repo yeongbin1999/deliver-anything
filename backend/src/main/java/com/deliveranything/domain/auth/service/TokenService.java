@@ -1,5 +1,6 @@
 package com.deliveranything.domain.auth.service;
 
+<<<<<<< HEAD
 import com.deliveranything.domain.auth.entity.RefreshToken;
 import com.deliveranything.domain.auth.repository.RefreshTokenRepository;
 import com.deliveranything.domain.user.user.entity.User;
@@ -76,3 +77,8 @@ public class TokenService {
     log.info("모든 RefreshToken 무효화: userId={}", userId);
   }
 }
+=======
+public class TokenService {
+
+}
+>>>>>>> 2511efe (refactor(be) : 기존 user 패키지를 auth 와 user/user , user/profile 로 분리)
