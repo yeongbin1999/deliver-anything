@@ -9,8 +9,6 @@ public record LoginResponse(
     Long userId,
     String email,
     String name,
-    String accessToken,
-    String refreshToken,
     ProfileType currentActiveProfileType,
     Long currentActiveProfileId,
     boolean isOnboardingCompleted,
