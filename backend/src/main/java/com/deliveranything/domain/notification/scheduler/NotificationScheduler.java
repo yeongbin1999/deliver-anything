@@ -5,6 +5,7 @@ import com.deliveranything.domain.user.entity.profile.Profile;
 import com.deliveranything.domain.user.enums.ProfileType;
 import com.deliveranything.domain.user.repository.ProfileRepository;
 import com.deliveranything.domain.user.repository.UserRepository;
+import com.deliveranything.global.infra.SmsService;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
