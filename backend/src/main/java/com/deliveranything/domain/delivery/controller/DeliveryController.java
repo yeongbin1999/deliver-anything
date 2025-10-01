@@ -7,7 +7,6 @@ import com.deliveranything.domain.delivery.dto.request.RiderToggleStatusRequestD
 import com.deliveranything.domain.delivery.dto.response.CurrentDeliveringDetailsDto;
 import com.deliveranything.domain.delivery.dto.response.CurrentDeliveringResponseDto;
 import com.deliveranything.domain.delivery.dto.response.DeliveredSummaryResponseDto;
-import com.deliveranything.domain.delivery.dto.response.DeliverySettlementResponseDto;
 import com.deliveranything.domain.delivery.dto.response.TodayDeliveringResponseDto;
 import com.deliveranything.domain.delivery.enums.DeliveryStatus;
 import com.deliveranything.domain.delivery.service.DeliveryService;
@@ -147,36 +146,14 @@ public class DeliveryController {
 
   @GetMapping("/total")
   @Operation(summary = "총 배달 내역 요약 조회 + 배달 완료 리스트 조회",
-      description = "라이더의 총 배달 내역 요약과 배달 완료 리스트를 조회합니다. cursor 기반 페이징을 지원합니다."
-          + " filter: LATEST(최신순), OLDEST(오래된순)")
+      description = "라이더의 총 배달 내역 요약과 배달 완료 리스트를 조회합니다. cursor 기반 페이징을 지원합니다.")
   public ResponseEntity<ApiResponse<DeliveredSummaryResponseDto>> getTotalDeliveries(
       @AuthenticationPrincipal SecurityUser user,
-      @RequestParam(required = false, defaultValue = "LATEST") String filter,
       @RequestParam(required = false) String cursor,
       @RequestParam(required = false, defaultValue = "10") Integer size
   ) {
     DeliveredSummaryResponseDto response = deliveryService.getDeliveredSummary(
         user.getCurrentActiveProfileIdSafe(),
-        filter,
-        cursor,
-        size
-    );
-    return ResponseEntity.ok(ApiResponse.success(response));
-  }
-
-  @GetMapping("/settlements")
-  @Operation(summary = "배달 완료된 건의 정산 금액 조회",
-      description = "라이더의 배달 완료된 건의 총/이번주/이번달 정산 금액을 조회합니다."
-          + " filter: WEEK(이번주), MONTH(이번달)")
-  public ResponseEntity<ApiResponse<DeliverySettlementResponseDto>> getSettlementAmount(
-      @AuthenticationPrincipal SecurityUser user,
-      @RequestParam(required = false, defaultValue = "WEEK") String filter,
-      @RequestParam(required = false) String cursor,
-      @RequestParam(required = false, defaultValue = "10") Integer size
-  ) {
-    DeliverySettlementResponseDto response = deliveryService.getDeliverySettlementInfo(
-        user.getCurrentActiveProfileIdSafe(),
-        filter,
         cursor,
         size
     );
