@@ -4,13 +4,8 @@ import com.deliveranything.domain.user.profile.entity.Profile;
 import com.deliveranything.domain.user.profile.entity.RiderProfile;
 import com.deliveranything.domain.user.profile.enums.ProfileType;
 import com.deliveranything.domain.user.profile.enums.RiderToggleStatus;
-<<<<<<< HEAD
 import com.deliveranything.domain.user.profile.repository.ProfileRepository;
 import com.deliveranything.domain.user.profile.repository.RiderProfileRepository;
-=======
-import com.deliveranything.domain.user.profile.rerpository.ProfileRepository;
-import com.deliveranything.domain.user.profile.rerpository.RiderProfileRepository;
->>>>>>> 2511efe (refactor(be) : 기존 user 패키지를 auth 와 user/user , user/profile 로 분리)
 import com.deliveranything.domain.user.user.entity.User;
 import com.deliveranything.domain.user.user.repository.UserRepository;
 import com.deliveranything.global.exception.CustomException;
