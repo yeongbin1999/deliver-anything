@@ -6,7 +6,7 @@ import com.deliveranything.domain.review.dto.ReviewLikeResponse;
 import com.deliveranything.domain.review.dto.ReviewResponse;
 import com.deliveranything.domain.review.dto.ReviewUpdateRequest;
 import com.deliveranything.domain.review.service.ReviewService;
-import com.deliveranything.domain.user.enums.ProfileType;
+import com.deliveranything.domain.user.profile.enums.ProfileType;
 import com.deliveranything.global.common.ApiResponse;
 import com.deliveranything.global.exception.CustomException;
 import com.deliveranything.global.exception.ErrorCode;

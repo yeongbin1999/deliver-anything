@@ -2,7 +2,7 @@ package com.deliveranything.domain.review.dto;
 
 import com.deliveranything.domain.review.entity.Review;
 import com.deliveranything.domain.review.enums.ReviewTargetType;
-import com.deliveranything.domain.user.entity.profile.CustomerProfile;
+import com.deliveranything.domain.user.profile.entity.CustomerProfile;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
 

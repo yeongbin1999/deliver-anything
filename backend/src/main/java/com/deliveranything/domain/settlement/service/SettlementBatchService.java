@@ -9,7 +9,7 @@ import com.deliveranything.domain.settlement.repository.SettlementBatchRepositor
 import com.deliveranything.domain.settlement.repository.SettlementDetailRepository;
 import com.deliveranything.domain.settlement.service.dto.SettlementSummary;
 import com.deliveranything.domain.settlement.service.dto.TargetInfo;
-import com.deliveranything.domain.user.enums.ProfileType;
+import com.deliveranything.domain.user.profile.enums.ProfileType;
 import com.deliveranything.global.exception.CustomException;
 import com.deliveranything.global.exception.ErrorCode;
 import java.math.BigDecimal;

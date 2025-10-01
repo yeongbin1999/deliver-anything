@@ -1,13 +1,13 @@
 package com.deliveranything.global.security.filter;
 
-import com.deliveranything.domain.user.entity.User;
-import com.deliveranything.domain.user.entity.profile.Profile;
-import com.deliveranything.domain.user.entity.token.RefreshToken;
-import com.deliveranything.domain.user.enums.ProfileType;
-import com.deliveranything.domain.user.repository.ProfileRepository;
-import com.deliveranything.domain.user.repository.RefreshTokenRepository;
-import com.deliveranything.domain.user.repository.UserRepository;
-import com.deliveranything.domain.user.service.AuthTokenService;
+import com.deliveranything.domain.auth.entity.RefreshToken;
+import com.deliveranything.domain.auth.repository.RefreshTokenRepository;
+import com.deliveranything.domain.auth.service.AuthTokenService;
+import com.deliveranything.domain.user.profile.entity.Profile;
+import com.deliveranything.domain.user.profile.enums.ProfileType;
+import com.deliveranything.domain.user.profile.rerpository.ProfileRepository;
+import com.deliveranything.domain.user.user.entity.User;
+import com.deliveranything.domain.user.user.repository.UserRepository;
 import com.deliveranything.global.common.ApiResponse;
 import com.deliveranything.global.exception.CustomException;
 import com.deliveranything.global.exception.ErrorCode;

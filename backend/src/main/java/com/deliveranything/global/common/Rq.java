@@ -1,8 +1,8 @@
 package com.deliveranything.global.common;
 
-import com.deliveranything.domain.user.entity.User;
-import com.deliveranything.domain.user.entity.profile.Profile;
-import com.deliveranything.domain.user.enums.ProfileType;
+import com.deliveranything.domain.user.profile.entity.Profile;
+import com.deliveranything.domain.user.profile.enums.ProfileType;
+import com.deliveranything.domain.user.user.entity.User;
 import com.deliveranything.global.security.auth.SecurityUser;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;

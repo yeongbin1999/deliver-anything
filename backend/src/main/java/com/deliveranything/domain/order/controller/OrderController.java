@@ -7,7 +7,7 @@ import com.deliveranything.domain.order.dto.OrderCreateRequest;
 import com.deliveranything.domain.order.dto.OrderPayRequest;
 import com.deliveranything.domain.order.dto.OrderResponse;
 import com.deliveranything.domain.order.service.OrderService;
-import com.deliveranything.domain.user.enums.ProfileType;
+import com.deliveranything.domain.user.profile.enums.ProfileType;
 import com.deliveranything.global.common.ApiResponse;
 import com.deliveranything.global.common.CursorPageResponse;
 import com.deliveranything.global.exception.CustomException;
