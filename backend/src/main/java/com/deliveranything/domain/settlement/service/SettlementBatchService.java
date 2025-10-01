@@ -13,6 +13,7 @@ import com.deliveranything.domain.user.enums.ProfileType;
 import com.deliveranything.global.exception.CustomException;
 import com.deliveranything.global.exception.ErrorCode;
 import java.math.BigDecimal;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -38,7 +39,7 @@ public class SettlementBatchService {
 
   public SettlementResponse getSettlement(Long settlementId) {
     return SettlementResponse.from(settlementBatchRepository.findById(settlementId)
-        .orElseThrow(() -> new CustomException(ErrorCode.SETTLEMENT_NOT_FOUND)));
+        .orElseThrow(() -> new CustomException(ErrorCode.SETTLEMENT_BATCH_NOT_FOUND)));
   }
 
   // "초 분 시 일 월 요일"
@@ -89,5 +90,25 @@ public class SettlementBatchService {
               && d.getTargetType().equals(targetInfo.targetType()))
           .forEach(detail -> detail.process(savedBatch.getId()));
     });
+  }
+
+  // 이번 주 월요일 ~ 어제까지의 정산 목록
+  public List<SettlementResponse> getRiderWeekendSettlementBatches(Long riderProfileId) {
+    LocalDate today = LocalDate.now();
+    return settlementBatchRepository.findAllByTargetTypeAndTargetIdAndSettlementDateBetween(
+            TargetType.RIDER, riderProfileId, today.with(DayOfWeek.MONDAY), today.minusDays(1))
+        .stream()
+        .map(SettlementResponse::from)
+        .toList();
+  }
+
+  // 이번 달 1일 ~ 어제까지의 정산 목록
+  public List<SettlementResponse> getRiderMonthSettlementBatches(Long riderProfileId) {
+    LocalDate today = LocalDate.now();
+    return settlementBatchRepository.findAllByTargetTypeAndTargetIdAndSettlementDateBetween(
+            TargetType.RIDER, riderProfileId, today.withDayOfMonth(1), today.minusDays(1))
+        .stream()
+        .map(SettlementResponse::from)
+        .toList();
   }
 }
