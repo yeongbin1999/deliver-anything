@@ -1,4 +1,4 @@
-package com.deliveranything.domain.delivery.handler;
+package com.deliveranything.domain.delivery.handler.redis;
 
 import com.deliveranything.domain.delivery.event.dto.RiderNotificationDto;
 import com.deliveranything.domain.delivery.event.event.sse.OrderAssignmentSsePublisher;
@@ -18,7 +18,6 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 // 로드 밸런싱 / 다중 인스턴스 환경 대응하여 Redis Pub/Sub 구축
-// OrderDeliveryEventHandler 는 더 간단한 방법이나 현재 상황에서는 일시 삭제
 public class OrderAssignmentRedisSubscriber implements MessageListener {
 
   private static final String CHANNEL = "order-assignment-events";
