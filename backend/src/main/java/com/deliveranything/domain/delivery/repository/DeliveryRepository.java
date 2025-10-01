@@ -27,12 +27,17 @@ public interface DeliveryRepository extends JpaRepository<Delivery, Long> {
       "AND d.status = 'COMPLETED' AND DATE(d.completedAt) = CURRENT_DATE")
   List<Delivery> findTodayCompletedDeliveriesByRider(@Param("riderProfileId") Long riderProfileId);
 
-  Optional<Delivery> findByRiderProfileIdAndStatus(Long riderProfileId,
-      DeliveryStatus deliveryStatus);
+  // IN_PROGRESS 같은 단일 배달 조회용 (Optional)
+  Optional<Delivery> findFirstByRiderProfileIdAndStatusOrderByStartedAtDesc(
+      Long riderProfileId, DeliveryStatus deliveryStatus
+  );
 
   @Query("SELECT SUM(d.charge) FROM Delivery d WHERE d.riderProfile.id = :riderProfileId " +
       "AND d.status = 'COMPLETED'")
   Long sumTotalDeliveryChargesByRider(Long riderProfileId);
 
   List<Delivery> findByRiderProfileId(Long riderProfileId);
+
+  // 라이더별 상태 조회 (List 반환)
+  List<Delivery> findByRiderProfileIdAndStatus(Long riderProfileId, DeliveryStatus status);
 }

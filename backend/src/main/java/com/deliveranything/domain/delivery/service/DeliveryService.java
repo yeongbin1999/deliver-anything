@@ -127,9 +127,7 @@ public class DeliveryService {
 
   // 진행 중인 배달 정보 조회
   public CurrentDeliveringResponseDto getCurrentDeliveringInfo(Long riderProfileId) {
-    Delivery currentDelivery = deliveryRepository.findByRiderProfileIdAndStatus(
-            riderProfileId, DeliveryStatus.IN_PROGRESS)
-        .orElseThrow(() -> new CustomException(ErrorCode.NO_ACTIVE_DELIVERY));
+    Delivery currentDelivery = getInProgressDeliveryByRiderId(riderProfileId);
 
     Order currentOrder = orderService.getCurrentOrderByDeliveryId(currentDelivery.getId());
 
@@ -143,9 +141,7 @@ public class DeliveryService {
 
   // 진행 중인 배달 정보 상세 조회
   public CurrentDeliveringDetailsDto getCurrentDeliveringDetails(Long riderProfileId) {
-    Delivery currentDelivery = deliveryRepository.findByRiderProfileIdAndStatus(
-            riderProfileId, DeliveryStatus.IN_PROGRESS)
-        .orElseThrow(() -> new CustomException(ErrorCode.NO_ACTIVE_DELIVERY));
+    Delivery currentDelivery = getInProgressDeliveryByRiderId(riderProfileId);
 
     OrderResponse currentOrder = orderService.getOrderByDeliveryId(currentDelivery.getId());
     Store currentStore = currentDelivery.getStore();
@@ -180,7 +176,7 @@ public class DeliveryService {
     RiderProfile riderProfile = riderProfileService.getRiderProfileById(riderProfileId);
 
     List<Delivery> completedDeliveries = deliveryRepository
-        .findByRiderProfileId(riderProfileId);
+        .findByRiderProfileIdAndStatus(riderProfileId, DeliveryStatus.COMPLETED);
 
     // Delivery → DeliveredDetailsDto 변환
     List<DeliveredDetailsDto> deliveredDetails = completedDeliveries.stream()
@@ -204,6 +200,12 @@ public class DeliveryService {
   }
 
   // === 편의 메서드 ===
+
+  public Delivery getInProgressDeliveryByRiderId(Long riderProfileId) {
+    return deliveryRepository.findFirstByRiderProfileIdAndStatusOrderByStartedAtDesc(
+            riderProfileId, DeliveryStatus.IN_PROGRESS)
+        .orElseThrow(() -> new CustomException(ErrorCode.NO_ACTIVE_DELIVERY));
+  }
 
   // 오늘 배달 건 수
   public Long getTodayCompletedCountByRider(Long riderProfileId) {
