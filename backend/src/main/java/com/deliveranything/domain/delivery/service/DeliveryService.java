@@ -31,8 +31,10 @@ import com.deliveranything.domain.user.entity.profile.SellerProfile;
 import com.deliveranything.domain.user.enums.RiderToggleStatus;
 import com.deliveranything.domain.user.service.CustomerProfileService;
 import com.deliveranything.domain.user.service.RiderProfileService;
+import com.deliveranything.global.common.CursorPageResponse;
 import com.deliveranything.global.exception.CustomException;
 import com.deliveranything.global.exception.ErrorCode;
+import com.deliveranything.global.util.CursorUtil;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import java.time.DayOfWeek;
@@ -126,6 +128,7 @@ public class DeliveryService {
   }
 
   // 진행 중인 배달 정보 조회
+  // 페이지네이션 까지 필요 없음 -> List 반환
   public List<CurrentDeliveringResponseDto> getCurrentDeliveringInfo(Long riderProfileId) {
     List<Delivery> currentDeliveries = deliveryRepository.findByRiderProfileIdAndStatus(
         riderProfileId, DeliveryStatus.IN_PROGRESS);
@@ -178,31 +181,115 @@ public class DeliveryService {
   }
 
   // 총 배달 내역 요약 조회 + 배달 완료 리스트 조회
-  public DeliveredSummaryResponseDto getDeliveredSummary(Long riderProfileId) {
+  public DeliveredSummaryResponseDto getDeliveredSummary(
+      Long riderProfileId,
+      String cursor,
+      Integer size
+  ) {
     RiderProfile riderProfile = riderProfileService.getRiderProfileById(riderProfileId);
 
-    List<Delivery> completedDeliveries = deliveryRepository
-        .findByRiderProfileIdAndStatus(riderProfileId, DeliveryStatus.COMPLETED);
-
-    // Delivery → DeliveredDetailsDto 변환
-    List<DeliveredDetailsDto> deliveredDetails = completedDeliveries.stream()
-        .map(d -> DeliveredDetailsDto.builder()
-            .completedAt(d.getCompletedAt())
-            .storeName(d.getStore().getName())
-            .orderId(d.getId()) // 또는 실제 Order ID 조회
-            .customerAddress(getCustomerDefaultAddress(d.getCustomer().getDefaultAddressId()))
-            .settlementStatus("PENDING") // TODO: 정산 도메인 구현 후 실제 상태로 변경
-            .deliveryCharge(d.getCharge())
-            .build())
-        .toList();
+    // 페이징된 배달 내역 조회
+    CursorPageResponse<DeliveredDetailsDto> deliveredDetails =
+        getDeliveredDetailsCursor(riderProfileId, cursor, size != null ? size : 10);
 
     return DeliveredSummaryResponseDto.builder()
         .thisWeekDeliveredCount(getThisWeekCompletedCount(riderProfileId))
-        .totalDeliveryCharges(getTotalDeliveryCharges(riderProfileId))
         .waitingSettlementAmount(0) // TODO: 정산 도메인 구현 후 수정
         .completedSettlementAmount(0) // TODO: 정산 도메인 구현 후 수정
         .deliveredDetails(deliveredDetails)
         .build();
+  }
+
+  // 배달 완료 내역 커서 페이징 조회
+  private CursorPageResponse<DeliveredDetailsDto> getDeliveredDetailsCursor(
+      Long riderProfileId,
+      String nextPageToken,
+      int size
+  ) {
+    // 커서 디코딩
+    LocalDateTime lastCompletedAt = null;
+    Long lastOrderId = null;
+
+    if (nextPageToken != null) {
+      String[] decoded = CursorUtil.decode(nextPageToken);
+
+      if (decoded != null && decoded.length == 2) {
+        try {
+          lastCompletedAt = LocalDateTime.parse(decoded[0]);
+          lastOrderId = Long.parseLong(decoded[1]);
+        } catch (Exception e) {
+          lastCompletedAt = null;
+          lastOrderId = null;
+        }
+      }
+    }
+
+    final LocalDateTime finalLastCompletedAt = lastCompletedAt;
+    final Long finalLastOrderId = lastOrderId;
+
+    // 완료된 배달 조회 (size + 1개 조회하여 hasNext 판단)
+    List<Delivery> allCompletedDeliveries = deliveryRepository
+        .findByRiderProfileIdAndStatus(riderProfileId, DeliveryStatus.COMPLETED);
+
+    // 정렬 및 필터링
+    List<Delivery> filteredDeliveries = allCompletedDeliveries.stream()
+        .sorted((d1, d2) -> {
+          // 1차: completedAt 기준 내림차순 (최신순)
+          int dateCompare = d2.getCompletedAt().compareTo(d1.getCompletedAt());
+          if (dateCompare != 0) {
+            return dateCompare;
+          }
+          // 2차: id 기준 내림차순 (동일 시간일 경우 큰 ID가 먼저)
+          return Long.compare(d2.getId(), d1.getId());
+        })
+        .filter(d -> {
+          if (finalLastCompletedAt == null) {
+            return true;
+          }
+          int compareDate = d.getCompletedAt().compareTo(finalLastCompletedAt);
+          // 더 이전 날짜
+          if (compareDate < 0) {
+            return true;
+          }
+          if (compareDate == 0 && d.getId() < finalLastOrderId) {
+            return true; // 같은 날짜, 더 작은 ID
+          }
+          return false;
+        })
+        .limit(size + 1) // hasNext 판단용 1개 추가
+        .toList();
+
+    // hasNext 판단
+    boolean hasNext = filteredDeliveries.size() > size;
+    List<Delivery> pageDeliveries = hasNext ?
+        filteredDeliveries.subList(0, size) : filteredDeliveries;
+
+    // DTO 변환
+    List<DeliveredDetailsDto> deliveredDetailsList = pageDeliveries.stream()
+        .map(delivery -> {
+          OrderResponse order = orderService.getOrderByDeliveryId(delivery.getId());
+          return DeliveredDetailsDto.builder()
+              .orderId(order.id())
+              .storeName(order.storeName())
+              .completedAt(delivery.getCompletedAt())
+              .customerAddress(order.address())
+              .settlementStatus("PENDING") // TODO: 정산 도메인 구현 후 수정
+              .deliveryCharge(delivery.getCharge())
+              .build();
+        })
+        .toList();
+
+    // 다음 페이지 토큰 생성
+    if (hasNext && !deliveredDetailsList.isEmpty()) {
+      DeliveredDetailsDto last = deliveredDetailsList.get(deliveredDetailsList.size() - 1);
+      nextPageToken = CursorUtil.encode(last.completedAt(), last.orderId());
+    }
+
+    return new CursorPageResponse<>(
+        deliveredDetailsList,
+        nextPageToken,
+        hasNext
+    );
   }
 
   // === 편의 메서드 ===
