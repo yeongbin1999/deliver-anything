@@ -16,7 +16,6 @@ public enum ErrorCode {
   USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER-404", "사용자를 찾을 수 없습니다."),
   USER_EMAIL_ALREADY_EXIST(HttpStatus.CONFLICT, "USER-409", "이미 존재하는 이메일 입니다."),
   USER_PHONE_ALREADY_EXIST(HttpStatus.CONFLICT, "USER-409", "이미 존재하는 핸드폰 번호 입니다."),
-  
   // 인가 관련 오류
   PROFILE_NOT_ALLOWED(HttpStatus.FORBIDDEN, "AUTH-403", "해당 프로필로 사용할 권한이 없습니다."),
 
