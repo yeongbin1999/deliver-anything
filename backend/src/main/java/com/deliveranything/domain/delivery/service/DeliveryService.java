@@ -7,7 +7,6 @@ import com.deliveranything.domain.delivery.entity.Delivery;
 import com.deliveranything.domain.delivery.enums.DeliveryStatus;
 import com.deliveranything.domain.delivery.event.dto.DeliveryStatusEvent;
 import com.deliveranything.domain.delivery.event.dto.OrderStatusUpdateEvent;
-import com.deliveranything.domain.delivery.handler.DeliveryEventHandler;
 import com.deliveranything.domain.delivery.repository.DeliveryRepository;
 import com.deliveranything.domain.order.entity.Order;
 import com.deliveranything.domain.user.entity.profile.RiderProfile;
@@ -16,6 +15,7 @@ import com.deliveranything.domain.user.service.RiderProfileService;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -26,7 +26,7 @@ public class DeliveryService {
 
   private final RiderProfileService riderProfileService;
   private final DeliveryRepository deliveryRepository;
-  private final DeliveryEventHandler deliveryEventHandler;
+  private final ApplicationEventPublisher eventPublisher;
   private final RedisTemplate<String, Object> redisTemplate;
 
   public void updateRiderStatus(Long riderId, RiderToggleStatusRequestDto riderStatusRequestDto) {
@@ -57,7 +57,7 @@ public class DeliveryService {
         .nextStatus(next)
         .build();
 
-    deliveryEventHandler.handleDeliveryStatus(event);
+    eventPublisher.publishEvent(event);
   }
 
   // 라이더 배달 수락/거절 처리 및 상태 이벤트 발행
@@ -68,7 +68,7 @@ public class DeliveryService {
     // 이벤트만 발행 - 실제 상태 변경은 구독자에서 처리
     OrderStatusUpdateEvent event = new OrderStatusUpdateEvent(
         decisionRequestDto.orderId(), currentActiveProfileId, status);
-    deliveryEventHandler.handleOrderDeliveryStatus(event);
+    eventPublisher.publishEvent(event);
   }
 
   // Delivery 생성
