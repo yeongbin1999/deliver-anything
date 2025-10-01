@@ -5,7 +5,7 @@ import com.deliveranything.domain.auth.repository.RefreshTokenRepository;
 import com.deliveranything.domain.auth.service.AuthTokenService;
 import com.deliveranything.domain.user.profile.entity.Profile;
 import com.deliveranything.domain.user.profile.enums.ProfileType;
-import com.deliveranything.domain.user.profile.rerpository.ProfileRepository;
+import com.deliveranything.domain.user.profile.repository.ProfileRepository;
 import com.deliveranything.domain.user.user.entity.User;
 import com.deliveranything.domain.user.user.repository.UserRepository;
 import com.deliveranything.global.common.ApiResponse;

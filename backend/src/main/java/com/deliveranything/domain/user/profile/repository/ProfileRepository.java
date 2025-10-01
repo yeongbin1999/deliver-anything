@@ -1,4 +1,4 @@
-package com.deliveranything.domain.user.profile.rerpository;
+package com.deliveranything.domain.user.profile.repository;
 
 import com.deliveranything.domain.user.profile.entity.Profile;
 import com.deliveranything.domain.user.profile.enums.ProfileType;

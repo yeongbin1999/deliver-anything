@@ -1,8 +1,8 @@
 package com.deliveranything.domain.notification.scheduler;
 
-import com.deliveranything.domain.user.user.entity.User;
 import com.deliveranything.domain.user.profile.entity.Profile;
-import com.deliveranything.domain.user.profile.rerpository.ProfileRepository;
+import com.deliveranything.domain.user.profile.repository.ProfileRepository;
+import com.deliveranything.domain.user.user.entity.User;
 import com.deliveranything.domain.user.user.repository.UserRepository;
 import com.deliveranything.global.infra.SmsService;
 import java.util.HashMap;

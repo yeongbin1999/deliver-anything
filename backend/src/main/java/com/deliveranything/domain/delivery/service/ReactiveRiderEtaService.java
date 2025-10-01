@@ -4,7 +4,7 @@ import static com.deliveranything.domain.delivery.service.RiderLocationService.R
 
 import com.deliveranything.domain.user.profile.entity.RiderProfile;
 import com.deliveranything.domain.user.profile.enums.RiderToggleStatus;
-import com.deliveranything.domain.user.profile.rerpository.RiderProfileRepository;
+import com.deliveranything.domain.user.profile.repository.RiderProfileRepository;
 import com.deliveranything.global.exception.CustomException;
 import com.deliveranything.global.exception.ErrorCode;
 import java.util.ArrayList;
