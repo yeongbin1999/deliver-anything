@@ -21,7 +21,7 @@ public class SecurityUser extends User {
       Profile currentActiveProfile,
       Collection<? extends GrantedAuthority> authorities
   ) {
-    super(name, password, authorities);
+    super(String.valueOf(id), password, authorities);
     this.id = id;
     this.name = name;
     this.currentActiveProfile = currentActiveProfile;
