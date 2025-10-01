@@ -14,6 +14,8 @@ import com.deliveranything.domain.user.user.entity.User;
 import com.deliveranything.global.common.ApiResponse;
 import com.deliveranything.global.common.Rq;
 import com.deliveranything.global.util.UserAgentUtil;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -26,6 +28,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+@Tag(name = "Auth", description = "인증/인가 API")
 @Slf4j
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -39,10 +42,11 @@ public class AuthController {
 
   private final Rq rq;
 
-  /**
-   * 회원가입 POST /api/v1/auth/signup
-   */
   @PostMapping("/signup")
+  @Operation(
+      summary = "회원가입",
+      description = "이메일과 비밀번호로 신규 회원가입을 진행합니다. 비밀번호는 8자 이상, 영문/숫자/특수문자 포함이어야 합니다."
+  )
   public ResponseEntity<ApiResponse<SignupResponse>> signup(
       @Valid @RequestBody SignupRequest request) {
     User user = authService.signup(
@@ -63,10 +67,11 @@ public class AuthController {
         .body(ApiResponse.success("회원가입이 완료되었습니다.", response));
   }
 
-  /**
-   * 로그인 POST /api/v1/auth/login
-   */
   @PostMapping("/login")
+  @Operation(
+      summary = "로그인",
+      description = "이메일과 비밀번호로 로그인합니다. Access Token과 Refresh Token이 발급됩니다."
+  )
   public ResponseEntity<ApiResponse<LoginResponse>> login(
       @Valid @RequestBody LoginRequest request,
       HttpServletRequest httpRequest) {  // HttpServletRequest 추가
@@ -104,6 +109,10 @@ public class AuthController {
   }
 
   @PostMapping("/logout")
+  @Operation(
+      summary = "로그아웃",
+      description = "현재 사용자의 모든 Refresh Token을 무효화하고 로그아웃합니다."
+  )
   public ResponseEntity<ApiResponse<Void>> logout() {
     User currentUser = rq.getActor();
     if (currentUser != null) {
@@ -117,10 +126,11 @@ public class AuthController {
     return ResponseEntity.ok(ApiResponse.success("로그아웃이 완료되었습니다.", null));
   }
 
-  /**
-   * 토큰 재발급 POST /api/v1/auth/refresh
-   */
   @PostMapping("/refresh")
+  @Operation(
+      summary = "토큰 재발급",
+      description = "Refresh Token을 사용하여 새로운 Access Token을 발급받습니다."
+  )
   public ResponseEntity<ApiResponse<RefreshTokenResponse>> refreshToken(
       @Valid @RequestBody RefreshTokenRequest request) {
 
