@@ -1,4 +1,4 @@
-package com.deliveranything.domain.delivery.handler;
+package com.deliveranything.domain.delivery.handler.redis;
 
 import com.deliveranything.domain.delivery.event.dto.RiderNotificationDto;
 import com.deliveranything.domain.delivery.event.event.sse.OrderAssignmentSsePublisher;
