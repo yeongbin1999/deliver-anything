@@ -7,6 +7,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface StoreRepository extends JpaRepository<Store, Long> {
 
+  boolean existsBySellerProfileId(Long sellerProfileId);
+
   default Store getById(Long storeId) {
     return findById(storeId)
         .orElseThrow(() -> new CustomException(ErrorCode.STORE_NOT_FOUND));
