@@ -24,19 +24,19 @@ import com.deliveranything.domain.settlement.dto.SettlementResponse;
 import com.deliveranything.domain.settlement.service.SettlementBatchService;
 import com.deliveranything.domain.settlement.service.SettlementDetailService;
 import com.deliveranything.domain.store.store.entity.Store;
-import com.deliveranything.domain.user.entity.profile.CustomerProfile;
-import com.deliveranything.domain.user.entity.profile.RiderProfile;
-import com.deliveranything.domain.user.entity.profile.SellerProfile;
-import com.deliveranything.domain.user.enums.ProfileType;
-import com.deliveranything.domain.user.service.CustomerProfileService;
-import com.deliveranything.domain.user.service.RiderProfileService;
-import com.deliveranything.domain.user.service.SellerProfileService;
+import com.deliveranything.domain.user.profile.entity.CustomerProfile;
+import com.deliveranything.domain.user.profile.entity.RiderProfile;
+import com.deliveranything.domain.user.profile.entity.SellerProfile;
+import com.deliveranything.domain.user.profile.service.CustomerProfileService;
+import com.deliveranything.domain.user.profile.service.RiderProfileService;
+import com.deliveranything.domain.user.profile.service.SellerProfileService;
 import com.deliveranything.global.common.CursorPageResponse;
 import com.deliveranything.global.exception.CustomException;
 import com.deliveranything.global.exception.ErrorCode;
 import com.deliveranything.global.util.CursorUtil;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
+import java.time.DayOfWeek;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -493,5 +493,9 @@ public class DeliveryService {
   // 고객 기본 주소 조회
   private String getCustomerDefaultAddress(Long defaultAddressId) {
     return customerProfileService.getCurrentAddress(defaultAddressId).getAddress();
+  }
+
+  private Long getTotalDeliveryCharges(Long riderProfileId) {
+    return deliveryRepository.sumTotalDeliveryChargesByRider(riderProfileId);
   }
 }
