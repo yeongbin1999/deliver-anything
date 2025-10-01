@@ -128,7 +128,7 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
   private boolean isPublicEndpoint(String uri) {
     List<String> publicPaths = List.of(
         "/api/v1/auth/login",
-        "/api/v1/auth/register",
+        "/api/v1/auth/signup",
         "/api/v1/auth/logout",
         "/api/v1/auth/verification/send",
         "/api/v1/auth/verification/verify"

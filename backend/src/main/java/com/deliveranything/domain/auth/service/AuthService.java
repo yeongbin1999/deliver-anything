@@ -37,12 +37,12 @@ public class AuthService {
     // 중복 체크
     if (userRepository.existsByEmail(email)) {
       log.warn("이미 존재하는 이메일: {}", email);
-      throw new CustomException(ErrorCode.USER_NOT_FOUND);
+      throw new CustomException(ErrorCode.USER_EMAIL_ALREADY_EXIST);
     }
 
     if (userRepository.existsByPhoneNumber(phoneNumber)) {
       log.warn("이미 존재하는 전화번호: {}", phoneNumber);
-      throw new CustomException(ErrorCode.USER_NOT_FOUND);
+      throw new CustomException(ErrorCode.USER_PHONE_ALREADY_EXIST);
     }
 
     // 비밀번호 암호화
