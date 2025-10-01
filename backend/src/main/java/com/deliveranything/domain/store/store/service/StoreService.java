@@ -1,11 +1,8 @@
 package com.deliveranything.domain.store.store.service;
 
-import com.deliveranything.domain.order.dto.OrderResponse;
-import com.deliveranything.domain.order.service.OrderService;
 import com.deliveranything.domain.store.category.entity.StoreCategory;
 import com.deliveranything.domain.store.category.service.StoreCategoryService;
 import com.deliveranything.domain.store.store.dto.StoreCreateRequest;
-import com.deliveranything.domain.store.store.dto.StoreOrderCursorResponse;
 import com.deliveranything.domain.store.store.dto.StoreResponse;
 import com.deliveranything.domain.store.store.dto.StoreUpdateRequest;
 import com.deliveranything.domain.store.store.entity.Store;
@@ -13,7 +10,6 @@ import com.deliveranything.domain.store.store.enums.StoreStatus;
 import com.deliveranything.domain.store.store.event.StoreDeletedEvent;
 import com.deliveranything.domain.store.store.event.StoreSavedEvent;
 import com.deliveranything.domain.store.store.repository.StoreRepository;
-import com.deliveranything.global.common.CursorPageResponse;
 import com.deliveranything.global.exception.CustomException;
 import com.deliveranything.global.exception.ErrorCode;
 import com.deliveranything.global.util.PointUtil;
@@ -27,7 +23,6 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class StoreService {
 
-  private final OrderService orderService;
   private final StoreRepository storeRepository;
   private final StoreCategoryService storeCategoryService;
   private final ApplicationEventPublisher eventPublisher;
@@ -107,21 +102,5 @@ public class StoreService {
   @Transactional(readOnly = true)
   public Store getById(Long storeId) {
     return storeRepository.getById(storeId);
-  }
-
-  @Transactional(readOnly = true)
-  public CursorPageResponse<StoreOrderCursorResponse> getFinalizedStoreOrder(
-      Long storeId,
-      String nextPageToken,
-      int size
-  ) {
-    CursorPageResponse<OrderResponse> orderPage = orderService.getStoreOrdersByCursor(storeId,
-        nextPageToken, size);
-
-    return new CursorPageResponse<>(
-        orderPage.content().stream().map(StoreOrderCursorResponse::from).toList(),
-        orderPage.nextPageToken(),
-        orderPage.hasNext()
-    );
   }
 }
