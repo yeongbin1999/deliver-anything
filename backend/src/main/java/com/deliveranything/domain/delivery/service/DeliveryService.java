@@ -283,7 +283,7 @@ public class DeliveryService {
               .storeName(delivery.getStore().getName())
               .completedAt(delivery.getCompletedAt())
               .customerAddress(order.address())
-              .settlementStatus(getCompletedDeliverySettlementStatus(riderProfileId, order.id()))
+              .settlementStatus(getCompletedDeliverySettlementStatus(order.id(), riderProfileId))
               .deliveryCharge(delivery.getCharge())
               .build();
         })
@@ -459,7 +459,7 @@ public class DeliveryService {
   }
 
   // 특정 배달 건의 정산 상태 조회
-  public String getCompletedDeliverySettlementStatus(Long riderProfileId, Long orderId) {
+  public String getCompletedDeliverySettlementStatus(Long orderId, Long riderProfileId) {
     return settlementDetailService.getRiderSettlementDetail(orderId, riderProfileId)
         .settlementStatus().name();
   }
