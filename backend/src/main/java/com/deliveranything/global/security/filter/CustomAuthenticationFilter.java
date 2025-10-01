@@ -184,7 +184,17 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 
       // JWT에서 사용자 정보 복원 (DB 조회 최소화)
       User user = userRepository.findById(userId).orElse(null);
+      // JWT - DB간 불일치 체크
       if (user != null) {
+        Long dbProfileId = user.getCurrentActiveProfileId();
+
+        if (currentActiveProfileId != null && dbProfileId != null) {
+          if (!currentActiveProfileId.equals(dbProfileId)) {
+            log.warn("프로필 불일치: userId={}, JWT={}, DB={}",
+                userId, currentActiveProfileId, dbProfileId);
+            return null;
+          }
+        }
         // Profile 정보를 DB에서 조회해서 User에 설정
         if (currentActiveProfileId != null && currentActiveProfileId > 0) {
           Profile activeProfile = profileRepository.findById(currentActiveProfileId).orElse(null);
