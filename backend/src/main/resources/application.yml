@@ -96,7 +96,11 @@ toss:
 
 kakao:
   api:
+<<<<<<< HEAD
     key: ${KAKAO_API_KEY:임시키}
+=======
+    key: ${KAKAO_API_KEY}
+>>>>>>> b43933b (refactor(be) : auth , user , profile 패키지 분할 후 UserService의 과도한 로직 분할)
 
 custom:
   jwt:
