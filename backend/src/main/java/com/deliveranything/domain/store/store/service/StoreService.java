@@ -9,10 +9,16 @@ import com.deliveranything.domain.store.store.dto.StoreOrderCursorResponse;
 import com.deliveranything.domain.store.store.dto.StoreResponse;
 import com.deliveranything.domain.store.store.dto.StoreUpdateRequest;
 import com.deliveranything.domain.store.store.entity.Store;
+import com.deliveranything.domain.store.store.enums.StoreStatus;
+import com.deliveranything.domain.store.store.event.StoreDeletedEvent;
+import com.deliveranything.domain.store.store.event.StoreSavedEvent;
 import com.deliveranything.domain.store.store.repository.StoreRepository;
 import com.deliveranything.global.common.CursorPageResponse;
+import com.deliveranything.global.exception.CustomException;
+import com.deliveranything.global.exception.ErrorCode;
 import com.deliveranything.global.util.PointUtil;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,25 +30,33 @@ public class StoreService {
   private final OrderService orderService;
   private final StoreRepository storeRepository;
   private final StoreCategoryService storeCategoryService;
+  private final ApplicationEventPublisher eventPublisher;
 
   @Transactional
-  public Long createStore(StoreCreateRequest request) {
+  public Long createStore(StoreCreateRequest request, Long sellerProfileId) {
     StoreCategory storeCategory = storeCategoryService.getById(request.storeCategoryId());
 
     Store store = Store.builder()
-//        .sellerProfileId()
+        .sellerProfileId(sellerProfileId)
         .storeCategory(storeCategory)
         .name(request.name())
         .description(request.description())
         .roadAddr(request.roadAddr())
         .location(PointUtil.createPoint(request.lat(), request.lng()))
+        .imageUrl(request.imageUrl())
         .build();
-    return storeRepository.save(store).getId();
+    storeRepository.save(store);
+
+    store.updateStatus(StoreStatus.CLOSED);
+
+    eventPublisher.publishEvent(new StoreSavedEvent(store.getId()));
+
+    return store.getId();
   }
 
   @Transactional
-  public Long updateStore(Long storeId, StoreUpdateRequest request) {
-    Store store = storeRepository.getById(storeId);
+  public StoreResponse updateStore(Long storeId, StoreUpdateRequest request) {
+    Store store = this.getById(storeId);
 
     StoreCategory storeCategory = null;
     if (request.storeCategoryId() != null) {
@@ -51,19 +65,38 @@ public class StoreService {
 
     store.update(storeCategory, request.name(), request.description(), request.roadAddr(),
         request.lat() != null && request.lng() != null ? PointUtil.createPoint(request.lat(),
-            request.lng()) : null);
+            request.lng()) : null, request.imageUrl());
 
-    return store.getId();
+    eventPublisher.publishEvent(new StoreSavedEvent(store.getId()));
+
+    return StoreResponse.from(store);
   }
 
   @Transactional
   public void deleteStore(Long storeId) {
-    storeRepository.deleteById(storeId);
+    Store store = this.getById(storeId);
+    storeRepository.delete(store);
+    eventPublisher.publishEvent(new StoreDeletedEvent(store.getId()));
   }
 
   @Transactional(readOnly = true)
   public StoreResponse getStore(Long storeId) {
-    Store store = storeRepository.getById(storeId);
+    Store store = this.getById(storeId);
+    return StoreResponse.from(store);
+  }
+
+  @Transactional
+  public StoreResponse toggleStoreStatus(Long storeId) {
+    Store store = this.getById(storeId);
+
+    if (store.getStatus() == StoreStatus.DRAFT) {
+      throw new CustomException(ErrorCode.STORE_NOT_READY_FOR_OPENING);
+    }
+
+    StoreStatus newStatus = (store.getStatus() == StoreStatus.OPEN) ? StoreStatus.CLOSED : StoreStatus.OPEN;
+    store.updateStatus(newStatus);
+
+    eventPublisher.publishEvent(new StoreSavedEvent(store.getId()));
     return StoreResponse.from(store);
   }
 

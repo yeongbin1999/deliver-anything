@@ -60,20 +60,22 @@ public class Store extends BaseEntity {
   @Column(nullable = false, length = 12)
   private StoreStatus status = StoreStatus.DRAFT;
 
-  @Column(name = "is_open_now", nullable = false)
-  private boolean isOpenNow = false;
+  public void updateStatus(StoreStatus storeStatus) {
+    status = storeStatus;
+  }
 
   @Builder
-  public Store(Long sellerProfileId, StoreCategory storeCategory, String name, String description, String roadAddr, Point location) {
+  public Store(Long sellerProfileId, StoreCategory storeCategory, String imageUrl, String name, String description, String roadAddr, Point location) {
     this.sellerProfileId = sellerProfileId;
     this.storeCategory = storeCategory;
+    this.imageUrl = imageUrl;
     this.name = name;
     this.description = description;
     this.roadAddr = roadAddr;
     this.location = location;
   }
 
-  public void update(StoreCategory storeCategory, String name, String description, String roadAddr, Point location) {
+  public void update(StoreCategory storeCategory, String name, String description, String roadAddr, Point location, String imageUrl) {
     if (storeCategory != null) {
       this.storeCategory = storeCategory;
     }
@@ -88,6 +90,9 @@ public class Store extends BaseEntity {
     }
     if (location != null) {
       this.location = location;
+    }
+    if (imageUrl != null) {
+      this.imageUrl = imageUrl;
     }
   }
 }
