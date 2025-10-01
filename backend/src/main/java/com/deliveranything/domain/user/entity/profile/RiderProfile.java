@@ -97,16 +97,16 @@ public class RiderProfile extends BaseProfile {
         : RiderToggleStatus.ON;
   }
 
-  public void setToggleStatus(RiderToggleStatus status) {
+  public void updateToggleStatus(RiderToggleStatus status) {
     this.toggleStatus = status;
   }
 
   // String을 받아서 enum으로 변환하는 메서드 추가
-  public void setToggleStatus(String toggleStatus) {
+  public void updateToggleStatus(String toggleStatus) {
     this.toggleStatus = RiderToggleStatus.fromString(toggleStatus);
   }
 
-  public void setDeliveryArea(@NotNull String area) {
+  public void updateDeliveryArea(@NotNull String area) {
     this.area = area;
   }
 

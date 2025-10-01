@@ -25,7 +25,6 @@ import com.deliveranything.domain.store.store.service.StoreService;
 import com.deliveranything.domain.user.entity.profile.CustomerProfile;
 import com.deliveranything.domain.user.entity.profile.RiderProfile;
 import com.deliveranything.domain.user.entity.profile.SellerProfile;
-import com.deliveranything.domain.user.enums.RiderToggleStatus;
 import com.deliveranything.domain.user.service.CustomerProfileService;
 import com.deliveranything.domain.user.service.RiderProfileService;
 import com.deliveranything.global.common.CursorPageResponse;
@@ -57,17 +56,15 @@ public class DeliveryService {
 
   public void updateRiderStatus(Long riderId, RiderToggleStatusRequestDto riderStatusRequestDto) {
     RiderProfile riderProfile = riderProfileService.getRiderProfileById(riderId);
-
-    riderProfile.setToggleStatus(RiderToggleStatus.fromString(riderStatusRequestDto.riderStatus()));
+    riderProfile.updateToggleStatus(riderStatusRequestDto.riderStatus());
   }
 
   public void updateDeliveryArea(Long riderId, DeliveryAreaRequestDto deliveryAreaRequestDto) {
     RiderProfile riderProfile = riderProfileService.getRiderProfileById(riderId);
-
-    riderProfile.setDeliveryArea(deliveryAreaRequestDto.deliveryArea());
+    riderProfile.updateDeliveryArea(deliveryAreaRequestDto.deliveryArea());
   }
 
-  public void changeStatus(Long deliveryId, DeliveryStatus next) {
+  public void changeDeliveryStatus(Long deliveryId, DeliveryStatus next) {
     Delivery delivery = deliveryRepository.findById(deliveryId)
         .orElseThrow(() -> new CustomException(ErrorCode.DELIVERY_NOT_FOUND));
 
