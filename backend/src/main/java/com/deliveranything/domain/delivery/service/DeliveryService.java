@@ -292,6 +292,12 @@ public class DeliveryService {
 
   // === 편의 메서드 ===
 
+  public Delivery getInProgressDeliveryByRiderId(Long riderProfileId) {
+    return deliveryRepository.findFirstByRiderProfileIdAndStatusOrderByStartedAtDesc(
+            riderProfileId, DeliveryStatus.IN_PROGRESS)
+        .orElseThrow(() -> new CustomException(ErrorCode.NO_ACTIVE_DELIVERY));
+  }
+
   // 오늘 배달 건 수
   public Long getTodayCompletedCountByRider(Long riderProfileId) {
     return deliveryRepository.countTodayCompletedDeliveriesByRider(riderProfileId);
@@ -340,4 +346,7 @@ public class DeliveryService {
     return customerProfileService.getCurrentAddress(defaultAddressId).getAddress();
   }
 
+  private Long getTotalDeliveryCharges(Long riderProfileId) {
+    return deliveryRepository.sumTotalDeliveryChargesByRider(riderProfileId);
+  }
 }
