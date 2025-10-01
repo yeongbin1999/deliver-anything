@@ -93,7 +93,7 @@ public class SettlementBatchService {
   }
 
   // 이번 주 월요일 ~ 어제까지의 정산 목록
-  public List<SettlementResponse> getRiderWeekendSettlementBatches(Long riderProfileId) {
+  public List<SettlementResponse> getRiderWeekSettlementBatches(Long riderProfileId) {
     LocalDate today = LocalDate.now();
     return settlementBatchRepository.findAllByTargetTypeAndTargetIdAndSettlementDateBetween(
             TargetType.RIDER, riderProfileId, today.with(DayOfWeek.MONDAY), today.minusDays(1))
