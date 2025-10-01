@@ -2,7 +2,7 @@ package com.deliveranything.domain.store.store.security;
 
 import com.deliveranything.global.exception.CustomException;
 import com.deliveranything.global.exception.ErrorCode;
-import com.deliveranything.global.security.SecurityUser;
+import com.deliveranything.global.security.auth.SecurityUser;
 import org.springframework.stereotype.Component;
 
 @Component

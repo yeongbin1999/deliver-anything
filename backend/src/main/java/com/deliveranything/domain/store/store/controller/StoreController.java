@@ -5,7 +5,7 @@ import com.deliveranything.domain.store.store.dto.StoreResponse;
 import com.deliveranything.domain.store.store.dto.StoreUpdateRequest;
 import com.deliveranything.domain.store.store.service.StoreService;
 import com.deliveranything.global.common.ApiResponse;
-import com.deliveranything.global.security.SecurityUser;
+import com.deliveranything.global.security.auth.SecurityUser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
