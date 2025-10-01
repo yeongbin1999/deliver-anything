@@ -5,9 +5,9 @@ import lombok.Builder;
 
 @Builder
 public record DeliveredDetailsDto(
-    LocalDateTime completedAt,
-    String storeName,
     Long orderId,
+    String storeName,
+    LocalDateTime completedAt,
     String customerAddress,
     String settlementStatus,
     Integer deliveryCharge
