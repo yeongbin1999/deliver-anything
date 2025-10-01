@@ -25,13 +25,12 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
 
 @Entity
 @Table(name = "users")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class User extends BaseEntity implements UserDetails {
+public class User extends BaseEntity {
 
   @Column(name = "email", unique = true, nullable = false, columnDefinition = "VARCHAR(100)")
   private String email;
@@ -204,21 +203,19 @@ public class User extends BaseEntity implements UserDetails {
     return UUID.randomUUID().toString();
   }
 
-  // ========== UserDetails 구현 ==========
 
-  @Override
   public Collection<? extends GrantedAuthority> getAuthorities() {
     List<GrantedAuthority> authorities = new ArrayList<>();
 
     // 기본 사용자 권한
     authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
 
-    // 프로필별 권한 추가
+    // currentActiveProfile 기반 권한 추가
     if (currentActiveProfile != null) {
       ProfileType currentType = currentActiveProfile.getType();
       authorities.add(new SimpleGrantedAuthority("ROLE_" + currentType.name()));
 
-      /*** 
+      /***
        * 활성화된 다른 프로필들의 권한도 추가 (멀티프로필 지원) - 현재 쓸모가 없어보여서 주석처리
        for (Profile profile : profiles) {
        if (profile.isActive()) {
@@ -235,29 +232,19 @@ public class User extends BaseEntity implements UserDetails {
 
     return authorities;
   }
-
-  @Override
-  public String getUsername() {
-    return email;
-  }
-
-  @Override
+  
   public boolean isAccountNonExpired() {
     return true;
   }
 
-  @Override
+
   public boolean isAccountNonLocked() {
     return true;
   }
 
-  @Override
+
   public boolean isCredentialsNonExpired() {
     return true;
   }
 
-  @Override
-  public boolean isEnabled() {
-    return isEnabled;
-  }
 }

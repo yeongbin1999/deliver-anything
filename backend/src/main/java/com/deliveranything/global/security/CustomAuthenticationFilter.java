@@ -217,9 +217,8 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
   private void setAuthentication(User user) {
     UserDetails securityUser = new SecurityUser(
         user.getId(),
-        user.getUsername(),
-        "",  // 비밀번호는 빈 문자열
         user.getName(),
+        "",  // 비밀번호는 빈 문자열
         user.getCurrentActiveProfile(), // 현재 활성 프로필 타입
         user.getAuthorities()
     );
