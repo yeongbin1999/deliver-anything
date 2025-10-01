@@ -1,11 +1,8 @@
 package com.deliveranything.domain.settlement.entity;
 
-import com.deliveranything.domain.settlement.enums.TargetType;
 import com.deliveranything.global.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -18,10 +15,6 @@ import lombok.NoArgsConstructor;
 @Entity
 @Table(name = "settlement_batches")
 public class SettlementBatch extends BaseEntity {
-
-  @Enumerated(EnumType.STRING)
-  @Column(nullable = false)
-  private TargetType targetType;
 
   @Column(nullable = false)
   private Long targetId;
@@ -42,10 +35,9 @@ public class SettlementBatch extends BaseEntity {
   private LocalDate settlementDate;
 
   @Builder
-  public SettlementBatch(TargetType targetType, Long targetId, BigDecimal targetTotalAmount,
+  public SettlementBatch(Long targetId, BigDecimal targetTotalAmount,
       Integer transactionCount, BigDecimal totalPlatformFee, BigDecimal settledAmount,
       LocalDate settlementDate) {
-    this.targetType = targetType;
     this.targetId = targetId;
     this.targetTotalAmount = targetTotalAmount;
     this.transactionCount = transactionCount;
