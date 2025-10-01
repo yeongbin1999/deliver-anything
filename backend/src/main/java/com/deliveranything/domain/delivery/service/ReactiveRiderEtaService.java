@@ -4,7 +4,11 @@ import static com.deliveranything.domain.delivery.service.RiderLocationService.R
 
 import com.deliveranything.domain.user.profile.entity.RiderProfile;
 import com.deliveranything.domain.user.profile.enums.RiderToggleStatus;
+<<<<<<< HEAD
 import com.deliveranything.domain.user.profile.repository.RiderProfileRepository;
+=======
+import com.deliveranything.domain.user.profile.rerpository.RiderProfileRepository;
+>>>>>>> 2511efe (refactor(be) : 기존 user 패키지를 auth 와 user/user , user/profile 로 분리)
 import com.deliveranything.global.exception.CustomException;
 import com.deliveranything.global.exception.ErrorCode;
 import java.util.ArrayList;
