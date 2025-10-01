@@ -54,9 +54,6 @@ public class NotificationService {
 
       // 읽음 상태를 다른 디바이스에도 브로드캐스트
       broadcastToEmitters(profileId, notificationId, "notification-read");
-
-      // 래디스 삭제용 메서드
-      decreaseRedisCount(notificationId, profileId);
     }
   }
 
@@ -97,7 +94,9 @@ public class NotificationService {
     }
   }
 
-  // 해당 profileId의 모든 emitter로 전송
+  /**
+   * 해당 profileId의 모든 emitter로 전송
+   */
   public void sendToAll(Long profileId, String eventName, Object payload) {
     Map<String, SseEmitter> map = emitterRepository.getAllEmitters().get(profileId);
     if (map == null) {
@@ -113,23 +112,5 @@ public class NotificationService {
         emitter.completeWithError(e);
       }
     });
-  }
-
-  /**
-   * 래디스를 사용하는 알림용 감소 메서드
-   */
-  public void decreaseRedisCount(Long notificationId, Long profileId) {
-    Notification notification = notificationRepository.findById(notificationId)
-        .orElseThrow(() -> new IllegalArgumentException("Notification not found"));
-
-    String key = "notifications:hourly:profile:" + profileId;
-    String field = notification.getType().name();
-
-    Long current = (Long) redisTemplate.opsForHash().get(key, field);
-    if (current != null && current > 0) {
-      redisTemplate.opsForHash().increment(key, field, -1);
-    } else {
-      redisTemplate.opsForHash().put(key, field, 0);
-    }
   }
 }
