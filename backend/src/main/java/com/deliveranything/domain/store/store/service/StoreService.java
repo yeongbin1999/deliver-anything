@@ -34,6 +34,10 @@ public class StoreService {
 
   @Transactional
   public Long createStore(StoreCreateRequest request, Long sellerProfileId) {
+    if (storeRepository.existsBySellerProfileId(sellerProfileId)) {
+      throw new CustomException(ErrorCode.STORE_ALREADY_EXISTS);
+    }
+
     StoreCategory storeCategory = storeCategoryService.getById(request.storeCategoryId());
 
     Store store = Store.builder()
