@@ -4,6 +4,10 @@ import com.deliveranything.domain.delivery.dto.request.DeliveryAreaRequestDto;
 import com.deliveranything.domain.delivery.dto.request.DeliveryStatusRequestDto;
 import com.deliveranything.domain.delivery.dto.request.RiderDecisionRequestDto;
 import com.deliveranything.domain.delivery.dto.request.RiderToggleStatusRequestDto;
+import com.deliveranything.domain.delivery.dto.response.CurrentDeliveringDetailsDto;
+import com.deliveranything.domain.delivery.dto.response.CurrentDeliveringResponseDto;
+import com.deliveranything.domain.delivery.dto.response.DeliveredSummaryResponseDto;
+import com.deliveranything.domain.delivery.dto.response.TodayDeliveringResponseDto;
 import com.deliveranything.domain.delivery.enums.DeliveryStatus;
 import com.deliveranything.domain.delivery.service.DeliveryService;
 import com.deliveranything.domain.review.dto.ReviewRatingAndListResponseDto;
@@ -15,6 +19,7 @@ import com.deliveranything.global.security.auth.SecurityUser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -93,11 +98,61 @@ public class DeliveryController {
   }
 
   @PostMapping("/decision")
+  @Operation(summary = "라이더 배달 수락/거절 결정",
+      description = "라이더가 배달 요청에 대해 수락 또는 거절을 결정합니다.")
   public ResponseEntity<ApiResponse<Void>> decideOrderDelivery(
       @Valid @RequestBody RiderDecisionRequestDto decisionRequestDto,
       @AuthenticationPrincipal SecurityUser user
   ) {
     deliveryService.publishRiderDecision(decisionRequestDto, user.getCurrentActiveProfileIdSafe());
     return ResponseEntity.ok(ApiResponse.success());
+  }
+
+  @GetMapping("/today")
+  @Operation(summary = "오늘의 배달 내역 조회",
+      description = "라이더의 오늘 배달 내역을 조회합니다.")
+  public ResponseEntity<ApiResponse<TodayDeliveringResponseDto>> getTodayDeliveries(
+      @AuthenticationPrincipal SecurityUser user
+  ) {
+    TodayDeliveringResponseDto response = deliveryService.getTodayDeliveringInfo(
+        user.getCurrentActiveProfileIdSafe()
+    );
+    return ResponseEntity.ok(ApiResponse.success(response));
+  }
+
+  @GetMapping("/in-progress")
+  @Operation(summary = "진행 중인 배달 조회",
+      description = "라이더의 진행 중인 배달 내역을 조회합니다." +
+          " (동적 riderProfile ID 필요성으로 인해 클라이언트 측에서 1분에 한 번씩 폴링 권장)")
+  public ResponseEntity<ApiResponse<List<CurrentDeliveringResponseDto>>> getInProgressDelivery(
+      @AuthenticationPrincipal SecurityUser user
+  ) {
+    List<CurrentDeliveringResponseDto> response = deliveryService.getCurrentDeliveringInfo(
+        user.getCurrentActiveProfileIdSafe()
+    );
+    return ResponseEntity.ok(ApiResponse.success(response));
+  }
+
+  @GetMapping("/in-progress/{deliveryId}")
+  @Operation(summary = "진행 중인 배달 단건 상세 조회",
+      description = "라이더의 진행 중인 단일 배달 내역을 조회합니다." +
+          " (동적 riderProfile ID 필요성으로 인해 클라이언트 측에서 1분에 한 번씩 폴링 권장)")
+  public ResponseEntity<ApiResponse<CurrentDeliveringDetailsDto>> getInProgressDetailDelivery(
+      @PathVariable Long deliveryId
+  ) {
+    CurrentDeliveringDetailsDto response = deliveryService.getCurrentDeliveringDetails(deliveryId);
+    return ResponseEntity.ok(ApiResponse.success(response));
+  }
+
+  @GetMapping("/total")
+  @Operation(summary = "총 배달 내역 요약 조회 + 배달 완료 리스트 조회",
+      description = "라이더의 총 배달 내역 요약과 배달 완료 리스트를 조회합니다.")
+  public ResponseEntity<ApiResponse<DeliveredSummaryResponseDto>> getTotalDeliveries(
+      @AuthenticationPrincipal SecurityUser user
+  ) {
+    DeliveredSummaryResponseDto response = deliveryService.getDeliveredSummary(
+        user.getCurrentActiveProfileIdSafe()
+    );
+    return ResponseEntity.ok(ApiResponse.success(response));
   }
 }
