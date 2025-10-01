@@ -94,6 +94,10 @@ toss:
     secret-key: ${YOUR_TEST_SECRET_KEY}
     toss-url: https://api.tosspayments.com
 
+kakao:
+  api:
+    key: ${KAKAO_API_KEY}
+
 custom:
   jwt:
     secretKey: abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789
