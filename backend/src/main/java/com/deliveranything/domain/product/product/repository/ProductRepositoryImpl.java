@@ -1,6 +1,11 @@
 package com.deliveranything.domain.product.product.repository;
 
+import com.deliveranything.domain.product.product.dto.ProductSearchRequest;
+import com.deliveranything.domain.product.product.entity.Product;
+import com.deliveranything.domain.product.product.entity.QProduct;
+import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -8,8 +13,6 @@ import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.StringUtils;
-
-import java.util.List;
 
 @Repository
 @RequiredArgsConstructor

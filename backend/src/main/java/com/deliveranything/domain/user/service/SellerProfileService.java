@@ -1,6 +1,5 @@
 package com.deliveranything.domain.user.service;
 
-import com.deliveranything.domain.user.client.StoreClient;
 import com.deliveranything.domain.user.entity.User;
 import com.deliveranything.domain.user.entity.profile.Profile;
 import com.deliveranything.domain.user.entity.profile.SellerProfile;
@@ -22,7 +21,6 @@ public class SellerProfileService {
   private final UserRepository userRepository;
   private final ProfileRepository profileRepository;
   private final SellerProfileRepository sellerProfileRepository;
-  private final StoreClient storeClient; // 외부 서비스와 통신하는 클라이언트
 
   // ========== 판매자 프로필 관리 ==========
 
@@ -75,15 +73,6 @@ public class SellerProfileService {
 
     SellerProfile saved = sellerProfileRepository.save(sellerProfile);
     log.info("판매자 프로필 생성 완료: userId={}, profileId={}", userId, saved.getId());
-
-    // 프로필 생성과 동시에 StoreClient를 통한 상점 자동 생성
-    Long storeId = storeClient.createStoreForSeller(saved.getId(), businessName);
-    if (storeId != null) {
-      log.info("판매자용 상점 생성 완료: profileId={}, storeId={}", saved.getId(), storeId);
-    } else {
-      log.warn("판매자용 상점 생성 실패: profileId={}", saved.getId());
-      // 상점 생성 실패해도 SellerProfile은 유지
-    }
 
     return saved;
   }
