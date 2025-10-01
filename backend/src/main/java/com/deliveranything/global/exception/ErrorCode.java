@@ -59,6 +59,8 @@ public enum ErrorCode {
   STOCK_CHANGE_INVALID(HttpStatus.BAD_REQUEST, "STOCK-400", "재고 변경 수량이 유효하지 않습니다."),
   STOCK_CHANGE_CONFLICT(HttpStatus.CONFLICT, "STOCK-409", "재고 변경 충돌이 발생했습니다. 다시 시도해주세요."),
 
+  // 정산 관련 오류
+  SETTLEMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "SETTLEMENT-404", "정산된 정보를 찾을 수 없습니다."),
 
   // ------- 공통 오류 ---------
 
@@ -71,8 +73,6 @@ public enum ErrorCode {
   // 권한 오류
   PERMISSION_DENIED(HttpStatus.FORBIDDEN, "AUTH-403", "권한이 없어 요청을 수행할 수 없습니다."),
   ROLE_NOT_ALLOWED(HttpStatus.FORBIDDEN, "AUTH-405", "해당 역할로는 접근할 수 없습니다.");
-
-  //
 
   private final HttpStatus httpStatus;
   private final String code;

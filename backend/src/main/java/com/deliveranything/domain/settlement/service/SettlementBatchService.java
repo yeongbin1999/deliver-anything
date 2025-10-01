@@ -1,12 +1,17 @@
 package com.deliveranything.domain.settlement.service;
 
+import com.deliveranything.domain.settlement.dto.SettlementResponse;
 import com.deliveranything.domain.settlement.entity.SettlementBatch;
 import com.deliveranything.domain.settlement.entity.SettlementDetail;
 import com.deliveranything.domain.settlement.enums.SettlementStatus;
+import com.deliveranything.domain.settlement.enums.TargetType;
 import com.deliveranything.domain.settlement.repository.SettlementBatchRepository;
 import com.deliveranything.domain.settlement.repository.SettlementDetailRepository;
 import com.deliveranything.domain.settlement.service.dto.SettlementSummary;
 import com.deliveranything.domain.settlement.service.dto.TargetInfo;
+import com.deliveranything.domain.user.enums.ProfileType;
+import com.deliveranything.global.exception.CustomException;
+import com.deliveranything.global.exception.ErrorCode;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
@@ -23,6 +28,18 @@ public class SettlementBatchService {
 
   private final SettlementDetailRepository settlementDetailRepository;
   private final SettlementBatchRepository settlementBatchRepository;
+
+  public List<SettlementResponse> getSettlements(Long targetId, ProfileType profileType) {
+    return settlementBatchRepository.findAllByTargetIdAndTargetType(targetId,
+            profileType == ProfileType.SELLER ? TargetType.SELLER : TargetType.RIDER).stream()
+        .map(SettlementResponse::from)
+        .toList();
+  }
+
+  public SettlementResponse getSettlement(Long settlementId) {
+    return SettlementResponse.from(settlementBatchRepository.findById(settlementId)
+        .orElseThrow(() -> new CustomException(ErrorCode.SETTLEMENT_NOT_FOUND)));
+  }
 
   // "초 분 시 일 월 요일"
   // "0 0 0 * * *" 매일 0시 0분 0초에 실행
@@ -61,6 +78,7 @@ public class SettlementBatchService {
           .targetType(targetInfo.targetType())
           .targetTotalAmount(summary.totalTargetAmount())
           .totalPlatformFee(summary.totalPlatformFee())
+          .settledAmount(summary.totalTargetAmount().subtract(summary.totalPlatformFee()))
           .transactionCount(summary.transactionCount())
           .build();
 
