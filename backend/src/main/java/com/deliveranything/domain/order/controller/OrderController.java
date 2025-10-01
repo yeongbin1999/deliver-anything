@@ -12,7 +12,6 @@ import com.deliveranything.global.common.ApiResponse;
 import com.deliveranything.global.common.CursorPageResponse;
 import com.deliveranything.global.exception.CustomException;
 import com.deliveranything.global.exception.ErrorCode;
-import com.deliveranything.global.rq.Rq;
 import com.deliveranything.global.security.SecurityUser;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
@@ -31,8 +30,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/orders")
 @RestController
 public class OrderController {
-
-  private final Rq rq;
 
   private final OrderService orderService;
 
