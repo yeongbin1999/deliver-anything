@@ -10,7 +10,7 @@ import com.deliveranything.domain.user.enums.ProfileType;
 import com.deliveranything.global.common.ApiResponse;
 import com.deliveranything.global.exception.CustomException;
 import com.deliveranything.global.exception.ErrorCode;
-import com.deliveranything.global.security.SecurityUser;
+import com.deliveranything.global.security.auth.SecurityUser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;

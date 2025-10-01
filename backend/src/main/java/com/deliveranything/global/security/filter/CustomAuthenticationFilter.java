@@ -1,4 +1,4 @@
-package com.deliveranything.global.security;
+package com.deliveranything.global.security.filter;
 
 import com.deliveranything.domain.user.entity.User;
 import com.deliveranything.domain.user.entity.profile.Profile;
@@ -11,7 +11,8 @@ import com.deliveranything.domain.user.service.AuthTokenService;
 import com.deliveranything.global.common.ApiResponse;
 import com.deliveranything.global.exception.CustomException;
 import com.deliveranything.global.exception.ErrorCode;
-import com.deliveranything.standard.util.Ut;
+import com.deliveranything.global.security.auth.SecurityUser;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -21,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -38,10 +40,11 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
   private final ProfileRepository profileRepository;
   private final RefreshTokenRepository refreshTokenRepository;
   private final AuthTokenService authTokenService;
+  private final ObjectMapper objectMapper;
 
   @Override
-  protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
-      FilterChain filterChain) throws ServletException, IOException {
+  protected void doFilterInternal(HttpServletRequest request, @NonNull HttpServletResponse response,
+      @NonNull FilterChain filterChain) throws IOException {
 
     log.debug("Processing request for {}", request.getRequestURI());
 
@@ -270,6 +273,6 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
     response.setStatus(e.getHttpStatus().value());
 
     ApiResponse<Void> apiResponse = ApiResponse.fail(e.getCode(), e.getMessage());
-    response.getWriter().write(Ut.json.toString(apiResponse));
+    response.getWriter().write(objectMapper.writeValueAsString(apiResponse));
   }
 }

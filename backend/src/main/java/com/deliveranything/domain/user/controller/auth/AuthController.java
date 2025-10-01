@@ -9,7 +9,7 @@ import com.deliveranything.domain.user.entity.token.RefreshToken;
 import com.deliveranything.domain.user.enums.ProfileType;
 import com.deliveranything.domain.user.service.UserService;
 import com.deliveranything.global.common.ApiResponse;
-import com.deliveranything.global.rq.Rq;
+import com.deliveranything.global.common.Rq;
 import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;

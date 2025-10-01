@@ -11,7 +11,7 @@ import com.deliveranything.domain.review.dto.ReviewResponse;
 import com.deliveranything.domain.review.enums.MyReviewSortType;
 import com.deliveranything.domain.review.service.ReviewService;
 import com.deliveranything.global.common.ApiResponse;
-import com.deliveranything.global.security.SecurityUser;
+import com.deliveranything.global.security.auth.SecurityUser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;

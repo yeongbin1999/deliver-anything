@@ -1,9 +1,9 @@
-package com.deliveranything.global.rq;
+package com.deliveranything.global.common;
 
 import com.deliveranything.domain.user.entity.User;
 import com.deliveranything.domain.user.entity.profile.Profile;
 import com.deliveranything.domain.user.enums.ProfileType;
-import com.deliveranything.global.security.SecurityUser;
+import com.deliveranything.global.security.auth.SecurityUser;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

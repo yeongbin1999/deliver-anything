@@ -1,4 +1,4 @@
-package com.deliveranything.global.security;
+package com.deliveranything.global.security.auth;
 
 import com.deliveranything.domain.user.entity.profile.Profile;
 import com.deliveranything.domain.user.enums.ProfileType;

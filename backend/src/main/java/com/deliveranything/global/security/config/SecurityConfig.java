@@ -1,8 +1,8 @@
-package com.deliveranything.global.config;
+package com.deliveranything.global.security.config;
 
-import com.deliveranything.global.common.ApiResponse;
-import com.deliveranything.global.security.CustomAuthenticationFilter;
-import com.deliveranything.standard.util.Ut;
+import com.deliveranything.global.security.filter.CustomAuthenticationFilter;
+import com.deliveranything.global.security.handler.CustomAccessDeniedHandler;
+import com.deliveranything.global.security.handler.CustomAuthenticationEntryPoint;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -12,17 +12,21 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
-@EnableMethodSecurity(prePostEnabled = true) // @PreAuthorize 활성화
+@EnableMethodSecurity(prePostEnabled = true)
 @RequiredArgsConstructor
 public class SecurityConfig {
 
   private final CustomAuthenticationFilter customAuthenticationFilter;
+  private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
+  private final CustomAccessDeniedHandler customAccessDeniedHandler;
 
   @Bean
   public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -88,34 +92,13 @@ public class SecurityConfig {
 
         // 예외 처리
         .exceptionHandling(exceptionHandling -> exceptionHandling
-            .authenticationEntryPoint((request, response, authException) -> {
-              response.setContentType("application/json;charset=UTF-8");
-              response.setStatus(401);
-
-              ApiResponse<Void> apiResponse = ApiResponse.fail(
-                  "AUTH-401",
-                  "로그인 후 이용해주세요."
-              );
-              response.getWriter().write(Ut.json.toString(apiResponse));
-            })
-            .accessDeniedHandler((request, response, accessDeniedException) -> {
-              response.setContentType("application/json;charset=UTF-8");
-              response.setStatus(403);
-
-              ApiResponse<Void> apiResponse = ApiResponse.fail(
-                  "AUTH-403",
-                  "해당 기능을 사용할 권한이 없습니다. 프로필을 확인해주세요."
-              );
-              response.getWriter().write(Ut.json.toString(apiResponse));
-            })
+            .authenticationEntryPoint(customAuthenticationEntryPoint)
+            .accessDeniedHandler(customAccessDeniedHandler)
         );
 
     return http.build();
   }
 
-  /**
-   * CORS 설정
-   */
   @Bean
   public UrlBasedCorsConfigurationSource corsConfigurationSource() {
     CorsConfiguration configuration = new CorsConfiguration();
@@ -125,6 +108,7 @@ public class SecurityConfig {
         "http://localhost:3000",    // React 개발 서버
         "http://localhost:8080",    // Spring Boot 서버
         "https://*.deliver-anything.shop",  // 배포 도메인
+        "https://deliver-anything.shop",
         "https://cdpn.io"          // CodePen 테스트
     ));
 
@@ -139,5 +123,10 @@ public class SecurityConfig {
     source.registerCorsConfiguration("/api/**", configuration);
 
     return source;
+  }
+
+  @Bean
+  public PasswordEncoder passwordEncoder() {
+    return new BCryptPasswordEncoder();
   }
 }
