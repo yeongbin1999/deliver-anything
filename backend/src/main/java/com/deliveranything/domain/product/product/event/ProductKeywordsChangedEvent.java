@@ -1,11 +1,8 @@
 package com.deliveranything.domain.product.product.event;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+public record ProductKeywordsChangedEvent(
+    Long storeId,
+    Long productId
+) {
 
-@Getter
-@RequiredArgsConstructor
-public class ProductKeywordsChangedEvent {
-    private final Long storeId;
-    private final Long productId;
 }
