@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -21,7 +20,6 @@ public class NotificationService {
 
   private final NotificationRepository notificationRepository;
   private final EmitterRepository emitterRepository;
-  private final RedisTemplate<String, Object> redisTemplate;
 
   /**
    * 프로필 ID 기준 알림 생성 및 모든 디바이스 전송

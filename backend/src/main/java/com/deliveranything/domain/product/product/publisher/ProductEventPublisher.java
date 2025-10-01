@@ -1,4 +1,4 @@
-package com.deliveranything.global.publisher;
+package com.deliveranything.domain.product.product.publisher;
 
 import com.deliveranything.domain.product.product.event.ProductKeywordsChangedEvent;
 import lombok.RequiredArgsConstructor;

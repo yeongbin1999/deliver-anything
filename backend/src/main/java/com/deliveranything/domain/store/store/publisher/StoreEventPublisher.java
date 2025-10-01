@@ -1,4 +1,4 @@
-package com.deliveranything.global.publisher;
+package com.deliveranything.domain.store.store.publisher;
 
 import com.deliveranything.domain.store.store.event.StoreDeletedEvent;
 import com.deliveranything.domain.store.store.event.StoreSavedEvent;
