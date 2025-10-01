@@ -2,13 +2,15 @@ package com.deliveranything.domain.auth.controller;
 
 import com.deliveranything.domain.auth.dto.LoginRequest;
 import com.deliveranything.domain.auth.dto.LoginResponse;
+import com.deliveranything.domain.auth.dto.RefreshTokenRequest;
+import com.deliveranything.domain.auth.dto.RefreshTokenResponse;
 import com.deliveranything.domain.auth.dto.SignupRequest;
 import com.deliveranything.domain.auth.dto.SignupResponse;
 import com.deliveranything.domain.auth.service.AuthService;
+import com.deliveranything.domain.auth.service.TokenService;
 import com.deliveranything.domain.user.profile.enums.ProfileType;
 import com.deliveranything.domain.user.profile.service.ProfileService;
 import com.deliveranything.domain.user.user.entity.User;
-import com.deliveranything.domain.user.user.service.UserService;
 import com.deliveranything.global.common.ApiResponse;
 import com.deliveranything.global.common.Rq;
 import com.deliveranything.global.util.UserAgentUtil;
@@ -31,7 +33,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
   private final AuthService authService;
-  private final UserService userService;
+  private final TokenService tokenService;
   private final ProfileService profileService;
   private final UserAgentUtil userAgentUtil;
 
@@ -113,5 +115,29 @@ public class AuthController {
     rq.deleteCookie("apiKey");
 
     return ResponseEntity.ok(ApiResponse.success("로그아웃이 완료되었습니다.", null));
+  }
+
+  /**
+   * 토큰 재발급 POST /api/v1/auth/refresh
+   */
+  @PostMapping("/refresh")
+  public ResponseEntity<ApiResponse<RefreshTokenResponse>> refreshToken(
+      @Valid @RequestBody RefreshTokenRequest request) {
+
+    log.info("Access Token 재발급 요청");
+
+    // TokenService를 통해 새 Access Token 발급
+    String newAccessToken = tokenService.refreshAccessToken(request.refreshToken());
+
+    RefreshTokenResponse response = RefreshTokenResponse.builder()
+        .accessToken(newAccessToken)
+        .build();
+
+    // 쿠키 + 응답 헤더에도 설정
+    rq.setAccessToken(newAccessToken);
+
+    return ResponseEntity.ok(
+        ApiResponse.success("토큰이 재발급되었습니다.", response)
+    );
   }
 }
