@@ -1,5 +1,9 @@
 package com.deliveranything.domain.review.service;
 
+import com.deliveranything.domain.notification.entity.Notification;
+import com.deliveranything.domain.notification.enums.NotificationType;
+import com.deliveranything.domain.notification.repository.NotificationRepository;
+import com.deliveranything.domain.notification.service.NotificationService;
 import com.deliveranything.domain.review.dto.ReviewCreateRequest;
 import com.deliveranything.domain.review.dto.ReviewCreateResponse;
 import com.deliveranything.domain.review.dto.ReviewLikeResponse;
@@ -29,7 +33,9 @@ import com.deliveranything.global.util.CursorUtil;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.connection.ReturnType;
@@ -51,6 +57,7 @@ public class ReviewService {
   private final RedisTemplate<String, Object> redisTemplate;
   private final StoreService storeService;
   private final CustomerProfileService customerProfileService;
+  private final NotificationRepository notificationRepository;
 
   //============================메인 API 메서드==================================
   /* 리뷰 생성 */
@@ -83,6 +90,26 @@ public class ReviewService {
     //사진 URL 리스트 반환
     List<String> reviewPhotoUrls = getReviewPhotoUrlList(review);
     log.info("리뷰 생성 성공 - reviewId: {}, userId: {}", review.getId(), userId);
+
+    // 알림용 Redis 저장
+    NotificationType type = NotificationType.NEW_REVIEW;
+    String reviewNotificationKey = "notifications:hourly:profile:" + review.getTargetId();
+
+    redisTemplate.opsForHash().increment(reviewNotificationKey, type, 1);
+
+    // 2시간 후 자동 삭제
+    redisTemplate.expire(reviewNotificationKey, 2, TimeUnit.HOURS);
+
+    Map<String, Object> data = Map.of("reviewId", review.getId());
+
+    // 알림용 Notification 객체 저장
+    Notification notification = new Notification();
+    notification.setRecipientId(review.getTargetId());
+    notification.setType(NotificationType.NEW_REVIEW);
+    notification.setMessage("새 리뷰가 도착했습니다.");
+    notification.setData(data.toString());
+
+    notificationRepository.save(notification);
 
     return ReviewCreateResponse.from(review, reviewPhotoUrls, customerProfile);
   }
@@ -373,7 +400,6 @@ public class ReviewService {
       String cursor, int size) {
     log.info("상점 리뷰 리스트 조회 요청 - storeId: {}, sort: {}, cursor: {}, size: {}", storeId, sort, cursor,
         size);
-    Store store = storeService.findById(storeId);
 
     String[] decodedCursor = CursorUtil.decode(cursor);
 
