@@ -17,7 +17,7 @@ public class RedisConfig {
 
   @Bean
   public LettuceConnectionFactory redisConnectionFactory() {
-    return new LettuceConnectionFactory(); // application.yml 기반으로 host/port 세팅
+    return new LettuceConnectionFactory();
   }
 
   @Bean
@@ -38,10 +38,11 @@ public class RedisConfig {
     return new StringRedisTemplate(connectionFactory);
   }
 
-  // Redis Pub/Sub용 추가
+  // Redis Pub/Sub 컨테이너만 글로벌에서 제공 (구독은 도메인에서)
   @Bean
   public RedisMessageListenerContainer redisMessageListenerContainer(
-      RedisConnectionFactory connectionFactory) {
+      RedisConnectionFactory connectionFactory
+  ) {
     RedisMessageListenerContainer container = new RedisMessageListenerContainer();
     container.setConnectionFactory(connectionFactory);
     return container;
