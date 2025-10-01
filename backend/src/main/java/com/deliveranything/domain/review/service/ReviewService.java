@@ -57,7 +57,6 @@ public class ReviewService {
   private final RedisTemplate<String, Object> redisTemplate;
   private final StoreService storeService;
   private final CustomerProfileService customerProfileService;
-  private final NotificationService notificationService;
   private final NotificationRepository notificationRepository;
 
   //============================메인 API 메서드==================================
@@ -93,25 +92,19 @@ public class ReviewService {
     log.info("리뷰 생성 성공 - reviewId: {}, userId: {}", review.getId(), userId);
 
     // 알림용 Redis 저장
-    User user  = userService.findById(userId);
-    String reviewNotificationKey = "notifications:hourly:" + user.getPhoneNumber();
-    String targetType = review.getTargetType().name();
-    redisTemplate.opsForHash().increment(reviewNotificationKey, targetType, 1);
+    NotificationType type = NotificationType.NEW_REVIEW;
+    String reviewNotificationKey = "notifications:hourly:profile:" + review.getTargetId();
+
+    redisTemplate.opsForHash().increment(reviewNotificationKey, type, 1);
 
     // 2시간 후 자동 삭제
     redisTemplate.expire(reviewNotificationKey, 2, TimeUnit.HOURS);
 
-    // 알림용 Notification 객체 저장
-    Long targetId = switch (targetType) {
-      case "STORE" -> storeService.findById(review.getTargetId()).getSellerProfileId();
-      case "RIDER" -> review.getTargetId();
-      default -> throw new CustomException(ErrorCode.REVIEW_INVALID_TARGET);
-    };
-
     Map<String, Object> data = Map.of("reviewId", review.getId());
 
+    // 알림용 Notification 객체 저장
     Notification notification = new Notification();
-    notification.setRecipientId(targetId);
+    notification.setRecipientId(review.getTargetId());
     notification.setType(NotificationType.NEW_REVIEW);
     notification.setMessage("새 리뷰가 도착했습니다.");
     notification.setData(data.toString());
@@ -407,7 +400,6 @@ public class ReviewService {
       String cursor, int size) {
     log.info("상점 리뷰 리스트 조회 요청 - storeId: {}, sort: {}, cursor: {}, size: {}", storeId, sort, cursor,
         size);
-    Store store = storeService.findById(storeId);
 
     String[] decodedCursor = CursorUtil.decode(cursor);
 

@@ -25,7 +25,7 @@ public record ReviewCreateRequest(
     @NotNull
     ReviewTargetType targetType,
     @NotNull
-    @Schema(description = "리뷰 대상 id (상점 id or 배달원프로필 id)", example = "5")
+    @Schema(description = "리뷰 대상 프로필 id", example = "5")
     Long targetId
 ) {
 

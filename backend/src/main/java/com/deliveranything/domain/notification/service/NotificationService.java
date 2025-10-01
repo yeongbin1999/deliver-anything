@@ -4,8 +4,6 @@ import com.deliveranything.domain.notification.entity.Notification;
 import com.deliveranything.domain.notification.enums.NotificationType;
 import com.deliveranything.domain.notification.repository.EmitterRepository;
 import com.deliveranything.domain.notification.repository.NotificationRepository;
-import com.deliveranything.domain.user.entity.User;
-import com.deliveranything.domain.user.service.UserService;
 import jakarta.transaction.Transactional;
 import java.io.IOException;
 import java.util.List;
@@ -23,7 +21,6 @@ public class NotificationService {
 
   private final NotificationRepository notificationRepository;
   private final EmitterRepository emitterRepository;
-  private final UserService userService;
   private final RedisTemplate<String, Object> redisTemplate;
 
   /**
@@ -124,9 +121,15 @@ public class NotificationService {
   public void decreaseRedisCount(Long notificationId, Long profileId) {
     Notification notification = notificationRepository.findById(notificationId)
         .orElseThrow(() -> new IllegalArgumentException("Notification not found"));
-    User user = userService.findByProfileId(profileId);
-    String key = "notifications:hourly:" + user.getPhoneNumber();
+
+    String key = "notifications:hourly:profile:" + profileId;
     String field = notification.getType().name();
-    redisTemplate.opsForHash().increment(key, field, -1);
+
+    Long current = (Long) redisTemplate.opsForHash().get(key, field);
+    if (current != null && current > 0) {
+      redisTemplate.opsForHash().increment(key, field, -1);
+    } else {
+      redisTemplate.opsForHash().put(key, field, 0);
+    }
   }
 }

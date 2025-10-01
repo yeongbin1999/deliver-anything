@@ -1,13 +1,11 @@
 package com.deliveranything.domain.notification.scheduler;
 
-import com.deliveranything.domain.notification.repository.NotificationRepository;
-import com.deliveranything.domain.notification.service.NotificationService;
-import com.deliveranything.domain.review.repository.ReviewRepository;
 import com.deliveranything.domain.user.entity.User;
-import com.deliveranything.domain.user.repository.RiderProfileRepository;
-import com.deliveranything.domain.user.repository.SellerProfileRepository;
+import com.deliveranything.domain.user.entity.profile.Profile;
+import com.deliveranything.domain.user.enums.ProfileType;
+import com.deliveranything.domain.user.repository.ProfileRepository;
 import com.deliveranything.domain.user.repository.UserRepository;
-import com.deliveranything.domain.user.service.UserService;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -21,53 +19,79 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class NotificationScheduler {
 
-  private final NotificationService notificationService;
-  private final ReviewRepository reviewRepository;
-  private final SellerProfileRepository sellerProfileRepository;
-  private final RiderProfileRepository riderProfileRepository;
   private final UserRepository userRepository;
-  private final UserService userService;
-  private final NotificationRepository notificationRepository;
+  private final ProfileRepository profileRepository;
   private final RedisTemplate<String, String> redisTemplate;
+  private final SmsService smsService;
 
   // 1시간마다 실행
   @Scheduled(cron = "0 0 * * * *")
   public void sendReviewNotificationsHourly() {
-    log.info("1시간 리뷰 알림 스케줄 시작");
+    log.info("===== 1시간 알림 스케줄 시작 =====");
 
-    // 1. SMS 발송 대상 사용자 조회
-    List<User> allUsers = userService.findAllSellersAndRiders();
+    // 1. SMS 발송 대상 사용자 조회 (판매자 + 라이더 등)
+    List<User> allUsers = userRepository.findAll();
 
     for (User user : allUsers) {
-      String redisKey = "notifications:hourly:" + user.getPhoneNumber();
+      // 유저가 가진 모든 프로필 조회
+      List<Profile> profiles = profileRepository.findAllByUser(user);
 
-      // 2. Redis 에서 targetType별 알림 수 조회
-      Map<Object, Object> counts = redisTemplate.opsForHash().entries(redisKey);
+      Map<String, Integer> totalCounts = new HashMap<>();
 
-      if (!counts.isEmpty()) {
-        // 3. SMS 메시지 생성
-        StringBuilder message = new StringBuilder("지난 1시간 동안 새 리뷰: ");
-        counts.forEach((type, count) -> message.append(type).append(" ").append(count).append("건, "));
+      for (Profile profile : profiles) {
+        String redisKey = "notifications:hourly:profile:" + profile.getId();
+
+        // 2. Redis 에서 해당 프로필의 알림 카운트 조회
+        Map<Object, Object> counts = redisTemplate.opsForHash().entries(redisKey);
+
+        counts.forEach((type, count) -> {
+          int value = count != null ? Integer.parseInt(count.toString()) : 0;
+          String key = type.toString() + ":" + profile.getType().name();
+          totalCounts.merge(key, value, Integer::sum);
+        });
+
+        // 3. 한 프로필 처리 후 Redis 초기화
+        if (!counts.isEmpty()) {
+          redisTemplate.delete(redisKey);
+        }
+      }
+
+      // 4. 합산된 결과로 SMS 발송
+      if (!totalCounts.isEmpty()) {
+        StringBuilder message = new StringBuilder("지난 1시간 동안 새 알림: ");
+
+        totalCounts.forEach((key, count) -> {
+          String[] parts = key.split(":");
+          String type = parts[0];
+          String profileType = parts[1];
+          String displayType = switch (type) {
+            case "NEW_REVIEW" -> displayType = "리뷰";
+            // 1시간 집계 알림 확장 시 추가 요망
+            default -> displayType = type;
+          };
+
+          message.append(displayType)
+              .append("(")
+              .append(profileType)
+              .append(") ")
+              .append(count)
+              .append("건, ");
+        });
 
         // 마지막 쉼표 제거
-        if (message.charAt(message.length() - 2) == ',') {
+        if (message.length() > 2) {
           message.setLength(message.length() - 2);
         }
 
         try {
-          // 4. SMS 발송
           smsService.sendSms(user.getPhoneNumber(), message.toString());
           log.info("SMS 전송 완료: {}, 내용: {}", user.getPhoneNumber(), message);
-
-          // 5. Redis 초기화 (중복 방지)
-          redisTemplate.delete(redisKey);
-
         } catch (Exception e) {
           log.error("SMS 전송 실패: {}", user.getPhoneNumber(), e);
         }
       }
     }
 
-    log.info("===== 1시간 단위 리뷰 알림 스케줄러 종료 =====");
+    log.info("===== 1시간 단위 알림 스케줄러 종료 =====");
   }
 }
