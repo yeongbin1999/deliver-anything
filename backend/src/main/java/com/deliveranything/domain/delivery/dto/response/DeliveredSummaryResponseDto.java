@@ -5,6 +5,9 @@ import lombok.Builder;
 
 @Builder
 public record DeliveredSummaryResponseDto(
+    Long thisWeekDeliveredCount,
+    Integer waitingSettlementAmount,
+    Integer completedSettlementAmount,
     CursorPageResponse<DeliveredDetailsDto> deliveredDetails
 ) {
 
