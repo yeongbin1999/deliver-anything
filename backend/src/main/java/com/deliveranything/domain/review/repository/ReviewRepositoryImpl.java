@@ -26,12 +26,11 @@ public class ReviewRepositoryImpl implements ReviewRepositoryCustom {
       String[] cursor,
       int pageSize) {
     QReview review = QReview.review;
-    QStore store = QStore.store;
 
     // profileType에 따른 조건
     BooleanExpression profileCondition = switch (profileType) {
       case CUSTOMER -> review.customerProfile.id.eq(profileId);
-      case SELLER -> review.targetId.eq(store.id)
+      case SELLER -> review.targetId.eq(profileId)
           .and(review.targetType.eq(ReviewTargetType.STORE));
       case RIDER -> review.targetId.eq(profileId)
           .and(review.targetType.eq(ReviewTargetType.RIDER));
