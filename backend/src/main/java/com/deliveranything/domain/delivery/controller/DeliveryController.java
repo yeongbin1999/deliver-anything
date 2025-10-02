@@ -7,6 +7,7 @@ import com.deliveranything.domain.delivery.dto.request.RiderToggleStatusRequestD
 import com.deliveranything.domain.delivery.dto.response.CurrentDeliveringDetailsDto;
 import com.deliveranything.domain.delivery.dto.response.CurrentDeliveringResponseDto;
 import com.deliveranything.domain.delivery.dto.response.DeliveredSummaryResponseDto;
+import com.deliveranything.domain.delivery.dto.response.DeliverySettlementResponseDto;
 import com.deliveranything.domain.delivery.dto.response.TodayDeliveringResponseDto;
 import com.deliveranything.domain.delivery.enums.DeliveryStatus;
 import com.deliveranything.domain.delivery.service.DeliveryService;
@@ -155,6 +156,25 @@ public class DeliveryController {
       @RequestParam(required = false, defaultValue = "10") Integer size
   ) {
     DeliveredSummaryResponseDto response = deliveryService.getDeliveredSummary(
+        user.getCurrentActiveProfileIdSafe(),
+        filter,
+        cursor,
+        size
+    );
+    return ResponseEntity.ok(ApiResponse.success(response));
+  }
+
+  @GetMapping("/settlement")
+  @Operation(summary = "배달 완료된 건의 정산 금액 조회",
+      description = "라이더의 배달 완료된 건의 총/이번주/이번달 정산 금액을 조회합니다."
+          + " filter: WEEK(이번주), MONTH(이번달)")
+  public ResponseEntity<ApiResponse<DeliverySettlementResponseDto>> getSettlementAmount(
+      @AuthenticationPrincipal SecurityUser user,
+      @RequestParam(required = false, defaultValue = "WEEK") String filter,
+      @RequestParam(required = false) String cursor,
+      @RequestParam(required = false, defaultValue = "10") Integer size
+  ) {
+    DeliverySettlementResponseDto response = deliveryService.getDeliverySettlementInfo(
         user.getCurrentActiveProfileIdSafe(),
         filter,
         cursor,
