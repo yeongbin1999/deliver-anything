@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   deploy:
-    if: github.repository == 'yeongbin1999/deliver-anything'
+    if: github.repository == 'yeongbin1999/delivery-anything'
     runs-on: ubuntu-latest
 
     env:
