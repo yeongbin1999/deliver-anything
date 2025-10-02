@@ -165,7 +165,7 @@ jobs:
             # 기존 INACTIVE 컨테이너 제거
             docker stop $NEW_CONTAINER || true
             docker rm $NEW_CONTAINER || true
-
+            
             # 새 컨테이너 실행
             docker run -d --name $NEW_CONTAINER \
               --network common \
