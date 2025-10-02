@@ -14,17 +14,18 @@ public enum ErrorCode {
 
   // 유저 관련 오류
   USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER-404", "사용자를 찾을 수 없습니다."),
+  USER_EMAIL_ALREADY_EXIST(HttpStatus.CONFLICT, "USER-409", "이미 존재하는 이메일 입니다."),
+  USER_PHONE_ALREADY_EXIST(HttpStatus.CONFLICT, "USER-409", "이미 존재하는 핸드폰 번호 입니다."),
   SELLER_PROFILE_NOT_FOUND(HttpStatus.NOT_FOUND, "SELLER-404", "판매자 프로필을 찾을 수 없습니다."),
 
   // 인가 관련 오류
-  PROFILE_TYPE_FORBIDDEN(HttpStatus.FORBIDDEN, "AUTH-403", "해당 프로필 유형으로는 접근할 수 없습니다."),
+  PROFILE_NOT_ALLOWED(HttpStatus.FORBIDDEN, "AUTH-403", "해당 프로필로 사용할 권한이 없습니다."),
 
   // 배달/라이더 관련 오류
   RIDER_NOT_FOUND(HttpStatus.NOT_FOUND, "RIDER-404", "라이더를 찾을 수 없습니다."),
   DELIVERY_NOT_AVAILABLE_IN_PROGRESS(HttpStatus.CONFLICT, "DELIVERY-409",
       "현재 배달 진행 중이므로 해당 작업을 수행할 수 없습니다."),
   DELIVERY_NOT_FOUND(HttpStatus.NOT_FOUND, "DELIVERY-404", "배달을 찾을 수 없습니다."),
-  NO_ACTIVE_DELIVERY(HttpStatus.NOT_FOUND, "DELIVERY-405", "진행 중인 배달이 없습니다."),
 
   // 리뷰 관련 오류
   REVIEW_NO_PERMISSION(HttpStatus.FORBIDDEN, "REVIEW-403", "리뷰를 관리할 권한이 없습니다."),
@@ -74,11 +75,7 @@ public enum ErrorCode {
 
   // Redis 관련 오류
   REDIS_MESSAGE_PROCESSING_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "REDIS-500",
-      "Redis 메시지 처리 중 오류가 발생했습니다."),
-
-  // 권한 오류
-  PERMISSION_DENIED(HttpStatus.FORBIDDEN, "AUTH-403", "권한이 없어 요청을 수행할 수 없습니다."),
-  ROLE_NOT_ALLOWED(HttpStatus.FORBIDDEN, "AUTH-405", "해당 역할로는 접근할 수 없습니다.");
+      "Redis 메시지 처리 중 오류가 발생했습니다.");
 
   private final HttpStatus httpStatus;
   private final String code;
