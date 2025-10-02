@@ -79,6 +79,7 @@ docker run -d \
   --name redis \
   --restart unless-stopped \
   --network common \
+  -p 6379:6379
   -e TZ=${timezone} \
   -v /dockerProjects/redis/volumes/data:/data \
   -u 999:999 \

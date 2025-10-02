@@ -1,7 +1,4 @@
 spring:
-  autoconfigure:
-    exclude:
-
   jpa:
     database-platform: org.hibernate.dialect.MySQLDialect
   datasource:
@@ -9,6 +6,7 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
     username: ${MYSQL_USERNAME}
     password: ${MYSQL_PASSWORD}
+
   data:
     redis:
       host: ${REDIS_HOST}

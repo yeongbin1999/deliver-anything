@@ -9,6 +9,8 @@ on:
       - "backend/**"
       - "infra/docker/**"
 
+  workflow_dispatch: {}
+
 jobs:
   deploy:
     if: github.repository == 'yeongbin1999/deliver-anything'
@@ -126,10 +128,10 @@ jobs:
               -p $PORT_INACTIVE:8080 \
               $IMAGE
 
-            # 초기 딜레이 (Spring Boot 기동 대기)
+            # 초기 딜레이
             sleep 20
 
-            # --- 헬스체크 (컨테이너 내부 기준) ---
+            # --- 헬스체크 (컨테이너 이름 기준) ---
             echo "⏱ Waiting for $NEW_CONTAINER to become healthy..."
             HEALTH_OK=false
             TIMEOUT=120
@@ -171,7 +173,7 @@ jobs:
               -H "Authorization: Bearer $TOKEN" \
               -H "Content-Type: application/json" \
               -d "$NEW_CONFIG"
-              
+
             # 이전 ACTIVE 컨테이너 제거
             if [ "$ACTIVE" != "none" ]; then
               docker stop backend-$ACTIVE || true

@@ -1,6 +1,6 @@
 spring:
   application:
-    name: buddy-backend
+    name: deliver-anything
 
   config:
     import: optional:file:.env   # .env 파일에서 환경변수 불러오기
@@ -91,7 +91,7 @@ oauth2:
 
 toss:
   payments:
-    secret-key: ${TOSS_SECRET_KEY:임시키}
+    secret-key: ${YOUR_TEST_SECRET_KEY:임시키}
     toss-url: https://api.tosspayments.com
 
 kakao:
