@@ -1,7 +1,7 @@
 package com.deliveranything.domain.store.block.entity;
 
 import com.deliveranything.domain.store.store.entity.Store;
-import com.deliveranything.domain.user.entity.profile.CustomerProfile;
+import com.deliveranything.domain.user.profile.entity.CustomerProfile;
 import com.deliveranything.global.entity.BaseEntity;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;

@@ -14,7 +14,9 @@ public enum ErrorCode {
 
   // 유저 관련 오류
   USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER-404", "사용자를 찾을 수 없습니다."),
-
+  USER_EMAIL_ALREADY_EXIST(HttpStatus.CONFLICT, "USER-409", "이미 존재하는 이메일 입니다."),
+  USER_PHONE_ALREADY_EXIST(HttpStatus.CONFLICT, "USER-409", "이미 존재하는 핸드폰 번호 입니다."),
+  
   // 인가 관련 오류
   PROFILE_TYPE_FORBIDDEN(HttpStatus.FORBIDDEN, "AUTH-403", "해당 프로필 유형으로는 접근할 수 없습니다."),
 
@@ -61,7 +63,9 @@ public enum ErrorCode {
   STOCK_CHANGE_CONFLICT(HttpStatus.CONFLICT, "STOCK-409", "재고 변경 충돌이 발생했습니다. 다시 시도해주세요."),
 
   // 정산 관련 오류
-  SETTLEMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "SETTLEMENT-404", "정산된 정보를 찾을 수 없습니다."),
+  SETTLEMENT_BATCH_NOT_FOUND(HttpStatus.NOT_FOUND, "SETTLEMENT-BATCH-404", "일별 정산 정보를 찾을 수 없습니다."),
+  SETTLEMENT_DETAIL_NOT_FOUND(HttpStatus.NOT_FOUND, "SETTLEMENT-DETAIL-404",
+      "세부 정산 정보를 찾을 수 없습니다."),
 
   // ------- 공통 오류 ---------
 
@@ -69,7 +73,8 @@ public enum ErrorCode {
   SSE_SUBSCRIBE_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, "SSE-503", "SSE 연결에 실패했습니다."),
 
   // Redis 관련 오류
-  REDIS_MESSAGE_PROCESSING_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "REDIS-500", "Redis 메시지 처리 중 오류가 발생했습니다."),
+  REDIS_MESSAGE_PROCESSING_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "REDIS-500",
+      "Redis 메시지 처리 중 오류가 발생했습니다."),
 
   // 권한 오류
   PERMISSION_DENIED(HttpStatus.FORBIDDEN, "AUTH-403", "권한이 없어 요청을 수행할 수 없습니다."),

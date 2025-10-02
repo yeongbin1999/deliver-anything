@@ -82,6 +82,9 @@ dependencies {
     // --- Kafka ---
     implementation("org.springframework.kafka:spring-kafka")
 
+    // --- User-Agent 파싱 ---
+    implementation("eu.bitwalker:UserAgentUtils:1.21")
+    
     // --- Test ---
     testImplementation("org.springframework.boot:spring-boot-starter-test") {
         exclude(group = "org.junit.vintage", module = "junit-vintage-engine")

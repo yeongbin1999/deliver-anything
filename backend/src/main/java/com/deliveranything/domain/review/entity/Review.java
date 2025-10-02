@@ -1,16 +1,13 @@
 package com.deliveranything.domain.review.entity;
 
 import com.deliveranything.domain.review.dto.ReviewCreateRequest;
-import com.deliveranything.domain.review.dto.ReviewCreateResponse;
 import com.deliveranything.domain.review.dto.ReviewUpdateRequest;
 import com.deliveranything.domain.review.enums.ReviewTargetType;
-import com.deliveranything.domain.user.entity.User;
-import com.deliveranything.domain.user.entity.profile.CustomerProfile;
+import com.deliveranything.domain.user.profile.entity.CustomerProfile;
 import com.deliveranything.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import lombok.AccessLevel;
 import lombok.Builder;

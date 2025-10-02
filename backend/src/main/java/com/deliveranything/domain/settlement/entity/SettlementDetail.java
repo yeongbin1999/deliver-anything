@@ -1,7 +1,6 @@
 package com.deliveranything.domain.settlement.entity;
 
 import com.deliveranything.domain.settlement.enums.SettlementStatus;
-import com.deliveranything.domain.settlement.enums.TargetType;
 import com.deliveranything.global.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -22,10 +21,6 @@ public class SettlementDetail extends BaseEntity {
   @Column(nullable = false)
   private Long orderId;
 
-  @Enumerated(EnumType.STRING)
-  @Column(nullable = false)
-  private TargetType targetType;
-
   @Column(nullable = false)
   private Long targetId;
 
@@ -42,10 +37,9 @@ public class SettlementDetail extends BaseEntity {
   private Long batchId;
 
   @Builder
-  public SettlementDetail(Long orderId, Long targetId, TargetType targetType,
-      BigDecimal targetAmount, BigDecimal platformFee) {
+  public SettlementDetail(Long orderId, Long targetId, BigDecimal targetAmount,
+      BigDecimal platformFee) {
     this.orderId = orderId;
-    this.targetType = targetType;
     this.targetId = targetId;
     this.targetAmount = targetAmount;
     this.platformFee = platformFee;
