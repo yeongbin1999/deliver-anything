@@ -91,7 +91,7 @@ oauth2:
 
 toss:
   payments:
-    secret-key: ${YOUR_TEST_SECRET_KEY:임시키}
+    secret-key: ${TOSS_SECRET_KEY:임시키}
     toss-url: https://api.tosspayments.com
 
 kakao:
