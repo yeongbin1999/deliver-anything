@@ -9,11 +9,6 @@ on:
       - "backend/**"
       - "infra/docker/**"
 
-permissions:
-  contents: write
-  packages: write
-  id-token: write
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -132,6 +127,8 @@ jobs:
 
             NEW_CONTAINER=backend-$INACTIVE
 
+            echo "🚀 Deploying $NEW_CONTAINER on port $PORT_INACTIVE"
+
             # --- 기존 INACTIVE 컨테이너 제거 ---
             docker stop $NEW_CONTAINER || true
             docker rm $NEW_CONTAINER || true
@@ -139,9 +136,10 @@ jobs:
             # --- 새 컨테이너 실행 ---
             docker run -d --name $NEW_CONTAINER \
               --network common \
-              -p $PORT_INACTIVE:8080 \
+              -p ${PORT_INACTIVE}:8080 \
               $IMAGE
 
+            echo "⏱ Sleeping 20s for initialization..."
             sleep 20
 
             # --- 헬스체크 ---
@@ -161,7 +159,7 @@ jobs:
             done
 
             if [ "$HEALTH_OK" = false ]; then
-              echo "❌ $NEW_CONTAINER did not pass health check."
+              echo "❌ $NEW_CONTAINER did not pass health check. Aborting deployment."
               docker stop $NEW_CONTAINER || true
               docker rm $NEW_CONTAINER || true
               exit 1
@@ -171,11 +169,13 @@ jobs:
             TOKEN=$(curl -s -X POST http://127.0.0.1:81/api/tokens \
               -H "Content-Type: application/json" \
               -d "{\"identity\": \"${NPM_ID}\", \"secret\": \"${NPM_PASSWORD}\"}" | jq -r '.token')
+            echo "✅ NPM Token acquired"
 
             # --- 프록시 ID 확인 ---
             PROXY_ID=$(curl -s -X GET "http://127.0.0.1:81/api/nginx/proxy-hosts" \
               -H "Authorization: Bearer $TOKEN" \
               | jq ".[] | select(.domain_names[]==\"${NPM_DOMAIN}\") | .id")
+            echo "✅ Proxy ID: $PROXY_ID"
 
             # --- 업스트림 전환 ---
             NEW_CONFIG=$(jq -n --arg host "$NEW_CONTAINER" --argjson port 8080 '{forward_host: $host, forward_port: $port}')
@@ -183,6 +183,7 @@ jobs:
               -H "Authorization: Bearer $TOKEN" \
               -H "Content-Type: application/json" \
               -d "$NEW_CONFIG"
+            echo "✅ Upstream updated"
 
             # --- 이전 ACTIVE 제거 ---
             if [ "$ACTIVE" != "none" ]; then
