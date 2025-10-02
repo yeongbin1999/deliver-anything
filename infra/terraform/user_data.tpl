@@ -20,20 +20,6 @@ usermod -aG docker ec2-user || true
 docker network create common || true
 
 # --- 디렉터리 생성 및 권한 설정 ---
-# Nginx Proxy Manager
-mkdir -p /dockerProjects/npm/volumes/data
-mkdir -p /dockerProjects/npm/volumes/etc/letsencrypt
-chown -R 1000:1000 /dockerProjects/npm/volumes
-
-# Redis
-mkdir -p /dockerProjects/redis/volumes/data
-chown -R 999:999 /dockerProjects/redis/volumes/data
-
-# MySQL
-mkdir -p /dockerProjects/mysql/volumes/var/lib/mysql
-mkdir -p /dockerProjects/mysql/volumes/etc/mysql/conf.d
-chown -R 999:999 /dockerProjects/mysql/volumes
-
 # Elasticsearch
 mkdir -p /dockerProjects/elasticsearch/volumes/data
 chown -R 1000:1000 /dockerProjects/elasticsearch/volumes/data
@@ -74,20 +60,17 @@ docker run -d \
   ${elasticsearch_image}
 
 # --- Redis ---
-docker rm -f redis || true
 docker run -d \
   --name redis \
   --restart unless-stopped \
   --network common \
-  -p 6379:6379
+  -p 6379:6379 \
   -e TZ=${timezone} \
   -v /dockerProjects/redis/volumes/data:/data \
-  -u 999:999 \
   ${redis_image} \
   redis-server --appendonly yes --requirepass ${default_password}
 
 # --- MySQL ---
-docker rm -f mysql || true
 docker run -d \
   --name mysql \
   --restart unless-stopped \
@@ -98,7 +81,6 @@ docker run -d \
   -e MYSQL_ROOT_PASSWORD=${default_password} \
   -v /dockerProjects/mysql/volumes/var/lib/mysql:/var/lib/mysql \
   -v /dockerProjects/mysql/volumes/etc/mysql/conf.d:/etc/mysql/conf.d \
-  -u 999:999 \
   ${mysql_image}
 
 # --- MySQL 준비 대기 ---

@@ -145,7 +145,7 @@ variable "mysql_image" {
 variable "elasticsearch_image" {
   description = "Elasticsearch 이미지"
   type        = string
-  default     = "docker.elastic.co/elasticsearch/elasticsearch:8.11.1"
+  default     = "docker.elastic.co/elasticsearch/elasticsearch:8.18.5"
 }
 
 variable "public_key_path" {

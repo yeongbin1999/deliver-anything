@@ -1,6 +1,5 @@
 plugins {
     java
-    // Spring Boot 플러그인 버전은 최신 안정 버전으로 유지 (요청에 따라 3.5.5 유지)
     id("org.springframework.boot") version "3.5.5"
     id("io.spring.dependency-management") version "1.1.7"
 }
@@ -30,8 +29,8 @@ dependencyManagement {
     }
 
     dependencies {
-        dependency("co.elastic.clients:elasticsearch-java:8.11.1")
-        dependency("org.elasticsearch.client:elasticsearch-rest-client:8.11.1")
+        dependency("co.elastic.clients:elasticsearch-java:8.18.5")
+        dependency("org.elasticsearch.client:elasticsearch-rest-client:8.18.5")
     }
 }
 
