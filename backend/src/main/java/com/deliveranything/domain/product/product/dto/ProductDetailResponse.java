@@ -3,7 +3,8 @@ package com.deliveranything.domain.product.product.dto;
 import com.deliveranything.domain.product.product.entity.Product;
 
 public record ProductDetailResponse(
-    Long id,
+    Long productId,
+    Long storeId,
     String name,
     String description,
     Integer price,
@@ -14,6 +15,7 @@ public record ProductDetailResponse(
   public static ProductDetailResponse from(Product product) {
     return new ProductDetailResponse(
         product.getId(),
+        product.getStore().getId(),
         product.getName(),
         product.getDescription(),
         product.getPrice(),

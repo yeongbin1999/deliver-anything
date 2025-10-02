@@ -38,7 +38,7 @@ public class OrderService {
   public OrderResponse createOrder(Long customerId, OrderCreateRequest orderCreateRequest) {
     Order order = Order.builder()
         .customer(customerProfileService.getProfile(customerId))
-        .store(storeService.getById(orderCreateRequest.storeId()))
+        .store(storeService.getStoreById(orderCreateRequest.storeId()))
         .address(orderCreateRequest.address())
         .riderNote(orderCreateRequest.riderNote())
         .storeNote(orderCreateRequest.storeNote())

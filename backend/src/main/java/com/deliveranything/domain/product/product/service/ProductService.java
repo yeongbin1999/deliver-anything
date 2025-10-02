@@ -24,7 +24,7 @@ public class ProductService {
 
   @Transactional
   public ProductResponse createProduct(Long storeId, ProductCreateRequest request) {
-    Store store = storeService.getById(storeId);
+    Store store = storeService.getStoreById(storeId);
 
     Product product = Product.builder()
         .store(store)
@@ -42,14 +42,16 @@ public class ProductService {
   }
 
   @Transactional
-  public void deleteProduct(Long productId) {
+  public void deleteProduct(Long storeId, Long productId) {
     Product product = productRepository.getById(productId);
+    product.validateStore(storeId);
     productRepository.delete(product);
   }
 
   @Transactional
-  public ProductResponse updateProduct(Long productId, ProductUpdateRequest request) {
+  public ProductResponse updateProduct(Long storeId, Long productId, ProductUpdateRequest request) {
     Product product = productRepository.getById(productId);
+    product.validateStore(storeId);
 
     String oldName = product.getName();
     String oldDescription = product.getDescription();
@@ -64,14 +66,15 @@ public class ProductService {
   }
 
   @Transactional(readOnly = true)
-  public ProductDetailResponse getProduct(Long productId) {
+  public ProductDetailResponse getProduct(Long storeId, Long productId) {
     Product product = productRepository.getById(productId);
+    product.validateStore(storeId);
     return ProductDetailResponse.from(product);
   }
 
   @Transactional(readOnly = true)
   public Slice<ProductResponse> searchProducts(Long storeId, ProductSearchRequest request) {
-    storeService.getById(storeId);
+    storeService.getStoreById(storeId);
 
     Slice<Product> results = productRepository.search(storeId, request);
 

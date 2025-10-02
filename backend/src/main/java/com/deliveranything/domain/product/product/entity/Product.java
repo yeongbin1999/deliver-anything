@@ -3,6 +3,8 @@ package com.deliveranything.domain.product.product.entity;
 import com.deliveranything.domain.product.stock.entity.Stock;
 import com.deliveranything.domain.store.store.entity.Store;
 import com.deliveranything.global.entity.BaseEntity;
+import com.deliveranything.global.exception.CustomException;
+import com.deliveranything.global.exception.ErrorCode;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
@@ -107,6 +109,12 @@ public class Product extends BaseEntity {
     }
     if (imageUrl != null) {
       this.imageUrl = imageUrl;
+    }
+  }
+
+  public void validateStore(Long storeId) {
+    if (!this.store.getId().equals(storeId)) {
+      throw new CustomException(ErrorCode.PRODUCT_STORE_MISMATCH);
     }
   }
 }

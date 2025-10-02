@@ -19,7 +19,7 @@ public class StoreSyncService {
 
   @Transactional(readOnly = true)
   public void handleSaved(Long storeId) {
-    Store store = storeService.getById(storeId);
+    Store store = storeService.getStoreById(storeId);
     StoreDocument doc = StoreDocument.from(store);
     storeSearchRepository.save(doc);
     log.info("Store (ID: {}) synchronized to ES.", storeId);

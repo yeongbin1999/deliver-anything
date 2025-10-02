@@ -55,7 +55,7 @@ public class StoreService {
 
   @Transactional
   public StoreResponse updateStore(Long storeId, StoreUpdateRequest request) {
-    Store store = this.getById(storeId);
+    Store store = this.getStoreById(storeId);
 
     StoreCategory storeCategory = null;
     if (request.storeCategoryId() != null) {
@@ -73,20 +73,20 @@ public class StoreService {
 
   @Transactional
   public void deleteStore(Long storeId) {
-    Store store = this.getById(storeId);
+    Store store = this.getStoreById(storeId);
     storeRepository.delete(store);
     eventPublisher.publishEvent(new StoreDeletedEvent(store.getId()));
   }
 
   @Transactional(readOnly = true)
   public StoreResponse getStore(Long storeId) {
-    Store store = this.getById(storeId);
+    Store store = this.getStoreById(storeId);
     return StoreResponse.from(store);
   }
 
   @Transactional
   public StoreResponse toggleStoreStatus(Long storeId) {
-    Store store = this.getById(storeId);
+    Store store = this.getStoreById(storeId);
 
     if (store.getStatus() == StoreStatus.DRAFT) {
       throw new CustomException(ErrorCode.STORE_NOT_READY_FOR_OPENING);
@@ -100,7 +100,7 @@ public class StoreService {
   }
 
   @Transactional(readOnly = true)
-  public Store getById(Long storeId) {
+  public Store getStoreById(Long storeId) {
     return storeRepository.getById(storeId);
   }
 }
