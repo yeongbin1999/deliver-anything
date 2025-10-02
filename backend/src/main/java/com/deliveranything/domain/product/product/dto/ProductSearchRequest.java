@@ -14,5 +14,9 @@ public record ProductSearchRequest(
     @Max(value = 50, message = "limit 값은 50을 초과할 수 없습니다.")
     Integer limit
 ) {
-
+  public ProductSearchRequest {
+    if (limit == null) {
+      limit = 20;
+    }
+  }
 }
