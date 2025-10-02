@@ -5,9 +5,11 @@ import com.deliveranything.domain.review.dto.ReviewCreateResponse;
 import com.deliveranything.domain.review.dto.ReviewLikeResponse;
 import com.deliveranything.domain.review.dto.ReviewResponse;
 import com.deliveranything.domain.review.dto.ReviewUpdateRequest;
+import com.deliveranything.domain.review.dto.StoreReviewListRequest;
 import com.deliveranything.domain.review.service.ReviewService;
 import com.deliveranything.domain.user.profile.enums.ProfileType;
 import com.deliveranything.global.common.ApiResponse;
+import com.deliveranything.global.common.CursorPageResponse;
 import com.deliveranything.global.exception.CustomException;
 import com.deliveranything.global.exception.ErrorCode;
 import com.deliveranything.global.security.auth.SecurityUser;
@@ -17,9 +19,11 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -29,16 +33,17 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("api/v1/reviews")
+@RequestMapping
 @Tag(name = "Review", description = "리뷰 관련 API")
-public class ApiV1ReviewController {
+public class ReviewController {
 
   private final ReviewService reviewService;
 
-  @PostMapping
+  @PostMapping("api/v1/reviews")
   @Operation(summary = "리뷰 생성", description = "새로운 리뷰를 생성합니다.")
   public ResponseEntity<ApiResponse<ReviewCreateResponse>> createReview(
-      @RequestBody @Valid ReviewCreateRequest request, @AuthenticationPrincipal SecurityUser user
+      @RequestBody @Valid ReviewCreateRequest request,
+      @AuthenticationPrincipal SecurityUser user
   ) {
     if (!user.hasActiveProfile(ProfileType.CUSTOMER)) {
       throw new CustomException(ErrorCode.PROFILE_NOT_ALLOWED);
@@ -49,7 +54,7 @@ public class ApiV1ReviewController {
         .body(ApiResponse.success(response));
   }
 
-  @DeleteMapping("/{reviewId}")
+  @DeleteMapping("api/v1/reviews/{reviewId}")
   @Operation(summary = "리뷰 삭제", description = "리뷰를 삭제합니다.")
   public ResponseEntity<ApiResponse<String>> deleteReview(
       @AuthenticationPrincipal SecurityUser user,
@@ -64,7 +69,7 @@ public class ApiV1ReviewController {
         .body(ApiResponse.success(null));
   }
 
-  @PatchMapping("/{reviewId}")
+  @PatchMapping("api/v1/reviews/{reviewId}")
   @Operation(summary = "리뷰 수정", description = "리뷰를 수정합니다.")
   public ResponseEntity<ApiResponse<ReviewResponse>> updateReview(
       @AuthenticationPrincipal SecurityUser user,
@@ -81,7 +86,7 @@ public class ApiV1ReviewController {
         .body(ApiResponse.success(response));
   }
 
-  @GetMapping("/{reviewId}")
+  @GetMapping("api/v1/reviews/{reviewId}")
   @Operation(summary = "리뷰 조회", description = "리뷰 id로 리뷰를 조회합니다.")
   public ResponseEntity<ApiResponse<ReviewResponse>> getReview(
       @PathVariable Long reviewId
@@ -92,7 +97,19 @@ public class ApiV1ReviewController {
         .body(ApiResponse.success(response));
   }
 
-  @PostMapping("/{reviewId}/like")
+  @GetMapping("api/v1/stores/{storeId}/reviews")
+  @Operation(summary = "특정 상점 리뷰 리스트 조회", description = "sort, cursor, size 를 받아 특정 상점의 리뷰 리스트를 조회합니다.")
+  @PreAuthorize("hasRole('USER')")
+  public  ResponseEntity<ApiResponse<CursorPageResponse<ReviewResponse>>> getStoreReviews(
+      @PathVariable Long storeId,
+      @ModelAttribute StoreReviewListRequest request) {
+    CursorPageResponse<ReviewResponse> response = reviewService.getStoreReviews(storeId, request.sort(), request.cursor(), request.size());
+
+    return ResponseEntity.status(HttpStatus.OK)
+        .body(ApiResponse.success(response));
+  }
+
+  @PostMapping("api/v1/reviews/{reviewId}/like")
   @Operation(summary = "리뷰 좋아요 등록", description = "로그인한 사용자가 특정 리뷰에 좋아요를 누릅니다. 이미 좋아요한 리뷰는 중복 등록할 수 없습니다.")
   public ResponseEntity<ApiResponse<ReviewLikeResponse>> likeReview(
       @AuthenticationPrincipal SecurityUser user,
@@ -104,7 +121,7 @@ public class ApiV1ReviewController {
         .body(ApiResponse.success(response));
   }
 
-  @DeleteMapping("/{reviewId}/like")
+  @DeleteMapping("api/v1/reviews/{reviewId}/like")
   @Operation(summary = "리뷰 좋아요 취소", description = "로그인한 사용자가 특정 리뷰에 좋아요를 누른 상태에서 다시 좋아요를 누르면 취소됩니다.")
   public ResponseEntity<ApiResponse<ReviewLikeResponse>> unLikeReview(
       @AuthenticationPrincipal SecurityUser user,
@@ -116,7 +133,7 @@ public class ApiV1ReviewController {
         .body(ApiResponse.success(response));
   }
 
-  @GetMapping("/{reviewId}/likes")
+  @GetMapping("api/v1/reviews/{reviewId}/likes")
   @Operation(summary = "리뷰 좋아요 수 조회", description = "특정 리뷰에 달린 좋아요의 수를 조회합니다.")
   public ResponseEntity<ApiResponse<ReviewLikeResponse>> getReviewLikeCount(
       @AuthenticationPrincipal SecurityUser user,
