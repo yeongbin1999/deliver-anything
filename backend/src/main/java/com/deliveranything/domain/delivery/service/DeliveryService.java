@@ -119,7 +119,7 @@ public class DeliveryService {
 
     return TodayDeliveringResponseDto.builder()
         .now(LocalDateTime.now())
-        .currentStatus(riderProfile.getToggleStatus())
+        .currentStatus(riderProfile.getToggleStatus().name())
         .todayDeliveryCount(getTodayCompletedCountByRider(riderProfileId))
         .todayEarningAmount(getTodayEarningAmountByRiderId(riderProfileId))
         .avgDeliveryTime(getAvgDeliveryTimeByRiderId(riderProfileId))
@@ -283,7 +283,7 @@ public class DeliveryService {
               .storeName(delivery.getStore().getName())
               .completedAt(delivery.getCompletedAt())
               .customerAddress(order.address())
-              .settlementStatus(getCompletedDeliverySettlementStatus(order.id()))
+              .settlementStatus(getCompletedDeliverySettlementStatus(riderProfileId, order.id()))
               .deliveryCharge(delivery.getCharge())
               .build();
         })
@@ -413,7 +413,7 @@ public class DeliveryService {
 
   // 전체 배달 건 수
   public Integer getTotalDeliveredCount(Long riderProfileId) {
-    return settlementBatchService.getSettlements(riderProfileId, ProfileType.RIDER)
+    return settlementBatchService.getSettlements(riderProfileId)
         .size();
   }
 
@@ -452,15 +452,15 @@ public class DeliveryService {
 
   // 모든 기간의 정산 완료 금액
   public Long getTotalEarnings(Long riderProfileId) {
-    return settlementBatchService.getSettlements(riderProfileId, ProfileType.RIDER)
+    return settlementBatchService.getSettlements(riderProfileId)
         .stream()
         .map(SettlementResponse::settledAmount)
         .reduce(0L, Long::sum);
   }
 
   // 특정 배달 건의 정산 상태 조회
-  public String getCompletedDeliverySettlementStatus(Long orderId) {
-    return settlementDetailService.getRiderSettlementDetail(orderId)
+  public String getCompletedDeliverySettlementStatus(Long riderProfileId, Long orderId) {
+    return settlementDetailService.getRiderSettlementDetail(orderId, riderProfileId)
         .settlementStatus().name();
   }
 
@@ -493,9 +493,5 @@ public class DeliveryService {
   // 고객 기본 주소 조회
   private String getCustomerDefaultAddress(Long defaultAddressId) {
     return customerProfileService.getCurrentAddress(defaultAddressId).getAddress();
-  }
-
-  private Long getTotalDeliveryCharges(Long riderProfileId) {
-    return deliveryRepository.sumTotalDeliveryChargesByRider(riderProfileId);
   }
 }
