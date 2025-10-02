@@ -4,7 +4,6 @@ import com.deliveranything.domain.review.dto.ReviewLikeEvent;
 import com.deliveranything.domain.review.repository.ReviewRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,7 +14,6 @@ public class ReviewConsumer {
 
   private final ReviewRepository reviewRepository;
 
-  @KafkaListener(topics = "review-like-topic", groupId = "review-service")
   @Transactional
   public void handleLikeEvent(ReviewLikeEvent event) {
     try {
