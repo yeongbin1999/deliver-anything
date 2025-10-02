@@ -27,15 +27,36 @@ public class SettlementBatchService {
   private final SettlementDetailRepository settlementDetailRepository;
   private final SettlementBatchRepository settlementBatchRepository;
 
-  public List<SettlementResponse> getSettlements(Long targetId) {
+  @Transactional(readOnly = true)
+  public List<SettlementResponse> getSettlementsByDay(Long targetId) {
     return settlementBatchRepository.findAllByTargetId(targetId).stream()
         .map(SettlementResponse::from)
         .toList();
   }
 
-  public SettlementResponse getSettlement(Long settlementId) {
-    return SettlementResponse.from(settlementBatchRepository.findById(settlementId)
-        .orElseThrow(() -> new CustomException(ErrorCode.SETTLEMENT_BATCH_NOT_FOUND)));
+  @Transactional(readOnly = true)
+  public List<SettlementResponse> getSettlementsByWeek(Long targetId) {
+    return settlementBatchRepository.findWeeklySettlementsByTargetId(targetId).stream()
+        .map(SettlementResponse::fromProjection)
+        .toList();
+  }
+
+  @Transactional(readOnly = true)
+  public List<SettlementResponse> getSettlementsByMonth(Long targetId) {
+    return settlementBatchRepository.findMonthlySettlementsByTargetId(targetId).stream()
+        .map(SettlementResponse::fromProjection)
+        .toList();
+  }
+
+  @Transactional(readOnly = true)
+  public SettlementResponse getSettlementByPeriod(
+      Long targetId,
+      LocalDate startDate,
+      LocalDate endDate
+  ) {
+    return SettlementResponse.fromProjection(
+        settlementBatchRepository.findSettlementByTargetIdAndPeriod(targetId, startDate, endDate)
+            .orElseThrow(() -> new CustomException(ErrorCode.SETTLEMENT_BATCH_NOT_FOUND)));
   }
 
   // "초 분 시 일 월 요일"
@@ -87,9 +108,9 @@ public class SettlementBatchService {
   }
 
   // 이번 주 월요일 ~ 어제까지의 정산 목록
-  public List<SettlementResponse> getRiderWeekSettlementBatches(Long riderProfileId) {
+  public List<SettlementResponse> getThisWeekSettlementBatches(Long targetId) {
     LocalDate today = LocalDate.now();
-    return settlementBatchRepository.findAllByTargetIdAndSettlementDateBetween(riderProfileId,
+    return settlementBatchRepository.findAllByTargetIdAndSettlementDateBetween(targetId,
             today.with(DayOfWeek.MONDAY), today.minusDays(1))
         .stream()
         .map(SettlementResponse::from)
@@ -97,9 +118,9 @@ public class SettlementBatchService {
   }
 
   // 이번 달 1일 ~ 어제까지의 정산 목록
-  public List<SettlementResponse> getRiderMonthSettlementBatches(Long riderProfileId) {
+  public List<SettlementResponse> getThisMonthSettlementBatches(Long targetId) {
     LocalDate today = LocalDate.now();
-    return settlementBatchRepository.findAllByTargetIdAndSettlementDateBetween(riderProfileId,
+    return settlementBatchRepository.findAllByTargetIdAndSettlementDateBetween(targetId,
             today.withDayOfMonth(1), today.minusDays(1))
         .stream()
         .map(SettlementResponse::from)
