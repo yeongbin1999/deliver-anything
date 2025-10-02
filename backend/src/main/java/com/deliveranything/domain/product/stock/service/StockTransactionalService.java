@@ -26,8 +26,9 @@ public class StockTransactionalService {
 
   // 관리자용: 재고 직접 세팅
   @Transactional
-  public StockResponse setStockTransactional(Long productId, int newQuantity) {
+  public StockResponse setStockTransactional(Long storeId, Long productId, int newQuantity) {
     Stock stock = stockRepository.getByProductId(productId);
+    stock.getProduct().validateStore(storeId);
 
     stock.setQuantity(newQuantity);
 
