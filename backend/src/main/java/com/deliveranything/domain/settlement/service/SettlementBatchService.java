@@ -1,6 +1,7 @@
 package com.deliveranything.domain.settlement.service;
 
 import com.deliveranything.domain.settlement.dto.SettlementResponse;
+import com.deliveranything.domain.settlement.dto.projection.SettlementSummaryProjection;
 import com.deliveranything.domain.settlement.entity.SettlementBatch;
 import com.deliveranything.domain.settlement.entity.SettlementDetail;
 import com.deliveranything.domain.settlement.enums.SettlementStatus;
@@ -10,7 +11,7 @@ import com.deliveranything.domain.settlement.service.dto.SettlementSummary;
 import com.deliveranything.global.exception.CustomException;
 import com.deliveranything.global.exception.ErrorCode;
 import java.math.BigDecimal;
-import java.time.DayOfWeek;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -90,12 +91,14 @@ public class SettlementBatchService {
 
     // 그룹 정산 생성 및 각 정산 대상 상태 업데이트
     summaryMap.forEach((targetId, summary) -> {
+      BigDecimal flooredFee = summary.totalPlatformFee().setScale(0, RoundingMode.FLOOR);
+
       SettlementBatch batch = SettlementBatch.builder()
           .settlementDate(yesterday)
           .targetId(targetId)
           .targetTotalAmount(summary.totalTargetAmount())
-          .totalPlatformFee(summary.totalPlatformFee())
-          .settledAmount(summary.totalTargetAmount().subtract(summary.totalPlatformFee()))
+          .totalPlatformFee(flooredFee)
+          .settledAmount(summary.totalTargetAmount().subtract(flooredFee))
           .transactionCount(summary.transactionCount())
           .build();
 
@@ -107,23 +110,9 @@ public class SettlementBatchService {
     });
   }
 
-  // 이번 주 월요일 ~ 어제까지의 정산 목록
-  public List<SettlementResponse> getThisWeekSettlementBatches(Long targetId) {
-    LocalDate today = LocalDate.now();
-    return settlementBatchRepository.findAllByTargetIdAndSettlementDateBetween(targetId,
-            today.with(DayOfWeek.MONDAY), today.minusDays(1))
-        .stream()
-        .map(SettlementResponse::from)
-        .toList();
-  }
-
-  // 이번 달 1일 ~ 어제까지의 정산 목록
-  public List<SettlementResponse> getThisMonthSettlementBatches(Long targetId) {
-    LocalDate today = LocalDate.now();
-    return settlementBatchRepository.findAllByTargetIdAndSettlementDateBetween(targetId,
-            today.withDayOfMonth(1), today.minusDays(1))
-        .stream()
-        .map(SettlementResponse::from)
-        .toList();
+  // 요약 카드에 필요한 정산된 데이터 조회
+  private SettlementSummaryProjection getSettlementBatchSummary(Long targetId) {
+    return settlementBatchRepository.findSettlementSummaryByTargetId(targetId)
+        .orElseThrow(() -> new CustomException(ErrorCode.SETTLEMENT_BATCH_NOT_FOUND));
   }
 }

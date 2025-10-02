@@ -1,5 +1,6 @@
 package com.deliveranything.domain.settlement.dto;
 
+import com.deliveranything.domain.settlement.dto.projection.SettlementProjection;
 import com.deliveranything.domain.settlement.entity.SettlementBatch;
 import java.math.RoundingMode;
 import java.time.LocalDate;
@@ -34,5 +35,4 @@ public record SettlementResponse(
         sp.maxDate()
     );
   }
-
 }

@@ -1,6 +1,7 @@
 package com.deliveranything.domain.settlement.repository;
 
-import com.deliveranything.domain.settlement.dto.SettlementProjection;
+import com.deliveranything.domain.settlement.dto.projection.SettlementProjection;
+import com.deliveranything.domain.settlement.dto.projection.SettlementSummaryProjection;
 import com.deliveranything.domain.settlement.entity.SettlementBatch;
 import java.time.LocalDate;
 import java.util.List;
@@ -18,7 +19,7 @@ public interface SettlementBatchRepository extends JpaRepository<SettlementBatch
 
   // 주간별 집계 쿼리
   @Query(value = """
-          SELECT new com.deliveranything.domain.settlement.dto.SettlementProjection(
+          SELECT new com.deliveranything.domain.settlement.dto.projection.SettlementProjection(
               SUM(s.targetTotalAmount),
               SUM(s.totalPlatformFee),
               SUM(s.settledAmount),
@@ -36,7 +37,7 @@ public interface SettlementBatchRepository extends JpaRepository<SettlementBatch
 
   // 월별 집계 쿼리
   @Query(value = """
-          SELECT new com.deliveranything.domain.settlement.dto.SettlementProjection(
+          SELECT new com.deliveranything.domain.settlement.dto.projection.SettlementProjection(
               SUM(s.targetTotalAmount),
               SUM(s.totalPlatformFee),
               SUM(s.settledAmount),
@@ -53,7 +54,7 @@ public interface SettlementBatchRepository extends JpaRepository<SettlementBatch
 
   // 기간 정산
   @Query(value = """
-          SELECT new com.deliveranything.domain.settlement.dto.SettlementProjection(
+          SELECT new com.deliveranything.domain.settlement.dto.projection.SettlementProjection(
               SUM(s.targetTotalAmount),
               SUM(s.totalPlatformFee),
               SUM(s.settledAmount),
@@ -70,4 +71,31 @@ public interface SettlementBatchRepository extends JpaRepository<SettlementBatch
       @Param("startDate") LocalDate startDate,
       @Param("endDate") LocalDate endDate
   );
+
+  // 요약 카드에 필요한 쿼리
+  @Query(value = """
+          SELECT new com.deliveranything.domain.settlement.dto.projection.SettlementSummaryProjection(
+              SUM(s.transactionCount),
+              SUM(CASE
+                  WHEN FUNCTION('YEARWEEK', s.settlementDate) = FUNCTION('YEARWEEK', CURRENT_DATE())
+                  THEN s.transactionCount
+                  ELSE 0
+              END),
+              SUM(CASE
+                  WHEN FUNCTION('YEARWEEK', s.settlementDate) = FUNCTION('YEARWEEK', CURRENT_DATE())
+                  THEN s.settledAmount
+                  ELSE 0
+              END),
+              SUM(CASE
+                  WHEN FUNCTION('DATE_FORMAT', s.settlementDate, '%Y-%m') = FUNCTION('DATE_FORMAT', CURRENT_DATE(), '%Y-%m')
+                  THEN s.settledAmount
+                  ELSE 0
+              END),
+              SUM(s.settledAmount)
+          )
+          FROM SettlementBatch s
+          WHERE s.targetId = :targetId
+      """)
+  Optional<SettlementSummaryProjection> findSettlementSummaryByTargetId(
+      @Param("targetId") Long targetId);
 }

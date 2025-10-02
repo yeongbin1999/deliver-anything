@@ -1,4 +1,4 @@
-package com.deliveranything.domain.settlement.dto;
+package com.deliveranything.domain.settlement.dto.projection;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
