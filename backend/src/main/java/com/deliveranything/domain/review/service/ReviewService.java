@@ -242,7 +242,7 @@ public class ReviewService {
 
   //=============================편의 메서드====================================
   /* 리뷰 리스트 조회 */
-  public CursorPageResponse<ReviewResponse> getReviews(Long userId, MyReviewSortType sort,
+  public CursorPageResponse<ReviewRatingAndListResponseDto> getMyReviews(Long userId, MyReviewSortType sort,
       String cursor, Integer size) {
     log.info("내 리뷰 리스트 조회 요청 - userId: {}, sort: {}, cursor: {}, size: {}", userId, sort, cursor,
         size);
