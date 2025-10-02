@@ -1,12 +1,11 @@
 package com.deliveranything.domain.settlement.service;
 
 import com.deliveranything.domain.settlement.dto.SettlementResponse;
+import com.deliveranything.domain.settlement.dto.SummaryResponse;
 import com.deliveranything.domain.settlement.dto.projection.SettlementSummaryProjection;
 import com.deliveranything.domain.settlement.entity.SettlementBatch;
 import com.deliveranything.domain.settlement.entity.SettlementDetail;
-import com.deliveranything.domain.settlement.enums.SettlementStatus;
 import com.deliveranything.domain.settlement.repository.SettlementBatchRepository;
-import com.deliveranything.domain.settlement.repository.SettlementDetailRepository;
 import com.deliveranything.domain.settlement.service.dto.SettlementSummary;
 import com.deliveranything.global.exception.CustomException;
 import com.deliveranything.global.exception.ErrorCode;
@@ -25,7 +24,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class SettlementBatchService {
 
-  private final SettlementDetailRepository settlementDetailRepository;
+  private final SettlementDetailService settlementDetailService;
+  
   private final SettlementBatchRepository settlementBatchRepository;
 
   @Transactional(readOnly = true)
@@ -60,14 +60,18 @@ public class SettlementBatchService {
             .orElseThrow(() -> new CustomException(ErrorCode.SETTLEMENT_BATCH_NOT_FOUND)));
   }
 
+  @Transactional(readOnly = true)
+  public SummaryResponse getSettlementSummary(Long targetId) {
+    return SummaryResponse.fromSettledAndUnsettled(getSettlementBatchSummary(targetId),
+        settlementDetailService.getUnsettledDetail(targetId));
+  }
+
   // "초 분 시 일 월 요일"
   // "0 0 0 * * *" 매일 0시 0분 0초에 실행
   @Scheduled(cron = "0 0 0 * * *")
   @Transactional
   public void processDailySettlements() {
-    LocalDate yesterday = LocalDate.now().minusDays(1);
-    List<SettlementDetail> settlementDetails = settlementDetailRepository.findAllByStatusAndDateTime(
-        SettlementStatus.PENDING, yesterday.atStartOfDay(), LocalDate.now().atStartOfDay());
+    List<SettlementDetail> settlementDetails = settlementDetailService.getYesterdayUnsettledDetails();
 
     if (settlementDetails.isEmpty()) {
       return;
@@ -94,7 +98,7 @@ public class SettlementBatchService {
       BigDecimal flooredFee = summary.totalPlatformFee().setScale(0, RoundingMode.FLOOR);
 
       SettlementBatch batch = SettlementBatch.builder()
-          .settlementDate(yesterday)
+          .settlementDate(LocalDate.now().minusDays(1))
           .targetId(targetId)
           .targetTotalAmount(summary.totalTargetAmount())
           .totalPlatformFee(flooredFee)

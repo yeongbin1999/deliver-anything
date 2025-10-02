@@ -1,6 +1,7 @@
 package com.deliveranything.domain.settlement.controller;
 
 import com.deliveranything.domain.settlement.dto.SettlementResponse;
+import com.deliveranything.domain.settlement.dto.SummaryResponse;
 import com.deliveranything.domain.settlement.service.SettlementBatchService;
 import com.deliveranything.global.common.ApiResponse;
 import com.deliveranything.global.security.auth.SecurityUser;
@@ -54,7 +55,7 @@ public class RiderSettlementController {
   }
 
   @GetMapping("/period")
-  @Operation(summary = "정산 기간 조회", description = "상점이 특정 기간의 정산 정보를 요청한 경우")
+  @Operation(summary = "정산 기간 조회", description = "배달원이 특정 기간의 정산 정보를 요청한 경우")
   @PreAuthorize("@profileSecurity.isRider(#securityUser)")
   public ResponseEntity<ApiResponse<SettlementResponse>> getPeriodSettlements(
       @AuthenticationPrincipal SecurityUser securityUser,
@@ -63,5 +64,15 @@ public class RiderSettlementController {
   ) {
     return ResponseEntity.ok().body(ApiResponse.success("정산 기간 조회 성공",
         settlementBatchService.getSettlementByPeriod(securityUser.getId(), startDate, endDate)));
+  }
+
+  @GetMapping("/summary")
+  @Operation(summary = "정산 요약 조회", description = "배달원이 정산 요약 카드 정보를 요청한 경우")
+  @PreAuthorize("@profileSecurity.isRider(#securityUser)")
+  public ResponseEntity<ApiResponse<SummaryResponse>> getSummary(
+      @AuthenticationPrincipal SecurityUser securityUser
+  ) {
+    return ResponseEntity.ok().body(ApiResponse.success("정산 요약 카드 조회 성공",
+        settlementBatchService.getSettlementSummary(securityUser.getId())));
   }
 }
