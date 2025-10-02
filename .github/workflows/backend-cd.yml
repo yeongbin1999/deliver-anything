@@ -14,13 +14,13 @@ permissions:
 
 jobs:
   deploy:
-    if: github.repository == 'yeongbin1999/delivery-anything'
+    if: github.repository == 'yeongbin1999/deliver-anything'
     runs-on: ubuntu-latest
 
     env:
       # --- 프로젝트별 설정 ---
       APP_NAME: delivery-anything-backend
-      IMAGE_REPO: ghcr.io/${{ github.repository_owner }}/delivery-anything-backend
+      IMAGE_REPO: ghcr.io/${{ github.repository_owner }}/deliver-anything-backend
 
       # --- Blue/Green 배포 설정 ---
       BLUE_CONTAINER: backend-blue
