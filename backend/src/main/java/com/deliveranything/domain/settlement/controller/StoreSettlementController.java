@@ -57,10 +57,10 @@ public class StoreSettlementController {
         settlementBatchService.getSettlementsByMonth(securityUser.getId())));
   }
 
-  @GetMapping("/{storeId}")
+  @GetMapping("/{storeId}/period")
   @Operation(summary = "정산 기간 조회", description = "상점이 특정 기간의 정산 정보를 요청한 경우")
   @PreAuthorize("@profileSecurity.isSeller(#securityUser) and @storeSecurity.isOwner(#storeId,#securityUser)")
-  public ResponseEntity<ApiResponse<SettlementResponse>> get(
+  public ResponseEntity<ApiResponse<SettlementResponse>> getPeriodSettlements(
       @AuthenticationPrincipal SecurityUser securityUser,
       @PathVariable Long storeId,
       @RequestParam LocalDate startDate,
