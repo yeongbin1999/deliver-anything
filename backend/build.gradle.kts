@@ -23,6 +23,12 @@ repositories {
     mavenCentral()
 }
 
+dependencyManagement {
+    imports {
+        mavenBom("software.amazon.awssdk:bom:2.26.19")
+    }
+}
+
 dependencies {
     // --- Spring Boot Starter ---
     implementation("org.springframework.boot:spring-boot-starter-web")
@@ -31,6 +37,8 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
+    implementation("org.springframework.boot:spring-boot-starter-webflux")
+    implementation("org.springframework.boot:spring-boot-starter-data-elasticsearch")
     developmentOnly("org.springframework.boot:spring-boot-devtools")
 
     // --- Database ---
@@ -44,9 +52,9 @@ dependencies {
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310") // 날짜 직렬화
 
     // --- JWT ---
-    implementation("io.jsonwebtoken:jjwt-api:0.11.5")
-    implementation("io.jsonwebtoken:jjwt-impl:0.11.5")
-    implementation("io.jsonwebtoken:jjwt-jackson:0.11.5")
+    implementation("io.jsonwebtoken:jjwt-api:0.12.6")
+    runtimeOnly("io.jsonwebtoken:jjwt-impl:0.12.6")
+    runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.12.6")
 
     // --- OpenAPI 문서 ---
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.5.0")
@@ -62,6 +70,29 @@ dependencies {
 
     // --- Dotenv ---
     implementation("me.paulschwarz:spring-dotenv:4.0.0")
+
+    // --- QueryDSL ---
+    implementation("io.github.openfeign.querydsl:querydsl-jpa:7.0")
+    annotationProcessor("io.github.openfeign.querydsl:querydsl-apt:7.0:jakarta")
+
+    // --- Spatial (for Geolocation) ---
+    implementation("org.hibernate.orm:hibernate-spatial:6.5.2.Final")
+    implementation("org.locationtech.jts:jts-core:1.19.0")
+
+    // --- WebSocket ---
+    implementation("org.springframework.boot:spring-boot-starter-websocket")
+
+    // --- WebFlux ---
+    implementation("org.springframework.boot:spring-boot-starter-webflux")
+
+    // --- Kafka ---
+    implementation("org.springframework.kafka:spring-kafka")
+
+    // --- User-Agent 파싱 ---
+    implementation("eu.bitwalker:UserAgentUtils:1.21")
+
+    // --- AWS ---
+    implementation("software.amazon.awssdk:s3")
 
     // --- Test ---
     testImplementation("org.springframework.boot:spring-boot-starter-test") {

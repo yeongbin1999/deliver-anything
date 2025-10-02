@@ -44,6 +44,21 @@ docker run -d \
   -v /dockerProjects/npm/volumes/etc/letsencrypt:/etc/letsencrypt \
   ${npm_image}
 
+# --- Elasticsearch (내부 전용) ---
+docker rm -f elasticsearch || true
+mkdir -p /dockerProjects/elasticsearch/volumes/data
+docker run -d \
+  --name elasticsearch \
+  --restart unless-stopped \
+  --network common \
+  -p 9200:9200 \
+  -p 9300:9300 \
+  -e "discovery.type=single-node" \
+  -e "ES_JAVA_OPTS=-Xms512m -Xmx512m" \
+  -e "xpack.security.enabled=false" \
+  -v /dockerProjects/elasticsearch/volumes/data:/usr/share/elasticsearch/data \
+  ${elasticsearch_image}
+
 # --- Redis (내부 전용) ---
 docker rm -f redis || true
 docker run -d \

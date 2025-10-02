@@ -1,0 +1,234 @@
+name: Backend CD
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/**"
+      - "backend/**"
+      - "infra/docker/**"
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  deploy:
+    if: github.repository == 'yeongbin1999/deliver-anything'
+    runs-on: ubuntu-latest
+
+    env:
+      # --- 프로젝트별 설정 ---
+      APP_NAME: delivery-anything-backend
+      IMAGE_REPO: ghcr.io/${{ github.repository_owner }}/delivery-anything-backend
+
+      # --- Blue/Green 배포 설정 ---
+      BLUE_CONTAINER: backend-blue
+      GREEN_CONTAINER: backend-green
+      PORT_BLUE: 8081
+      PORT_GREEN: 8082
+      SPRING_PROFILE: prod
+
+      # --- EC2 검색용 ---
+      EC2_NAME: team9-ec2
+
+      # --- Nginx Proxy Manager ---
+      NPM_ID: ${{ secrets.NPM_ID }}
+      NPM_PASSWORD: ${{ secrets.NPM_PASSWORD }}
+      NPM_DOMAIN: ${{ secrets.NPM_DOMAIN }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # 1) 버전 태깅 + 릴리스
+      - name: Create Git Tag
+        id: create_tag
+        uses: mathieudutour/github-tag-action@v6.2
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set Tag Output
+        id: set_tag_output
+        run: echo "new_tag=${{ steps.create_tag.outputs.new_tag }}" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.create_tag.outputs.new_tag }}
+          name: Release ${{ steps.create_tag.outputs.new_tag }}
+          body: ${{ steps.create_tag.outputs.changelog }}
+          draft: false
+          prerelease: false
+
+      # 2) Docker 빌드/푸시 (GHCR)
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build & Push Docker Image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: infra/docker/Dockerfile
+          push: true
+          tags: |
+            ${{ env.IMAGE_REPO }}:${{ steps.create_tag.outputs.new_tag }}
+            ${{ env.IMAGE_REPO }}:sha-${{ github.sha }}
+            ${{ env.IMAGE_REPO }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # 3) AWS 자격 구성 (OIDC)
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::174170816230:role/gha-deploy
+          aws-region: ap-northeast-2
+          role-session-name: github-actions-deploy
+
+      # 4) 대상 EC2 식별 (태그 기반)
+      - name: Get EC2 Instance ID
+        id: get_instance
+        run: |
+          set -euo pipefail
+          INSTANCE_ID=$(aws ec2 describe-instances \
+            --filters "Name=tag:Name,Values=${EC2_NAME}" "Name=instance-state-name,Values=running" \
+            --query "Reservations[].Instances[].InstanceId" --output text)
+          if [ -z "$INSTANCE_ID" ] || [ "$INSTANCE_ID" = "None" ]; then
+            echo "❌ No running EC2 instance found"
+            exit 1
+          fi
+          echo "INSTANCE_ID=$INSTANCE_ID" >> $GITHUB_ENV
+          echo "🔎 Using EC2 instance: $INSTANCE_ID"
+
+      # 5) Blue/Green 배포 (SSM)
+      - name: Blue/Green deploy via SSM
+        uses: peterkimzz/aws-ssm-send-command@master
+        with:
+          aws-region: ${{ secrets.AWS_REGION }}
+          aws-access-key-id: ""
+          aws-secret-access-key: ""
+          instance-ids: ${{ env.INSTANCE_ID }}
+          working-directory: /
+          comment: Deploy
+          command: |
+            set -euo pipefail
+
+            IMAGE="${{ env.IMAGE_REPO }}:${{ steps.create_tag.outputs.new_tag }}"
+            echo "🚢 Image: $IMAGE"
+
+            # --- Blue/Green 상태 파악 ---
+            if docker ps --format '{{.Names}}' | grep -q "^${BLUE_CONTAINER}$"; then
+              ACTIVE=blue; INACTIVE=green; PORT_ACTIVE=$PORT_BLUE; PORT_INACTIVE=$PORT_GREEN
+            elif docker ps --format '{{.Names}}' | grep -q "^${GREEN_CONTAINER}$"; then
+              ACTIVE=green; INACTIVE=blue; PORT_ACTIVE=$PORT_GREEN; PORT_INACTIVE=$PORT_BLUE
+            else
+              ACTIVE=none; INACTIVE=blue; PORT_ACTIVE=; PORT_INACTIVE=$PORT_BLUE
+            fi
+            NEW_CONTAINER="backend-$INACTIVE"
+            echo "🔁 ACTIVE=$ACTIVE, NEW=$NEW_CONTAINER -> $PORT_INACTIVE"
+
+            # --- 네트워크 보장 ---
+            docker network inspect common >/dev/null 2>&1 || docker network create common
+
+            # --- Nginx Proxy Manager 토큰 발급 ---
+            TOKEN=$(curl -s -X POST http://127.0.0.1:81/api/tokens \
+              -H "Content-Type: application/json" \
+              -d "{\"identity\":\"${NPM_ID}\",\"secret\":\"${NPM_PASSWORD}\"}" \
+              | jq -r '.token')
+            echo "::add-mask::$TOKEN"
+
+            # --- Proxy host 확인 & 생성 ---
+            PROXY_INFO=$(curl -s -X GET "http://127.0.0.1:81/api/nginx/proxy-hosts" \
+              -H "Authorization: Bearer $TOKEN")
+            PROXY_ID=$(echo "$PROXY_INFO" | jq ".[] | select(.domain_names[]==\"${NPM_DOMAIN}\") | .id")
+
+            if [ -z "$PROXY_ID" ] || [ "$PROXY_ID" = "null" ]; then
+              echo "⚡ Proxy host not found, creating..."
+              CREATE_RESPONSE=$(curl -s -X POST "http://127.0.0.1:81/api/nginx/proxy-hosts" \
+                -H "Authorization: Bearer $TOKEN" \
+                -H "Content-Type: application/json" \
+                -d "{
+                      \"domain_names\": [\"${NPM_DOMAIN}\"],
+                      \"forward_host\": \"${NEW_CONTAINER}\",
+                      \"forward_port\": 8080,
+                      \"scheme\": \"http\",
+                      \"http2\": true,
+                      \"ssl_enabled\": true,
+                      \"block_exploits\": true,
+                      \"force_ssl\": true,
+                      \"certificate_id\": null
+                    }")
+              PROXY_ID=$(echo "$CREATE_RESPONSE" | jq -r '.id')
+              if [ -z "$PROXY_ID" ] || [ "$PROXY_ID" = "null" ]; then
+                echo "❌ Failed to create proxy host"; exit 1
+              fi
+
+              # --- SSL 발급 완료 대기 ---
+              echo "⏱ Waiting for SSL certificate to be issued..."
+              MAX_WAIT=180
+              WAITED=0
+              while true; do
+                STATUS=$(curl -s -X GET "http://127.0.0.1:81/api/nginx/proxy-hosts/$PROXY_ID" \
+                  -H "Authorization: Bearer $TOKEN" | jq -r '.ssl_status')
+                if [ "$STATUS" = "active" ]; then
+                  echo "✅ SSL certificate active"
+                  break
+                fi
+                sleep 5
+                WAITED=$((WAITED + 5))
+                if [ $WAITED -ge $MAX_WAIT ]; then
+                  echo "❌ SSL certificate not active after $MAX_WAIT seconds"
+                  exit 1
+                fi
+              done
+            else
+              echo "⚡ Proxy host exists, updating upstream..."
+              NEW_CONFIG=$(jq -n --arg host "$NEW_CONTAINER" --argjson port 8080 '{forward_host: $host, forward_port: $port}')
+              curl -sS --fail -X PUT "http://127.0.0.1:81/api/nginx/proxy-hosts/$PROXY_ID" \
+                -H "Authorization: Bearer $TOKEN" \
+                -H "Content-Type: application/json" \
+                -d "$NEW_CONFIG" >/dev/null
+            fi
+
+            # --- inactive 컨테이너 정리 & 신규 컨테이너 실행 ---
+            docker rm -f "$NEW_CONTAINER" >/dev/null 2>&1 || true
+            docker run -d --name "$NEW_CONTAINER" \
+              --network common \
+              -p $PORT_INACTIVE:8080 \
+              -e SPRING_PROFILES_ACTIVE=$SPRING_PROFILE \
+              "$IMAGE"
+
+            # --- HEALTHCHECK ---
+            echo "⏱ Waiting for $NEW_CONTAINER to be healthy..."
+            HEALTH_OK=false
+            TIMEOUT=120
+            INTERVAL=3
+            ELAPSED=0
+            until [ $ELAPSED -ge $TIMEOUT ]; do
+              STATUS=$(docker exec "$NEW_CONTAINER" sh -c "curl -fsS -o /dev/null -w '%{http_code}' http://127.0.0.1:8080/actuator/health" || echo 000)
+              if [ "$STATUS" = "200" ]; then
+                HEALTH_OK=true; echo "✅ Healthy!"; break
+              fi
+              sleep $INTERVAL; ELAPSED=$((ELAPSED + INTERVAL))
+            done
+            if [ "$HEALTH_OK" = false ]; then
+              echo "❌ Health check failed"; docker logs "$NEW_CONTAINER" || true
+              docker rm -f "$NEW_CONTAINER" || true; exit 1
+            fi
+
+            # --- 기존 ACTIVE 정리 ---
+            if [ "$ACTIVE" != "none" ]; then
+              docker rm -f "backend-$ACTIVE" || true
+            fi
+
+            echo "🎉 Blue/Green switch complete → $NEW_CONTAINER"
