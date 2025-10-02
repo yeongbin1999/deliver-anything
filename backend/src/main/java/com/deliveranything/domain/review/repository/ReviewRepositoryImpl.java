@@ -174,4 +174,17 @@ public class ReviewRepositoryImpl implements ReviewRepositoryCustom {
         .limit(pageSize + 1)
         .fetch();
   }
+
+  @Override
+  public Double findAvgRatingByStoreId(Long storeId) {
+    QReview review = QReview.review;
+    QStore store = QStore.store;
+
+    return queryFactory
+        .select(review.rating.avg())
+        .from(review)
+        .join(store).on(review.targetId.eq(store.sellerProfileId)) // 리뷰 targetId = 상점 소유자 프로필 ID
+        .where(store.id.eq(storeId), review.targetType.eq(ReviewTargetType.STORE))
+        .fetchOne();
+  }
 }
