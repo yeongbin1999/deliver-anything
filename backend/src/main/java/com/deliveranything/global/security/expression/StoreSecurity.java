@@ -1,4 +1,4 @@
-package com.deliveranything.domain.store.store.security;
+package com.deliveranything.global.security.expression;
 
 import com.deliveranything.domain.store.store.entity.Store;
 import com.deliveranything.domain.store.store.service.StoreService;
