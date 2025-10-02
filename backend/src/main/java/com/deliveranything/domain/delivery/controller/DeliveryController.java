@@ -164,7 +164,7 @@ public class DeliveryController {
     return ResponseEntity.ok(ApiResponse.success(response));
   }
 
-  @GetMapping("/settlement")
+  @GetMapping("/settlements")
   @Operation(summary = "배달 완료된 건의 정산 금액 조회",
       description = "라이더의 배달 완료된 건의 총/이번주/이번달 정산 금액을 조회합니다."
           + " filter: WEEK(이번주), MONTH(이번달)")
