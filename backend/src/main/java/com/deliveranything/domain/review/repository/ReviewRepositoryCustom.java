@@ -15,4 +15,6 @@ public interface ReviewRepositoryCustom {
 
   List<Review> getStoreReviews(Long storeId, StoreReviewSortType sort, String[] decodedCursor,
       int size);
+
+  Double findAvgRatingByStoreId(Long storeId);
 }
