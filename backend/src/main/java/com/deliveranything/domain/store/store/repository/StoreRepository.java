@@ -1,7 +1,7 @@
 package com.deliveranything.domain.store.store.repository;
 
 import com.deliveranything.domain.store.store.entity.Store;
-import com.deliveranything.domain.user.entity.profile.SellerProfile;
+import com.deliveranything.domain.user.profile.entity.SellerProfile;
 import com.deliveranything.global.exception.CustomException;
 import com.deliveranything.global.exception.ErrorCode;
 import java.util.Optional;
