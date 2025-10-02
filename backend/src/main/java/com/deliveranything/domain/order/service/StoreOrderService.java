@@ -1,0 +1,79 @@
+package com.deliveranything.domain.order.service;
+
+import com.deliveranything.domain.order.dto.OrderResponse;
+import com.deliveranything.domain.order.entity.Order;
+import com.deliveranything.domain.order.enums.OrderStatus;
+import com.deliveranything.domain.order.repository.OrderRepository;
+import com.deliveranything.domain.order.repository.OrderRepositoryCustom;
+import com.deliveranything.global.common.CursorPageResponse;
+import com.deliveranything.global.util.CursorUtil;
+import java.time.LocalDateTime;
+import java.util.List;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@RequiredArgsConstructor
+@Service
+public class StoreOrderService {
+
+  private final OrderRepository orderRepository;
+  private final OrderRepositoryCustom orderRepositoryCustom;
+
+  // 주문 이력 조회
+  @Transactional(readOnly = true)
+  public CursorPageResponse<OrderResponse> getStoreOrdersByCursor(
+      Long storeId,
+      String nextPageToken,
+      int size
+  ) {
+    LocalDateTime lastCreatedAt = null;
+    Long lastOrderId = null;
+    String[] decodedParts = CursorUtil.decode(nextPageToken);
+
+    if (decodedParts != null && decodedParts.length == 2) {
+      try {
+        lastCreatedAt = LocalDateTime.parse(decodedParts[0]);
+        lastOrderId = Long.parseLong(decodedParts[1]);
+      } catch (NumberFormatException e) {
+        lastCreatedAt = null;
+        lastOrderId = null;
+      }
+    }
+
+    List<Order> cursorOrders = orderRepositoryCustom.findOrdersWithStoreByStoreId(storeId,
+        List.of(OrderStatus.COMPLETED, OrderStatus.REJECTED), lastCreatedAt, lastOrderId, size + 1);
+
+    List<OrderResponse> cursorResponses = cursorOrders.stream()
+        .limit(size)
+        .map(OrderResponse::from)
+        .toList();
+
+    boolean hasNext = cursorOrders.size() > size;
+    OrderResponse lastResponse = cursorResponses.getLast();
+
+    return new CursorPageResponse<>(
+        cursorResponses,
+        hasNext ? CursorUtil.encode(lastResponse.createdAt(), lastResponse.id()) : null,
+        hasNext
+    );
+  }
+
+  // 들어온 주문 중 수락 or 거절 해야하는 목록 조회
+  @Transactional(readOnly = true)
+  public List<OrderResponse> getPendingOrders(Long storeId) {
+    return orderRepository.findOrdersWithStoreByStoreIdAndStatus(storeId, OrderStatus.PENDING)
+        .stream()
+        .map(OrderResponse::from)
+        .toList();
+  }
+
+  // 주문 현황 목록 조회
+  @Transactional(readOnly = true)
+  public List<OrderResponse> getAcceptedOrders(Long storeId) {
+    return orderRepository.findOrdersWithStoreByStoreIdAndStatuses(storeId,
+            List.of(OrderStatus.PREPARING, OrderStatus.RIDER_ASSIGNED, OrderStatus.DELIVERING)).stream()
+        .map(OrderResponse::from)
+        .toList();
+  }
+}

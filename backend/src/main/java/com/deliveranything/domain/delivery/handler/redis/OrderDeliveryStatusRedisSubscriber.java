@@ -8,7 +8,7 @@ import com.deliveranything.domain.delivery.service.DeliveryService;
 import com.deliveranything.domain.notification.service.NotificationService;
 import com.deliveranything.domain.order.entity.Order;
 import com.deliveranything.domain.order.enums.OrderStatus;
-import com.deliveranything.domain.order.service.OrderService;
+import com.deliveranything.domain.order.service.DeliveryOrderService;
 import com.deliveranything.domain.user.profile.service.RiderProfileService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -28,7 +28,7 @@ public class OrderDeliveryStatusRedisSubscriber implements MessageListener {
   private final NotificationService notificationService;
   private final ObjectMapper objectMapper;
   private final RedisMessageListenerContainer container;
-  private final OrderService orderService;
+  private final DeliveryOrderService deliveryOrderService;
   private final DeliveryRepository deliveryRepository;
   private final RiderProfileService riderProfileService;
   private final DeliveryService deliveryService;
@@ -63,7 +63,7 @@ public class OrderDeliveryStatusRedisSubscriber implements MessageListener {
 
     // 라이더 수락 시 Delivery 생성
     if (event.status().name().equals("RIDER_ASSIGNED")) {
-      Order order = orderService.getOrderById(Long.parseLong(orderId));
+      Order order = deliveryOrderService.getOrderById(Long.parseLong(orderId));
       order.updateStatus(OrderStatus.RIDER_ASSIGNED);
 
       // Delivery 생성
@@ -92,10 +92,10 @@ public class OrderDeliveryStatusRedisSubscriber implements MessageListener {
 
   // 주문자/스토어 조회는 서비스 호출이나 캐시 활용
   private Long getCustomerIdByOrderId(String orderId) { /* ... */
-    return orderService.getCustomerIdByOrderId(Long.parseLong(orderId));
+    return deliveryOrderService.getCustomerIdByOrderId(Long.parseLong(orderId));
   }
 
   private Long getStoreIdByOrderId(String orderId) { /* ... */
-    return orderService.getSellerIdByOrderId(Long.parseLong(orderId));
+    return deliveryOrderService.getSellerIdByOrderId(Long.parseLong(orderId));
   }
 }
