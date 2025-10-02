@@ -219,6 +219,53 @@ public class ReviewService {
     return new ReviewRatingAndListResponseDto(avgRating, result);
   }
 
+  /* 상점 리뷰 리스트 조회 */
+  public ReviewRatingAndListResponseDto getStoreReviews(Long storeId, StoreReviewSortType sort,
+      String cursor, int size) {
+    log.info("상점 리뷰 리스트 조회 요청 - storeId: {}, sort: {}, cursor: {}, size: {}", storeId, sort, cursor,
+        size);
+
+    String[] decodedCursor = CursorUtil.decode(cursor);
+
+    //실제 조회
+    List<Review> reviews = reviewRepository.getStoreReviews(storeId, sort,
+        decodedCursor,
+        size);
+
+    List<ReviewResponse> reviewList = new ArrayList<>();
+
+    for (Review review : reviews) {
+      Long likeCount = redisTemplate.opsForSet().size("review:likes:" + review.getId());
+      reviewList.add(ReviewResponse.from(review, getReviewPhotoUrlList(review), likeCount));
+    }
+
+    boolean hasNext = reviewList.size() > size;
+
+    //클라이언트 전달값
+    List<ReviewResponse> reviewResponses = hasNext ? reviewList.subList(0, size) : reviewList;
+
+    String nextPageToken = null;
+    if (!reviewList.isEmpty()) {
+      ReviewResponse lastReview = reviewList.get(reviewResponses.size() - 1);
+
+      String cursorValue = switch (sort) {
+        case LATEST, OLDEST -> lastReview.createdAt().toString();
+        case RATING_DESC, RATING_ASC -> String.valueOf(lastReview.rating());
+        case LIKED_DESC -> String.valueOf(lastReview.likeCount());
+      };
+
+      nextPageToken = CursorUtil.encode(cursorValue, lastReview.id());
+
+    }
+
+    CursorPageResponse<ReviewResponse> result = new CursorPageResponse<>(reviewResponses, nextPageToken, hasNext);
+    Double avgRating = getStoreReviewRating(storeId);
+
+    log.info("상점 리뷰 리스트 조회 성공 - storeId: {}, resultCount: {}", storeId, reviewResponses.size());
+    log.debug("nextPageToken: {}", nextPageToken);
+    return new ReviewRatingAndListResponseDto(avgRating, result);
+  }
+
   /* 리뷰 좋아요 추가 */
   public ReviewLikeResponse likeReview(Long reviewId, Long userId) {
     log.info("리뷰 좋아요 요청 - userId: {}, reviewId: {}", userId, reviewId);
@@ -400,58 +447,8 @@ public class ReviewService {
     );
   }
 
-  /* 상점 리뷰 리스트 조회 */
-  public CursorPageResponse<ReviewResponse> getStoreReviews(Long storeId, StoreReviewSortType sort,
-      String cursor, int size) {
-    log.info("상점 리뷰 리스트 조회 요청 - storeId: {}, sort: {}, cursor: {}, size: {}", storeId, sort, cursor,
-        size);
-
-    String[] decodedCursor = CursorUtil.decode(cursor);
-
-    //실제 조회
-    List<Review> reviews = reviewRepository.getStoreReviews(storeId, sort,
-        decodedCursor,
-        size);
-
-    List<ReviewResponse> reviewList = new ArrayList<>();
-
-    for (Review review : reviews) {
-      Long likeCount = redisTemplate.opsForSet().size("review:likes:" + review.getId());
-      reviewList.add(ReviewResponse.from(review, getReviewPhotoUrlList(review), likeCount));
-    }
-
-    boolean hasNext = reviewList.size() > size;
-
-    //클라이언트 전달값
-    List<ReviewResponse> result = hasNext ? reviewList.subList(0, size) : reviewList;
-
-    String nextPageToken = null;
-    if (!reviewList.isEmpty()) {
-      ReviewResponse lastReview = reviewList.get(result.size() - 1);
-
-      String cursorValue = switch (sort) {
-        case LATEST, OLDEST -> lastReview.createdAt().toString();
-        case RATING_DESC, RATING_ASC -> String.valueOf(lastReview.rating());
-        case LIKED_DESC -> String.valueOf(lastReview.likeCount());
-      };
-
-      nextPageToken = CursorUtil.encode(cursorValue, lastReview.id());
-
-    }
-
-    log.info("상점 리뷰 리스트 조회 성공 - storeId: {}, resultCount: {}", storeId, result.size());
-    log.debug("nextPageToken: {}", nextPageToken);
-    return new CursorPageResponse<>(result, nextPageToken, hasNext);
-  }
-
-//  /* 라이더 별점 평균값 조회 메서드 */
-//  public Double getAvgRating(Long riderProfileId) {
-//    return Math.round(reviewRepository.findAvgRatingByTargetIdAndTargetType(riderProfileId,
-//        ReviewTargetType.RIDER) * 100.0) / 100.0;
-//  }
-
   /* 별점 평균값 조회 메서드 - 판매자, 배달원 */
-  public Double getSellerOrRiderReviewRating(
+  private Double getSellerOrRiderReviewRating(
       Long userId, ReviewTargetType type) {
     Double avg = reviewRepository.findAvgRatingByTargetIdAndTargetType(userId, type);
     if (avg == null) return 0.0;
@@ -459,9 +456,16 @@ public class ReviewService {
   }
 
   /* 별점 평균값 조회 메서드 - 소비자 */
-  public Double getCustomerReviewRating(
+  private Double getCustomerReviewRating(
       Long userId) {
     Double avg = reviewRepository.findAvgRatingByCustomerProfileId(userId);
+    if (avg == null) return 0.0;
+    return Math.round(avg * 100.0) / 100.0;
+  }
+
+  /* 별점 평균값 조회 메서드 - 상점 */
+  private Double getStoreReviewRating(Long storeId) {
+    Double avg = reviewRepository.findAvgRatingByStoreId(storeId);
     if (avg == null) return 0.0;
     return Math.round(avg * 100.0) / 100.0;
   }

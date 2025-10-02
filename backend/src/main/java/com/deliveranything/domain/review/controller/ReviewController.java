@@ -114,10 +114,10 @@ public class ReviewController {
   @GetMapping("api/v1/stores/{storeId}/reviews")
   @Operation(summary = "특정 상점 리뷰 리스트 조회", description = "sort, cursor, size 를 받아 특정 상점의 리뷰 리스트를 조회합니다.")
   @PreAuthorize("hasRole('USER')")
-  public  ResponseEntity<ApiResponse<CursorPageResponse<ReviewResponse>>> getStoreReviews(
+  public  ResponseEntity<ApiResponse<ReviewRatingAndListResponseDto>> getStoreReviews(
       @PathVariable Long storeId,
       @ModelAttribute StoreReviewListRequest request) {
-    CursorPageResponse<ReviewResponse> response = reviewService.getStoreReviews(storeId, request.sort(), request.cursor(), request.size());
+    ReviewRatingAndListResponseDto response = reviewService.getStoreReviews(storeId, request.sort(), request.cursor(), request.size());
 
     //TODO: ReviewRating 포함
     return ResponseEntity.status(HttpStatus.OK)
