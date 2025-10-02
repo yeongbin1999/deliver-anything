@@ -312,8 +312,6 @@ public class DeliveryService {
       String cursor,
       Integer size
   ) {
-    RiderProfile riderProfile = riderProfileService.getRiderProfileById(riderProfileId);
-
     CursorPageResponse<DeliveredSettlementDetailsDto> deliveredSettlementDetails =
         getDeliveredSettlementDetailsCursor(riderProfileId, filter, cursor, size);
 
