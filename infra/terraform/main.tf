@@ -376,7 +376,7 @@ data "aws_iam_policy_document" "gha_permissions" {
     ]
     resources = [
       "arn:${data.aws_partition.current.partition}:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:instance/*",
-      "arn:${data.aws_partition.current.partition}:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:document/AWS-RunShellScript"
+      "arn:${data.aws_partition.current.partition}:ssm:${var.region}::document/AWS-RunShellScript"
     ]
   }
 }
