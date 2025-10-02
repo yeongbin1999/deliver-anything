@@ -1,5 +1,6 @@
 plugins {
     java
+    // Spring Boot 플러그인 버전은 최신 안정 버전으로 유지 (요청에 따라 3.5.5 유지)
     id("org.springframework.boot") version "3.5.5"
     id("io.spring.dependency-management") version "1.1.7"
 }
@@ -27,6 +28,11 @@ dependencyManagement {
     imports {
         mavenBom("software.amazon.awssdk:bom:2.26.19")
     }
+
+    dependencies {
+        dependency("co.elastic.clients:elasticsearch-java:8.11.1")
+        dependency("org.elasticsearch.client:elasticsearch-rest-client:8.11.1")
+    }
 }
 
 dependencies {
@@ -38,7 +44,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-webflux")
-    implementation("org.springframework.boot:spring-boot-starter-data-elasticsearch")
+    implementation("org.springframework.boot:spring-boot-starter-data-elasticsearch") // 이 스타터가 이제 8.11.1 클라이언트를 사용합니다.
     developmentOnly("org.springframework.boot:spring-boot-devtools")
 
     // --- Database ---
