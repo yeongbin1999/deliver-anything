@@ -27,13 +27,12 @@ import com.deliveranything.domain.settlement.dto.SettlementResponse;
 import com.deliveranything.domain.settlement.service.SettlementBatchService;
 import com.deliveranything.domain.settlement.service.SettlementDetailService;
 import com.deliveranything.domain.store.store.entity.Store;
-import com.deliveranything.domain.user.entity.profile.CustomerProfile;
-import com.deliveranything.domain.user.entity.profile.RiderProfile;
-import com.deliveranything.domain.user.entity.profile.SellerProfile;
-import com.deliveranything.domain.user.enums.ProfileType;
-import com.deliveranything.domain.user.service.CustomerProfileService;
-import com.deliveranything.domain.user.service.RiderProfileService;
-import com.deliveranything.domain.user.service.SellerProfileService;
+import com.deliveranything.domain.user.profile.entity.CustomerProfile;
+import com.deliveranything.domain.user.profile.entity.RiderProfile;
+import com.deliveranything.domain.user.profile.entity.SellerProfile;
+import com.deliveranything.domain.user.profile.service.CustomerProfileService;
+import com.deliveranything.domain.user.profile.service.RiderProfileService;
+import com.deliveranything.domain.user.profile.service.SellerProfileService;
 import com.deliveranything.global.common.CursorPageResponse;
 import com.deliveranything.global.exception.CustomException;
 import com.deliveranything.global.exception.ErrorCode;
@@ -122,7 +121,7 @@ public class DeliveryService {
 
     return TodayDeliveringResponseDto.builder()
         .now(LocalDateTime.now())
-        .currentStatus(riderProfile.getToggleStatus())
+        .currentStatus(riderProfile.getToggleStatus().name())
         .todayDeliveryCount(getTodayCompletedCountByRider(riderProfileId))
         .todayEarningAmount(getTodayEarningAmountByRiderId(riderProfileId))
         .avgDeliveryTime(getAvgDeliveryTimeByRiderId(riderProfileId))
@@ -286,7 +285,7 @@ public class DeliveryService {
               .storeName(delivery.getStore().getName())
               .completedAt(delivery.getCompletedAt())
               .customerAddress(order.address())
-              .settlementStatus(getCompletedDeliverySettlementStatus(order.id()))
+              .settlementStatus(getCompletedDeliverySettlementStatus(order.id(), riderProfileId))
               .deliveryCharge(delivery.getCharge())
               .build();
         })
@@ -418,7 +417,7 @@ public class DeliveryService {
 
   // 전체 배달 건 수
   public Integer getTotalDeliveredCount(Long riderProfileId) {
-    return settlementBatchService.getSettlements(riderProfileId, ProfileType.RIDER)
+    return settlementBatchService.getSettlements(riderProfileId)
         .size();
   }
 
@@ -457,15 +456,15 @@ public class DeliveryService {
 
   // 모든 기간의 정산 완료 금액
   public Long getTotalEarnings(Long riderProfileId) {
-    return settlementBatchService.getSettlements(riderProfileId, ProfileType.RIDER)
+    return settlementBatchService.getSettlements(riderProfileId)
         .stream()
         .map(SettlementResponse::settledAmount)
         .reduce(0L, Long::sum);
   }
 
   // 특정 배달 건의 정산 상태 조회
-  public String getCompletedDeliverySettlementStatus(Long orderId) {
-    return settlementDetailService.getRiderSettlementDetail(orderId)
+  public String getCompletedDeliverySettlementStatus(Long orderId, Long riderProfileId) {
+    return settlementDetailService.getRiderSettlementDetail(orderId, riderProfileId)
         .settlementStatus().name();
   }
 
