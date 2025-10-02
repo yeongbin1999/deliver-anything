@@ -108,3 +108,10 @@ gemini:
   api:
     key: ${GEMINI_API_KEY:임시키}
     url: https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent
+
+cloud:
+  aws:
+    s3:
+      bucket: ${AWS_S3_BUCKET_NAME:team9-public-bucket}
+    region:
+      static: ${AWS_S3_REGION:ap-northeast-2}

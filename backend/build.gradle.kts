@@ -23,6 +23,12 @@ repositories {
     mavenCentral()
 }
 
+dependencyManagement {
+    imports {
+        mavenBom("software.amazon.awssdk:bom:2.26.19")
+    }
+}
+
 dependencies {
     // --- Spring Boot Starter ---
     implementation("org.springframework.boot:spring-boot-starter-web")
@@ -84,7 +90,10 @@ dependencies {
 
     // --- User-Agent 파싱 ---
     implementation("eu.bitwalker:UserAgentUtils:1.21")
-    
+
+    // --- AWS ---
+    implementation("software.amazon.awssdk:s3")
+
     // --- Test ---
     testImplementation("org.springframework.boot:spring-boot-starter-test") {
         exclude(group = "org.junit.vintage", module = "junit-vintage-engine")
