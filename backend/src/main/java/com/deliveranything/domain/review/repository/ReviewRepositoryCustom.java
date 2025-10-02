@@ -3,7 +3,7 @@ package com.deliveranything.domain.review.repository;
 import com.deliveranything.domain.review.entity.Review;
 import com.deliveranything.domain.review.enums.MyReviewSortType;
 import com.deliveranything.domain.review.enums.StoreReviewSortType;
-import com.deliveranything.domain.user.enums.ProfileType;
+import com.deliveranything.domain.user.profile.enums.ProfileType;
 import java.util.List;
 
 public interface ReviewRepositoryCustom {

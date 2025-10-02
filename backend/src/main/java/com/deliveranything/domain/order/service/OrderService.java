@@ -11,7 +11,7 @@ import com.deliveranything.domain.order.repository.OrderRepositoryCustom;
 import com.deliveranything.domain.payment.service.PaymentService;
 import com.deliveranything.domain.product.product.service.ProductService;
 import com.deliveranything.domain.store.store.service.StoreService;
-import com.deliveranything.domain.user.service.CustomerProfileService;
+import com.deliveranything.domain.user.profile.service.CustomerProfileService;
 import com.deliveranything.global.common.CursorPageResponse;
 import com.deliveranything.global.exception.CustomException;
 import com.deliveranything.global.exception.ErrorCode;
