@@ -54,7 +54,6 @@ public class ProductController {
 
   @Operation(summary = "상품 목록 조회", description = "특정 상점의 상품 목록을 조회합니다.")
   @GetMapping
-  @PreAuthorize("hasRole('USER')")
   public ResponseEntity<ApiResponse<CursorPageResponse<ProductResponse>>> searchProducts(
       @Parameter(description = "상품을 조회할 상점 ID") @PathVariable Long storeId,
       @Valid @ModelAttribute ProductSearchRequest request
@@ -78,7 +77,6 @@ public class ProductController {
 
   @Operation(summary = "상품 상세 조회", description = "특정 상품의 상세 정보를 조회합니다.")
   @GetMapping("/{productId}")
-  @PreAuthorize("hasRole('USER')")
   public ResponseEntity<ApiResponse<ProductDetailResponse>> getProduct(
       @Parameter(description = "상점 ID") @PathVariable Long storeId,
       @Parameter(description = "조회할 상품 ID") @PathVariable Long productId
