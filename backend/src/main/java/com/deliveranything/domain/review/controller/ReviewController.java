@@ -100,7 +100,7 @@ public class ReviewController {
   }
 
   @GetMapping("api/v1/me/reviews")
-  @Operation(summary = "내 리뷰 리스트 & 평점 조회", description = "사용자의 프로필에 따라 작성한 리뷰 or 내게 달린 리뷰 리스트 및 평균 평점을 조회합니다.")
+  @Operation(summary = "내 리뷰 리스트 & 평점 조회", description = "sort, cursor, size와 사용자의 프로필에 따라 작성한 리뷰 or 내게 달린 리뷰 리스트 및 평균 평점을 조회합니다.")
   public ResponseEntity<ApiResponse<ReviewRatingAndListResponseDto>> getMyReviews(
       @AuthenticationPrincipal SecurityUser user,
       @RequestBody ReviewListRequest request
@@ -112,7 +112,7 @@ public class ReviewController {
   }
 
   @GetMapping("api/v1/stores/{storeId}/reviews")
-  @Operation(summary = "특정 상점 리뷰 리스트 조회", description = "sort, cursor, size 를 받아 특정 상점의 리뷰 리스트를 조회합니다.")
+  @Operation(summary = "특정 상점 리뷰 리스트 & 평점 조회", description = "sort, cursor, size 를 받아 특정 상점의 리뷰 리스트 및 평균 평점을 조회합니다.")
   @PreAuthorize("hasRole('USER')")
   public  ResponseEntity<ApiResponse<ReviewRatingAndListResponseDto>> getStoreReviews(
       @PathVariable Long storeId,

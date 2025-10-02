@@ -170,7 +170,8 @@ public class ReviewService {
   }
 
   /* 리뷰 리스트 조회 */
-  public ReviewRatingAndListResponseDto getMyReviews(Long userId, Profile profile, MyReviewSortType sort,
+  public ReviewRatingAndListResponseDto getMyReviews(Long userId, Profile profile,
+      MyReviewSortType sort,
       String cursor, Integer size) {
     log.info("내 리뷰 리스트 조회 요청 - userId: {}, sort: {}, cursor: {}, size: {}", userId, sort, cursor,
         size);
@@ -206,7 +207,8 @@ public class ReviewService {
 
     }
 
-    CursorPageResponse<ReviewResponse> result = new CursorPageResponse<>(reviewResponse, nextPageToken, hasNext);
+    CursorPageResponse<ReviewResponse> result = new CursorPageResponse<>(reviewResponse,
+        nextPageToken, hasNext);
 
     Double avgRating = switch (profileType) {
       case CUSTOMER -> getCustomerReviewRating(userId);
@@ -258,7 +260,8 @@ public class ReviewService {
 
     }
 
-    CursorPageResponse<ReviewResponse> result = new CursorPageResponse<>(reviewResponses, nextPageToken, hasNext);
+    CursorPageResponse<ReviewResponse> result = new CursorPageResponse<>(reviewResponses,
+        nextPageToken, hasNext);
     Double avgRating = getStoreReviewRating(storeId);
 
     log.info("상점 리뷰 리스트 조회 성공 - storeId: {}, resultCount: {}", storeId, reviewResponses.size());
@@ -451,7 +454,9 @@ public class ReviewService {
   private Double getSellerOrRiderReviewRating(
       Long userId, ReviewTargetType type) {
     Double avg = reviewRepository.findAvgRatingByTargetIdAndTargetType(userId, type);
-    if (avg == null) return 0.0;
+    if (avg == null) {
+      return 0.0;
+    }
     return Math.round(avg * 100.0) / 100.0;
   }
 
@@ -459,14 +464,18 @@ public class ReviewService {
   private Double getCustomerReviewRating(
       Long userId) {
     Double avg = reviewRepository.findAvgRatingByCustomerProfileId(userId);
-    if (avg == null) return 0.0;
+    if (avg == null) {
+      return 0.0;
+    }
     return Math.round(avg * 100.0) / 100.0;
   }
 
   /* 별점 평균값 조회 메서드 - 상점 */
   private Double getStoreReviewRating(Long storeId) {
     Double avg = reviewRepository.findAvgRatingByStoreId(storeId);
-    if (avg == null) return 0.0;
+    if (avg == null) {
+      return 0.0;
+    }
     return Math.round(avg * 100.0) / 100.0;
   }
 }
