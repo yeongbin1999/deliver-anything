@@ -1,6 +1,5 @@
 package com.deliveranything.domain.delivery.repository;
 
-
 import com.deliveranything.domain.delivery.entity.Delivery;
 import com.deliveranything.domain.delivery.enums.DeliveryStatus;
 import io.lettuce.core.dynamic.annotation.Param;
@@ -45,7 +44,7 @@ public interface DeliveryRepository extends JpaRepository<Delivery, Long> {
       "JOIN FETCH d.order o " +
       "WHERE d.riderProfile.id = :riderProfileId AND d.status = :status")
   List<Delivery> findByRiderProfileIdAndStatus(
-      @Param("riderProfileId") Long riderProfileId,
+      @Param("riderProfileId") Long riderProfileId, 
       @Param("status") DeliveryStatus status
   );
 }
