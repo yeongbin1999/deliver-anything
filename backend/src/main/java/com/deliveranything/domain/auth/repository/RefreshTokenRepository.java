@@ -1,7 +1,7 @@
 package com.deliveranything.domain.auth.repository;
 
-import com.deliveranything.domain.user.user.entity.User;
 import com.deliveranything.domain.auth.entity.RefreshToken;
+import com.deliveranything.domain.user.user.entity.User;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;

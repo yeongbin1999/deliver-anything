@@ -15,6 +15,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -27,6 +28,7 @@ public class SecurityConfig {
   private final CustomAuthenticationFilter customAuthenticationFilter;
   private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
   private final CustomAccessDeniedHandler customAccessDeniedHandler;
+  private final AuthenticationSuccessHandler customOAuth2LoginSuccessHandler;
 
   @Bean
   public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -38,21 +40,24 @@ public class SecurityConfig {
         .httpBasic(AbstractHttpConfigurer::disable)
 
         // 세션 완전 비활성화 (JWT 환경)
-        .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        .sessionManagement(
+            session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+
+        // OAuth2 로그인 설정 (소셜 로그인)
+        .oauth2Login(oauth2Login -> oauth2Login
+            .successHandler(customOAuth2LoginSuccessHandler)
+        )
 
         // CORS
         .cors(cors -> cors.configurationSource(corsConfigurationSource()))
 
         // 권한 설정
         .authorizeHttpRequests(auth -> auth
-            // 정적 리소스 및 H2 콘솔
-            .requestMatchers("/favicon.ico", "/error", "/h2-console/**").permitAll()
+                // 정적 리소스 및 H2 콘솔
+                .requestMatchers("/favicon.ico", "/error", "/h2-console/**").permitAll()
 
-            // Swagger
-            .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
-
-            // 인증 관련 엔드포인트
-            .requestMatchers("/api/v1/auth/**").permitAll()
+                // Swagger
+                .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
 
 //            현재 필요없음
 //            // 관리자
@@ -77,8 +82,8 @@ public class SecurityConfig {
 //            // 나머지 API는 인증 필요
 //            .requestMatchers("/api/v1/**").authenticated()
 
-            // 그 외 요청 허용
-            .anyRequest().permitAll()
+                // 그 외 요청 허용
+                .anyRequest().permitAll()
         )
 
         // H2 콘솔 frame 옵션 허용
@@ -122,7 +127,6 @@ public class SecurityConfig {
 
     return source;
   }
-
 
   @Bean
   public PasswordEncoder passwordEncoder() {
