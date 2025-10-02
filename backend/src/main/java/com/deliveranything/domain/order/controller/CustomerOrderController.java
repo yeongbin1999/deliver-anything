@@ -6,7 +6,8 @@ import com.deliveranything.domain.order.dto.OrderCancelRequest;
 import com.deliveranything.domain.order.dto.OrderCreateRequest;
 import com.deliveranything.domain.order.dto.OrderPayRequest;
 import com.deliveranything.domain.order.dto.OrderResponse;
-import com.deliveranything.domain.order.service.OrderService;
+import com.deliveranything.domain.order.service.CustomerOrderService;
+import com.deliveranything.domain.order.service.PaymentOrderService;
 import com.deliveranything.global.common.ApiResponse;
 import com.deliveranything.global.common.CursorPageResponse;
 import com.deliveranything.global.security.auth.SecurityUser;
@@ -25,11 +26,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/orders")
+@RequestMapping("/api/v1/customer/orders")
 @RestController
-public class OrderController {
+public class CustomerOrderController {
 
-  private final OrderService orderService;
+  private final CustomerOrderService customerOrderService;
+  private final PaymentOrderService paymentOrderService;
 
   @PostMapping
   @Operation(summary = "주문 생성", description = "소비자가 상점에 주문을 요청한 경우")
@@ -38,7 +40,7 @@ public class OrderController {
       @AuthenticationPrincipal SecurityUser securityUser,
       @Valid @RequestBody OrderCreateRequest orderCreateRequest
   ) {
-    return ResponseEntity.status(CREATED).body(ApiResponse.success(orderService.createOrder(
+    return ResponseEntity.status(CREATED).body(ApiResponse.success(customerOrderService.createOrder(
         securityUser.getCurrentActiveProfile().getId(), orderCreateRequest)));
   }
 
@@ -51,8 +53,7 @@ public class OrderController {
       @RequestParam(defaultValue = "10") int size
   ) {
     return ResponseEntity.ok().body(ApiResponse.success("소비자 전체 주문 내역 조회 성공",
-        orderService.getCustomerOrdersByCursor(securityUser.getCurrentActiveProfile().getId(),
-            cursor, size)));
+        customerOrderService.getCustomerOrdersByCursor(securityUser.getId(), cursor, size)));
   }
 
   @GetMapping("/{orderId}")
@@ -63,7 +64,7 @@ public class OrderController {
       @PathVariable Long orderId
   ) {
     return ResponseEntity.ok().body(ApiResponse.success("소비자 주문 단일 조회 성공",
-        orderService.getCustomerOrder(orderId, securityUser.getCurrentActiveProfile().getId())));
+        customerOrderService.getCustomerOrder(orderId, securityUser.getId())));
   }
 
   @PostMapping("/{merchantUid}/pay")
@@ -76,7 +77,7 @@ public class OrderController {
   ) {
 
     return ResponseEntity.ok().body(ApiResponse.success("소비자 결제 승인 성공",
-        orderService.payOrder(merchantUid, orderPayRequest.paymentKey())));
+        paymentOrderService.payOrder(merchantUid, orderPayRequest.paymentKey())));
   }
 
   @PostMapping("/{orderId}/cancel")
@@ -88,6 +89,6 @@ public class OrderController {
       @RequestBody OrderCancelRequest orderCancelRequest
   ) {
     return ResponseEntity.ok().body(ApiResponse.success("소비자 주문 취소 성공",
-        orderService.cancelOrder(orderId, orderCancelRequest.cancelReason())));
+        paymentOrderService.cancelOrder(orderId, orderCancelRequest.cancelReason())));
   }
 }
