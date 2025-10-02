@@ -21,8 +21,8 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
   @Query("SELECT o FROM Order o JOIN FETCH o.store WHERE o.delivery.id = :deliveryId")
   Optional<Order> findOrderWithStoreByDeliveryId(Long deliveryId);
 
-  @Query("SELECT o FROM Order o JOIN FETCH o.store WHERE o.status = :status")
-  List<Order> findOrdersWithStoreByStatus(OrderStatus status);
+  @Query("SELECT o FROM Order o JOIN FETCH o.store WHERE o.store.id = :storeId AND o.status = :status")
+  List<Order> findOrdersWithStoreByStoreIdAndStatus(Long storeId, OrderStatus status);
 
   @Query("SELECT o FROM Order o JOIN FETCH o.store WHERE o.delivery.riderProfile.id = :riderProfileId")
   List<Order> findOrdersWithStoreByRiderProfile(Long riderProfileId);
@@ -34,6 +34,5 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
       WHERE s.id = :storeId AND o.status IN :statuses
       ORDER BY o.createdAt ASC
       """)
-  List<Order> findOrdersWithStoreByStoreAndStatusIn(Long storeId,
-      List<OrderStatus> statuses);
+  List<Order> findOrdersWithStoreByStoreIdAndStatuses(Long storeId, List<OrderStatus> statuses);
 }
