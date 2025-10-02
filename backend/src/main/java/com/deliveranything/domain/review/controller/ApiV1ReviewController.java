@@ -41,7 +41,7 @@ public class ApiV1ReviewController {
       @RequestBody @Valid ReviewCreateRequest request, @AuthenticationPrincipal SecurityUser user
   ) {
     if (!user.hasActiveProfile(ProfileType.CUSTOMER)) {
-      throw new CustomException(ErrorCode.ROLE_NOT_ALLOWED);
+      throw new CustomException(ErrorCode.PROFILE_NOT_ALLOWED);
     }
 
     ReviewCreateResponse response = reviewService.createReview(request, user.getId());
@@ -56,7 +56,7 @@ public class ApiV1ReviewController {
       @PathVariable Long reviewId
   ) {
     if (!user.hasActiveProfile(ProfileType.CUSTOMER)) {
-      throw new CustomException(ErrorCode.ROLE_NOT_ALLOWED);
+      throw new CustomException(ErrorCode.PROFILE_NOT_ALLOWED);
     }
 
     reviewService.deleteReview(user.getId(), reviewId);
@@ -72,7 +72,7 @@ public class ApiV1ReviewController {
       @RequestBody ReviewUpdateRequest request
   ) {
     if (!user.hasActiveProfile(ProfileType.CUSTOMER)) {
-      throw new CustomException(ErrorCode.ROLE_NOT_ALLOWED);
+      throw new CustomException(ErrorCode.PROFILE_NOT_ALLOWED);
     }
 
     ReviewResponse response = reviewService.updateReview(request, reviewId, user.getId());
