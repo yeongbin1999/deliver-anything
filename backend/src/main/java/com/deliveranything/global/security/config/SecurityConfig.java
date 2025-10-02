@@ -80,12 +80,13 @@ public class SecurityConfig {
 
         // ✅ CORS 설정 적용 추가
         .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-
         .csrf(AbstractHttpConfigurer::disable)
         .formLogin(AbstractHttpConfigurer::disable)
         .logout(AbstractHttpConfigurer::disable)
         .httpBasic(AbstractHttpConfigurer::disable)
         .sessionManagement(AbstractHttpConfigurer::disable)
+        .oauth2Login(oauth2 -> {
+        })
 
         // 커스텀 인증 필터 등록
         .addFilterBefore(customAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
