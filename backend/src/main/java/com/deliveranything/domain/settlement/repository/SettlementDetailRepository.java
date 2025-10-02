@@ -2,7 +2,6 @@ package com.deliveranything.domain.settlement.repository;
 
 import com.deliveranything.domain.settlement.entity.SettlementDetail;
 import com.deliveranything.domain.settlement.enums.SettlementStatus;
-import com.deliveranything.domain.settlement.enums.TargetType;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -12,7 +11,7 @@ import org.springframework.data.repository.query.Param;
 
 public interface SettlementDetailRepository extends JpaRepository<SettlementDetail, Long> {
 
-  Optional<SettlementDetail> findByOrderIdAndTargetType(Long orderId, TargetType targetType);
+  Optional<SettlementDetail> findByOrderIdAndTargetId(Long orderId, Long targetId);
 
   @Query("SELECT sd FROM SettlementDetail sd WHERE sd.status = :status "
       + "AND :startDateTime <= sd.createdAt AND sd.createdAt < :endDateTime")
@@ -24,14 +23,12 @@ public interface SettlementDetailRepository extends JpaRepository<SettlementDeta
 
   @Query("""
       SELECT sd FROM SettlementDetail sd
-      WHERE sd.targetType = :targetType
-        AND sd.targetId = :targetId
+      WHERE sd.targetId = :targetId
         AND sd.status = :status
         AND sd.createdAt >= :startDateTime
         AND sd.createdAt < :endDateTime
       """)
   List<SettlementDetail> findAllUnsettledDetails(
-      TargetType targetType,
       Long targetId,
       SettlementStatus status,
       LocalDateTime start,
