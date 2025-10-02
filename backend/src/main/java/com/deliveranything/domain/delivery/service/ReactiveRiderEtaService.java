@@ -2,9 +2,9 @@ package com.deliveranything.domain.delivery.service;
 
 import static com.deliveranything.domain.delivery.service.RiderLocationService.RIDER_GEO_KEY;
 
-import com.deliveranything.domain.user.entity.profile.RiderProfile;
-import com.deliveranything.domain.user.enums.RiderToggleStatus;
-import com.deliveranything.domain.user.repository.RiderProfileRepository;
+import com.deliveranything.domain.user.profile.entity.RiderProfile;
+import com.deliveranything.domain.user.profile.enums.RiderToggleStatus;
+import com.deliveranything.domain.user.profile.repository.RiderProfileRepository;
 import com.deliveranything.global.exception.CustomException;
 import com.deliveranything.global.exception.ErrorCode;
 import java.util.ArrayList;

@@ -6,7 +6,7 @@ import com.deliveranything.domain.review.enums.MyReviewSortType;
 import com.deliveranything.domain.review.enums.ReviewTargetType;
 import com.deliveranything.domain.review.enums.StoreReviewSortType;
 import com.deliveranything.domain.store.store.entity.QStore;
-import com.deliveranything.domain.user.enums.ProfileType;
+import com.deliveranything.domain.user.profile.enums.ProfileType;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;

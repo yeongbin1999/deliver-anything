@@ -1,6 +1,10 @@
 package com.deliveranything.domain.review.controller;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.deliveranything.domain.review.dto.ReviewCreateRequest;
 import com.deliveranything.domain.review.dto.ReviewCreateResponse;
@@ -11,10 +15,10 @@ import com.deliveranything.domain.review.enums.ReviewTargetType;
 import com.deliveranything.domain.review.factory.ReviewFactory;
 import com.deliveranything.domain.review.repository.ReviewRepository;
 import com.deliveranything.domain.review.service.ReviewService;
-import com.deliveranything.domain.user.entity.User;
-import com.deliveranything.domain.user.entity.profile.CustomerProfile;
-import com.deliveranything.domain.user.enums.ProfileType;
-import com.deliveranything.domain.user.repository.UserRepository;
+import com.deliveranything.domain.user.profile.entity.CustomerProfile;
+import com.deliveranything.domain.user.profile.enums.ProfileType;
+import com.deliveranything.domain.user.user.entity.User;
+import com.deliveranything.domain.user.user.repository.UserRepository;
 import com.deliveranything.global.common.CursorPageResponse;
 import com.deliveranything.global.exception.CustomException;
 import jakarta.persistence.EntityManager;

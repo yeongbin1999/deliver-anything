@@ -1,7 +1,7 @@
 package com.deliveranything.global.security.auth;
 
-import com.deliveranything.domain.user.entity.profile.Profile;
-import com.deliveranything.domain.user.enums.ProfileType;
+import com.deliveranything.domain.user.profile.entity.Profile;
+import com.deliveranything.domain.user.profile.enums.ProfileType;
 import java.util.Collection;
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
@@ -21,7 +21,7 @@ public class SecurityUser extends User {
       Profile currentActiveProfile,
       Collection<? extends GrantedAuthority> authorities
   ) {
-    super(name, password, authorities);
+    super(String.valueOf(id), password, authorities);
     this.id = id;
     this.name = name;
     this.currentActiveProfile = currentActiveProfile;

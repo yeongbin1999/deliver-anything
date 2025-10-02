@@ -1,13 +1,13 @@
 package com.deliveranything.global.security.filter;
 
-import com.deliveranything.domain.user.entity.User;
-import com.deliveranything.domain.user.entity.profile.Profile;
-import com.deliveranything.domain.user.entity.token.RefreshToken;
-import com.deliveranything.domain.user.enums.ProfileType;
-import com.deliveranything.domain.user.repository.ProfileRepository;
-import com.deliveranything.domain.user.repository.RefreshTokenRepository;
-import com.deliveranything.domain.user.repository.UserRepository;
-import com.deliveranything.domain.user.service.AuthTokenService;
+import com.deliveranything.domain.auth.entity.RefreshToken;
+import com.deliveranything.domain.auth.repository.RefreshTokenRepository;
+import com.deliveranything.domain.auth.service.AuthTokenService;
+import com.deliveranything.domain.user.profile.entity.Profile;
+import com.deliveranything.domain.user.profile.enums.ProfileType;
+import com.deliveranything.domain.user.profile.repository.ProfileRepository;
+import com.deliveranything.domain.user.user.entity.User;
+import com.deliveranything.domain.user.user.repository.UserRepository;
 import com.deliveranything.global.common.ApiResponse;
 import com.deliveranything.global.exception.CustomException;
 import com.deliveranything.global.exception.ErrorCode;
@@ -18,6 +18,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +26,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
@@ -125,7 +128,7 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
   private boolean isPublicEndpoint(String uri) {
     List<String> publicPaths = List.of(
         "/api/v1/auth/login",
-        "/api/v1/auth/register",
+        "/api/v1/auth/signup",
         "/api/v1/auth/logout",
         "/api/v1/auth/verification/send",
         "/api/v1/auth/verification/verify"
@@ -181,7 +184,17 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 
       // JWT에서 사용자 정보 복원 (DB 조회 최소화)
       User user = userRepository.findById(userId).orElse(null);
+      // JWT - DB간 불일치 체크
       if (user != null) {
+        Long dbProfileId = user.getCurrentActiveProfileId();
+
+        if (currentActiveProfileId != null && dbProfileId != null) {
+          if (!currentActiveProfileId.equals(dbProfileId)) {
+            log.warn("프로필 불일치: userId={}, JWT={}, DB={}",
+                userId, currentActiveProfileId, dbProfileId);
+            return null;
+          }
+        }
         // Profile 정보를 DB에서 조회해서 User에 설정
         if (currentActiveProfileId != null && currentActiveProfileId > 0) {
           Profile activeProfile = profileRepository.findById(currentActiveProfileId).orElse(null);
@@ -214,16 +227,51 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
     return userRepository.findByApiKey(token).orElse(null);
   }
 
+  // 권한 생성 로직 (User 엔티티에서 이동)
+
+  private List<GrantedAuthority> buildAuthorities(User user) {
+    List<GrantedAuthority> authorities = new ArrayList<>();
+
+    // 기본 사용자 권한
+    authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
+
+    // currentActiveProfile 기반 권한 추가
+    if (user.getCurrentActiveProfile() != null) {
+      ProfileType currentType = user.getCurrentActiveProfile().getType();
+      authorities.add(new SimpleGrantedAuthority("ROLE_" + currentType.name()));
+
+      /***
+       * 활성화된 다른 프로필들의 권한도 추가 (멀티프로필 지원) - 현재 쓸모가 없어보여서 주석처리
+       for (Profile profile : profiles) {
+       if (profile.isActive()) {
+       authorities.add(new SimpleGrantedAuthority("PROFILE_" + profile.getType().name()));
+       }
+       }
+       ***/
+    }
+
+    // 관리자 권한
+    if (user.isAdmin()) {
+      authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
+    }
+
+    return authorities;
+  }
+
+
   /**
    * SecurityContext에 인증 정보 설정 (Profile ID 포함)
    */
   private void setAuthentication(User user) {
+    // 권한 생성
+    List<GrantedAuthority> authorities = buildAuthorities(user);
+
     UserDetails securityUser = new SecurityUser(
         user.getId(),
         user.getName(),
         "",  // 비밀번호는 빈 문자열
         user.getCurrentActiveProfile(), // 현재 활성 프로필 타입
-        user.getAuthorities()
+        authorities
     );
 
     Authentication authentication = new UsernamePasswordAuthenticationToken(

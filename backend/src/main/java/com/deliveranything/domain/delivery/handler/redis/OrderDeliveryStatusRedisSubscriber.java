@@ -9,7 +9,7 @@ import com.deliveranything.domain.notification.service.NotificationService;
 import com.deliveranything.domain.order.entity.Order;
 import com.deliveranything.domain.order.enums.OrderStatus;
 import com.deliveranything.domain.order.service.OrderService;
-import com.deliveranything.domain.user.service.RiderProfileService;
+import com.deliveranything.domain.user.profile.service.RiderProfileService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
