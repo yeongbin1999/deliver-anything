@@ -9,7 +9,7 @@ public record TodayDeliveringResponseDto(
     LocalDateTime now,
     RiderToggleStatus currentStatus,
     Long todayDeliveryCount,
-    Integer todayEarningAmount,
+    Long todayEarningAmount,
     Double avgDeliveryTime
 ) {
 

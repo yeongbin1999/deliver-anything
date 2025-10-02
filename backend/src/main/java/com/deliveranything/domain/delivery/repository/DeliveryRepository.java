@@ -38,6 +38,13 @@ public interface DeliveryRepository extends JpaRepository<Delivery, Long> {
 
   List<Delivery> findByRiderProfileId(Long riderProfileId);
 
-  // 라이더별 상태 조회 (List 반환)
-  List<Delivery> findByRiderProfileIdAndStatus(Long riderProfileId, DeliveryStatus status);
+  // 라이더별 상태 조회 (List 반환) - JOIN FETCH로 N+1 방지
+  @Query("SELECT d FROM Delivery d " +
+      "JOIN FETCH d.store s " +
+      "JOIN FETCH d.order o " +
+      "WHERE d.riderProfile.id = :riderProfileId AND d.status = :status")
+  List<Delivery> findByRiderProfileIdAndStatus(
+      @Param("riderProfileId") Long riderProfileId, 
+      @Param("status") DeliveryStatus status
+  );
 }

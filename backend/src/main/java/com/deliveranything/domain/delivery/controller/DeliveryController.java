@@ -146,14 +146,17 @@ public class DeliveryController {
 
   @GetMapping("/total")
   @Operation(summary = "총 배달 내역 요약 조회 + 배달 완료 리스트 조회",
-      description = "라이더의 총 배달 내역 요약과 배달 완료 리스트를 조회합니다. cursor 기반 페이징을 지원합니다.")
+      description = "라이더의 총 배달 내역 요약과 배달 완료 리스트를 조회합니다. cursor 기반 페이징을 지원합니다."
+          + " filter: LATEST(최신순), OLDEST(오래된순)")
   public ResponseEntity<ApiResponse<DeliveredSummaryResponseDto>> getTotalDeliveries(
       @AuthenticationPrincipal SecurityUser user,
+      @RequestParam(required = false, defaultValue = "LATEST") String filter,
       @RequestParam(required = false) String cursor,
       @RequestParam(required = false, defaultValue = "10") Integer size
   ) {
     DeliveredSummaryResponseDto response = deliveryService.getDeliveredSummary(
         user.getCurrentActiveProfileIdSafe(),
+        filter,
         cursor,
         size
     );
