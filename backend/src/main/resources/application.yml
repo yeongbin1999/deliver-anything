@@ -94,6 +94,10 @@ toss:
     secret-key: ${YOUR_TEST_SECRET_KEY}
     toss-url: https://api.tosspayments.com
 
+kakao:
+  api:
+    key: ${KAKAO_API_KEY:임시키}
+
 custom:
   jwt:
     secretKey: abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789
@@ -104,7 +108,3 @@ gemini:
   api:
     key: ${GEMINI_API_KEY}
     url: https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent
-
-kakao:
-  api:
-    key: aasdfghjkl # 카카오 맵 REST API 키 (예시)
