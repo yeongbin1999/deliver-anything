@@ -126,41 +126,48 @@ jobs:
             --targets "Key=instanceIds,Values=${INSTANCE_ID}" \
             --document-name "AWS-RunShellScript" \
             --comment "Blue/Green deploy" \
-            --parameters 'commands=[
-              "set -euo pipefail",
-              "IMAGE=${IMAGE_REPO}:${{ steps.create_tag.outputs.new_tag }}",
-              "echo 🚢 Deploying image: $IMAGE",
-              
-              "# --- Blue/Green 상태 파악 ---",
-              "if docker ps --format '\''{{.Names}}'\'' | grep -q '\''^${BLUE_CONTAINER}$'\''; then ACTIVE=blue; INACTIVE=green; PORT_ACTIVE=$PORT_BLUE; PORT_INACTIVE=$PORT_GREEN; elif docker ps --format '\''{{.Names}}'\'' | grep -q '\''^${GREEN_CONTAINER}$'\''; then ACTIVE=green; INACTIVE=blue; PORT_ACTIVE=$PORT_GREEN; PORT_INACTIVE=$PORT_BLUE; else ACTIVE=none; INACTIVE=blue; PORT_ACTIVE=; PORT_INACTIVE=$PORT_BLUE; fi",
-              "NEW_CONTAINER=backend-$INACTIVE",
-              "echo 🔁 ACTIVE=$ACTIVE, NEW=$NEW_CONTAINER -> $PORT_INACTIVE",
+            --parameters "commands=[
+              \"set -euo pipefail\",
+              \"IMAGE=${IMAGE_REPO}:${{ steps.create_tag.outputs.new_tag }}\",
+              \"BLUE_CONTAINER=${BLUE_CONTAINER}\",
+              \"GREEN_CONTAINER=${GREEN_CONTAINER}\",
+              \"PORT_BLUE=${PORT_BLUE}\",
+              \"PORT_GREEN=${PORT_GREEN}\",
+              \"SPRING_PROFILE=${SPRING_PROFILE}\",
+              \"NPM_ID=${{ secrets.NPM_ID }}\",
+              \"NPM_PASSWORD=${{ secrets.NPM_PASSWORD }}\",
+              \"NPM_DOMAIN=${{ secrets.NPM_DOMAIN }}\",
 
-              "# --- Docker 네트워크 생성 ---",
-              "docker network inspect common >/dev/null 2>&1 || docker network create common",
+              \"# --- Blue/Green 상태 파악 ---\",
+              \"if docker ps --format '{{.Names}}' | grep -q '^'$BLUE_CONTAINER'$'; then ACTIVE=blue; INACTIVE=green; PORT_ACTIVE=$PORT_BLUE; PORT_INACTIVE=$PORT_GREEN; elif docker ps --format '{{.Names}}' | grep -q '^'$GREEN_CONTAINER'$'; then ACTIVE=green; INACTIVE=blue; PORT_ACTIVE=$PORT_GREEN; PORT_INACTIVE=$PORT_BLUE; else ACTIVE=none; INACTIVE=blue; PORT_ACTIVE=; PORT_INACTIVE=$PORT_BLUE; fi\",
+              \"NEW_CONTAINER=backend-$INACTIVE\",
+              \"echo 🔁 ACTIVE=$ACTIVE, NEW=$NEW_CONTAINER -> $PORT_INACTIVE\",
 
-              "# --- 기존 INACTIVE 컨테이너 제거 ---",
-              "docker rm -f $NEW_CONTAINER >/dev/null 2>&1 || true",
+              \"# --- Docker 네트워크 생성 ---\",
+              \"docker network inspect common >/dev/null 2>&1 || docker network create common\",
 
-              "# --- 새 컨테이너 실행 ---",
-              "docker run -d --name $NEW_CONTAINER --network common -p $PORT_INACTIVE:8080 -e SPRING_PROFILES_ACTIVE=$SPRING_PROFILE $IMAGE",
+              \"# --- 기존 INACTIVE 컨테이너 제거 ---\",
+              \"docker rm -f $NEW_CONTAINER >/dev/null 2>&1 || true\",
 
-              "# --- Healthcheck ---",
-              "echo ⏱ Waiting for $NEW_CONTAINER to be healthy...",
-              "HEALTH_OK=false",
-              "TIMEOUT=120",
-              "INTERVAL=3",
-              "ELAPSED=0",
-              "until [ $ELAPSED -ge $TIMEOUT ]; do STATUS=$(docker exec $NEW_CONTAINER sh -c '\''curl -fsS -o /dev/null -w %{http_code} http://127.0.0.1:8080/actuator/health'\'' || echo 000); if [ $STATUS = 200 ]; then HEALTH_OK=true; echo ✅ Healthy!; break; fi; sleep $INTERVAL; ELAPSED=$((ELAPSED + INTERVAL)); done",
-              "if [ $HEALTH_OK = false ]; then echo ❌ Health check failed; docker logs $NEW_CONTAINER || true; docker rm -f $NEW_CONTAINER || true; exit 1; fi",
+              \"# --- 새 컨테이너 실행 ---\",
+              \"docker run -d --name $NEW_CONTAINER --network common -p $PORT_INACTIVE:8080 -e SPRING_PROFILES_ACTIVE=$SPRING_PROFILE $IMAGE\",
 
-              "# --- 기존 ACTIVE 제거 ---",
-              "if [ $ACTIVE != none ]; then docker rm -f backend-$ACTIVE || true; fi",
-              "echo 🎉 Blue/Green switch complete → $NEW_CONTAINER",
+              \"# --- Healthcheck ---\",
+              \"echo ⏱ Waiting for $NEW_CONTAINER to be healthy...\",
+              \"HEALTH_OK=false\",
+              \"TIMEOUT=120\",
+              \"INTERVAL=3\",
+              \"ELAPSED=0\",
+              \"until [ $ELAPSED -ge $TIMEOUT ]; do STATUS=$(docker exec $NEW_CONTAINER sh -c 'curl -fsS -o /dev/null -w %{http_code} http://127.0.0.1:8080/actuator/health' || echo 000); if [ $STATUS = 200 ]; then HEALTH_OK=true; echo ✅ Healthy!; break; fi; sleep $INTERVAL; ELAPSED=$((ELAPSED + INTERVAL)); done\",
+              \"if [ $HEALTH_OK = false ]; then echo ❌ Health check failed; docker logs $NEW_CONTAINER || true; docker rm -f $NEW_CONTAINER || true; exit 1; fi\",
 
-              "# --- NPM API 호출 ---",
-              "echo 🔧 Updating NPM configuration...",
-              "curl -s -X POST http://localhost:81/api/nginx/proxy-hosts -u ${NPM_ID}:${NPM_PASSWORD} -H Content-Type:application/json -d '\''{\"domain_names\":[\"${NPM_DOMAIN}\"],\"forward_host\":\"127.0.0.1\",\"forward_port\":'"$PORT_INACTIVE"' ,\"access_list_id\":0,\"certificate_id\":0,\"enabled\":true}'\''",
-              "echo ✅ NPM API call complete"
-            ]' \
+              \"# --- 기존 ACTIVE 제거 ---\",
+              \"if [ $ACTIVE != none ]; then docker rm -f backend-$ACTIVE || true; fi\",
+              \"echo 🎉 Blue/Green switch complete → $NEW_CONTAINER\",
+
+              \"# --- NPM API 호출 ---\",
+              \"echo 🔧 Updating NPM configuration...\",
+              \"curl -s -X POST http://localhost:81/api/nginx/proxy-hosts -u $NPM_ID:$NPM_PASSWORD -H Content-Type:application/json -d '{\\\"domain_names\\\":[\\\"$NPM_DOMAIN\\\"],\\\"forward_host\\\":\\\"127.0.0.1\\\",\\\"forward_port\\\":'$PORT_INACTIVE',\\\"access_list_id\\\":0,\\\"certificate_id\\\":0,\\\"enabled\\\":true}'\",
+              \"echo ✅ NPM API call complete\"
+            ]" \
             --region ap-northeast-2
