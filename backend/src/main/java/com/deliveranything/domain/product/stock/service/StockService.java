@@ -20,9 +20,10 @@ public class StockService {
   private static final int MAX_RETRIES = 3;
 
   @Transactional(readOnly = true)
-  public StockResponse getProductStock(Long productId) {
+  public StockResponse getProductStock(Long storeId, Long productId) {
     Stock stock = stockRepository.findByProductId(productId)
         .orElseThrow(() -> new CustomException(ErrorCode.PRODUCT_NOT_FOUND));
+    stock.getProduct().validateStore(storeId);
     return StockResponse.from(stock);
   }
 
@@ -41,11 +42,11 @@ public class StockService {
   }
 
   // 관리자용: 직접 세팅
-  public StockResponse updateStockByAdmin(Long productId, int newQuantity) {
+  public StockResponse updateStockByAdmin(Long storeId, Long productId, int newQuantity) {
     int retries = 0;
     while (true) {
       try {
-        return stockTransactionalService.setStockTransactional(productId, newQuantity);
+        return stockTransactionalService.setStockTransactional(storeId, productId, newQuantity);
       } catch (OptimisticLockException e) {
         if (++retries >= MAX_RETRIES) {
           throw new CustomException(ErrorCode.STOCK_CHANGE_CONFLICT);

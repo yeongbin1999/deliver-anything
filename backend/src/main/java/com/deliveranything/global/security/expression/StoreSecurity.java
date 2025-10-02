@@ -15,7 +15,7 @@ public class StoreSecurity {
   private final StoreService storeService;
 
   public boolean isOwner(Long storeId, SecurityUser user) {
-    Store store = storeService.getById(storeId);
+    Store store = storeService.getStoreById(storeId);
 
     if (!store.getSellerProfileId().equals(user.getCurrentActiveProfile().getId())) {
       throw new CustomException(ErrorCode.STORE_OWNER_MISMATCH);

@@ -45,7 +45,6 @@ public class StoreController {
 
   @Operation(summary = "상점 단건 조회", description = "특정 상점의 정보를 조회합니다.")
   @GetMapping("/{storeId}")
-  @PreAuthorize("hasRole('USER')")
   public ResponseEntity<ApiResponse<StoreResponse>> getStore(
       @PathVariable Long storeId
   ) {
