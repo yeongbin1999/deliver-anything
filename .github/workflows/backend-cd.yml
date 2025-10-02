@@ -11,46 +11,13 @@ on:
 
 jobs:
   deploy:
+    if: github.repository == 'yeongbin1999/deliver-anything'
     runs-on: ubuntu-latest
-    
-    # -------------------------------------------------------------
-    # 📌 환경 변수 (이 섹션만 수정하여 프로젝트에 맞게 재사용하세요) 
-    # -------------------------------------------------------------
     env:
-      APP_NAME: deliver-anything-backend
-      IMAGE_REPO: ghcr.io/${{ github.repository_owner }}/deliver-anything-backend
-      DOCKERFILE_PATH: infra/docker/Dockerfile
+      DOCKER_IMAGE_NAME: deliver-anything-backend
       DOT_ENV: ${{ secrets.DOT_ENV }}
-
-      # 배포 환경 설정
-      EC2_TAG_NAME: team9-ec2
-      
-      # Blue-Green 설정
-      BLUE_CONTAINER: backend-blue
-      GREEN_CONTAINER: backend-green
-      PORT_BLUE: 8081
-      PORT_GREEN: 8082
-      INTERNAL_PORT: 8080
-      
-      # Health Check 설정
-      HEALTH_CHECK_PATH: /actuator/health
-      HEALTH_TIMEOUT: 120                       # 헬스 체크 최대 대기 시간 (초)
-      HEALTH_INTERVAL: 3                        # 헬스 체크 간격 (초)
-      INITIAL_DELAY: 20                         # 새 컨테이너 실행 후 초기 대기 시간 (초)
-
-      # Nginx Proxy Manager (NPM) 설정
-      NPM_HOST: 127.0.0.1
-      NPM_PORT: 81
-      NPM_DOMAIN: ${{ secrets.NPM_DOMAIN }}     # NPM 도메인 (Secret 필요)
-      NPM_ID: ${{ secrets.NPM_ID }}             # NPM 사용자 ID (Secret 필요)
-      NPM_PASSWORD: ${{ secrets.NPM_PASSWORD }} # NPM 비밀번호 (Secret 필요)
-    # -------------------------------------------------------------
-    
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+      - uses: actions/checkout@v4
 
       - name: Create Git Tag
         id: create_tag
@@ -63,16 +30,18 @@ jobs:
         run: echo "new_tag=${{ steps.create_tag.outputs.new_tag }}" >> $GITHUB_OUTPUT
 
       - name: Create Release
-        uses: softprops/action-gh-release@v2
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ steps.create_tag.outputs.new_tag }}
-          name: Release ${{ steps.create_tag.outputs.new_tag }}
+          release_name: Release ${{ steps.create_tag.outputs.new_tag }}
           body: ${{ steps.create_tag.outputs.changelog }}
           draft: false
           prerelease: false
 
       - name: Generate .env
-        run: mkdir -p backend && echo "$DOT_ENV" > backend/.env
+        run: echo "$DOT_ENV" > backend/.env
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -88,11 +57,11 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           context: .
-          file: ${{ env.DOCKERFILE_PATH }}
+          file: infra/docker/Dockerfile
           push: true
           tags: |
-            ${{ env.IMAGE_REPO }}:${{ steps.create_tag.outputs.new_tag }}
-            ${{ env.IMAGE_REPO }}:latest
+            ghcr.io/${{ github.repository_owner }}/${{ env.DOCKER_IMAGE_NAME }}:${{ steps.create_tag.outputs.new_tag }}
+            ghcr.io/${{ github.repository_owner }}/${{ env.DOCKER_IMAGE_NAME }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -107,10 +76,10 @@ jobs:
         id: get_instance
         run: |
           INSTANCE_ID=$(aws ec2 describe-instances \
-            --filters "Name=tag:Name,Values=${{ env.EC2_TAG_NAME }}" "Name=instance-state-name,Values=running" \
+            --filters "Name=tag:Name,Values=terra-ec2-web" "Name=instance-state-name,Values=running" \
             --query "Reservations[].Instances[].InstanceId" --output text)
           if [ -z "$INSTANCE_ID" ]; then
-            echo "❌ No running EC2 instance found with tag ${{ env.EC2_TAG_NAME }}"
+            echo "❌ No running EC2 instance found"
             exit 1
           fi
           echo "INSTANCE_ID=$INSTANCE_ID" >> $GITHUB_ENV
@@ -123,44 +92,29 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           instance-ids: ${{ env.INSTANCE_ID }}
           working-directory: /
-          comment: Deploy ${{ steps.create_tag.outputs.new_tag }}
+          comment: Deploy
           command: |
-            IMAGE=${{ env.IMAGE_REPO }}:${{ steps.create_tag.outputs.new_tag }}
-
-            BLUE_CONTAINER=${{ env.BLUE_CONTAINER }}
-            GREEN_CONTAINER=${{ env.GREEN_CONTAINER }}
-            PORT_BLUE=${{ env.PORT_BLUE }}
-            PORT_GREEN=${{ env.PORT_GREEN }}
-            INTERNAL_PORT=${{ env.INTERNAL_PORT }}
-            HEALTH_CHECK_PATH=${{ env.HEALTH_CHECK_PATH }}
-            HEALTH_TIMEOUT=${{ env.HEALTH_TIMEOUT }}
-            HEALTH_INTERVAL=${{ env.HEALTH_INTERVAL }}
-            INITIAL_DELAY=${{ env.INITIAL_DELAY }}
-            NPM_HOST=${{ env.NPM_HOST }}
-            NPM_PORT=${{ env.NPM_PORT }}
-            NPM_DOMAIN=${{ env.NPM_DOMAIN }}
-            NPM_ID="${{ env.NPM_ID }}"
-            NPM_PASSWORD="${{ env.NPM_PASSWORD }}"
+            IMAGE=ghcr.io/${{ github.repository_owner }}/${{ env.DOCKER_IMAGE_NAME }}:${{ steps.create_tag.outputs.new_tag }}
 
             # --- 현재 활성 컨테이너 확인 ---
-            if docker ps --filter "name=$BLUE_CONTAINER" | grep $BLUE_CONTAINER; then
+            if docker ps --filter "name=backend-blue" | grep backend-blue; then
                 ACTIVE=blue
                 INACTIVE=green
-                PORT_ACTIVE=$PORT_BLUE
-                PORT_INACTIVE=$PORT_GREEN
-            elif docker ps --filter "name=$GREEN_CONTAINER" | grep $GREEN_CONTAINER; then
+                PORT_ACTIVE=8081
+                PORT_INACTIVE=8082
+            elif docker ps --filter "name=backend-green" | grep backend-green; then
                 ACTIVE=green
                 INACTIVE=blue
-                PORT_ACTIVE=$PORT_GREEN
-                PORT_INACTIVE=$PORT_BLUE
+                PORT_ACTIVE=8082
+                PORT_INACTIVE=8081
             else
                 ACTIVE=none
                 INACTIVE=blue
                 PORT_ACTIVE=
-                PORT_INACTIVE=$PORT_BLUE
+                PORT_INACTIVE=8081
             fi
 
-            NEW_CONTAINER=${INACTIVE_CONTAINER}
+            NEW_CONTAINER=backend-$INACTIVE
 
             # 기존 INACTIVE 컨테이너 제거
             docker stop $NEW_CONTAINER || true
@@ -169,26 +123,28 @@ jobs:
             # 새 컨테이너 실행
             docker run -d --name $NEW_CONTAINER \
               --network common \
-              -p $PORT_INACTIVE:$INTERNAL_PORT \
+              -p $PORT_INACTIVE:8080 \
               $IMAGE
 
             # 초기 딜레이
-            sleep $INITIAL_DELAY
+            sleep 10
 
-            # --- 헬스체크 ---
+            # --- 헬스체크 (호스트 기준) ---
             echo "⏱ Waiting for $NEW_CONTAINER to become healthy..."
             HEALTH_OK=false
+            TIMEOUT=120
+            INTERVAL=3
             ELAPSED=0
 
-            until [ $ELAPSED -ge $HEALTH_TIMEOUT ]; do
-              STATUS=$(docker exec $NEW_CONTAINER curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:$INTERNAL_PORT$HEALTH_CHECK_PATH || echo 000)
+            until [ $ELAPSED -ge $TIMEOUT ]; do
+              STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:$PORT_INACTIVE/actuator/health || echo 000)
               if [ "$STATUS" -eq 200 ]; then
                 HEALTH_OK=true
                 echo "✅ $NEW_CONTAINER is healthy!"
                 break
               fi
-              sleep $HEALTH_INTERVAL
-              ELAPSED=$((ELAPSED + HEALTH_INTERVAL))
+              sleep $INTERVAL
+              ELAPSED=$((ELAPSED + INTERVAL))
             done
 
             if [ "$HEALTH_OK" = false ]; then
@@ -199,18 +155,20 @@ jobs:
             fi
 
             # --- NPM 토큰 발급 ---
-            TOKEN=$(curl -s -X POST http://$NPM_HOST:$NPM_PORT/api/tokens \
+            TOKEN=$(curl -s -X POST http://127.0.0.1:81/api/tokens \
               -H "Content-Type: application/json" \
-              -d "{\"identity\": \"$NPM_ID\", \"secret\": \"$NPM_PASSWORD\"}" | jq -r '.token')
+              -d "{\"identity\": \"${{ secrets.NPM_ID }}\", \"secret\": \"${{ secrets.NPM_PASSWORD }}\"}" | jq -r '.token')
+            echo "::add-mask::$TOKEN"
 
             # --- 프록시 ID 확인 ---
-            PROXY_ID=$(curl -s -X GET "http://$NPM_HOST:$NPM_PORT/api/nginx/proxy-hosts" \
+            PROXY_ID=$(curl -s -X GET "http://127.0.0.1:81/api/nginx/proxy-hosts" \
               -H "Authorization: Bearer $TOKEN" \
-              | jq ".[] | select(.domain_names[]==\"$NPM_DOMAIN\") | .id")
+              | jq ".[] | select(.domain_names[]==\"${{ secrets.NPM_DOMAIN }}\") | .id")
+            echo "::add-mask::$PROXY_ID"
 
-            # --- 업스트림 전환 ---
-            NEW_CONFIG=$(jq -n --arg host "$NEW_CONTAINER" --argjson port $INTERNAL_PORT '{forward_host: $host, forward_port: $port}')
-            curl -s -X PUT "http://$NPM_HOST:$NPM_PORT/api/nginx/proxy-hosts/$PROXY_ID" \
+            # --- 업스트림 전환 (최소 필드만) ---
+            NEW_CONFIG=$(jq -n --arg host "$NEW_CONTAINER" --argjson port 8080 '{forward_host: $host, forward_port: $port}')
+            curl -s -f -X PUT "http://127.0.0.1:81/api/nginx/proxy-hosts/$PROXY_ID" \
               -H "Authorization: Bearer $TOKEN" \
               -H "Content-Type: application/json" \
               -d "$NEW_CONFIG"
