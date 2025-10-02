@@ -61,7 +61,7 @@ public class OrderDeliveryStatusRedisSubscriber implements MessageListener {
 
     // 라이더 수락 시 Delivery 생성
     if (event.status().name().equals("RIDER_ASSIGNED")) {
-      Order order = orderService.getOrderById(Long.parseLong(orderId));
+      Order order = deliveryOrderService.getOrderById(Long.parseLong(orderId));
       order.updateStatus(OrderStatus.RIDER_ASSIGNED);
 
       // Delivery 생성
