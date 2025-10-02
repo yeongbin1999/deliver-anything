@@ -40,6 +40,7 @@ import org.springframework.data.redis.connection.ReturnType;
 import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;
+import org.springframework.data.redis.core.ZSetOperations.TypedTuple;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -191,7 +192,7 @@ public class ReviewService {
 
     String nextPageToken = null;
     if (!reviewList.isEmpty()) {
-      ReviewResponse lastReview = reviewList.get(reviewList.size() - 1);
+      ReviewResponse lastReview = reviewList.get(reviewResponse.size() - 1);
 
       String cursorValue = switch (sort) {
         case LATEST, OLDEST -> lastReview.createdAt().toString();
@@ -207,7 +208,11 @@ public class ReviewService {
 
     CursorPageResponse<ReviewResponse> result = new CursorPageResponse<>(reviewResponse, nextPageToken, hasNext);
 
-    Double avgRating = getReviewRating(userId, profileType);
+    Double avgRating = switch (profileType) {
+      case CUSTOMER -> getCustomerReviewRating(userId);
+      case SELLER -> getSellerOrRiderReviewRating(userId, ReviewTargetType.STORE);
+      case RIDER -> getSellerOrRiderReviewRating(userId, ReviewTargetType.RIDER);
+    };
 
     log.info("리뷰 리스트 조회 성공 - userId: {}, resultCount: {}", userId, reviewResponse.size());
     log.debug("nextPageToken: {}", nextPageToken);
@@ -336,13 +341,13 @@ public class ReviewService {
     String reviewSortedKey = "review:likes:store:" + storeId;
 
     //모든 값 조회
-    Set<ZSetOperations.TypedTuple<Object>> allReviews = redisTemplate.opsForZSet()
+    Set<TypedTuple<Object>> allReviews = redisTemplate.opsForZSet()
         .reverseRangeWithScores(reviewSortedKey, 0, -1);
 
     List<ReviewLikeResponse> list = new ArrayList<>();
 
     if (allReviews != null) {
-      for (ZSetOperations.TypedTuple<Object> tuple : allReviews) {
+      for (TypedTuple<Object> tuple : allReviews) {
         if (tuple == null || tuple.getValue() == null || tuple.getScore() == null) {
           continue;
         }
@@ -422,7 +427,7 @@ public class ReviewService {
 
     String nextPageToken = null;
     if (!reviewList.isEmpty()) {
-      ReviewResponse lastReview = reviewList.get(reviewList.size() - 1);
+      ReviewResponse lastReview = reviewList.get(result.size() - 1);
 
       String cursorValue = switch (sort) {
         case LATEST, OLDEST -> lastReview.createdAt().toString();
@@ -445,10 +450,19 @@ public class ReviewService {
 //        ReviewTargetType.RIDER) * 100.0) / 100.0;
 //  }
 
-  /* 별점 평균값 조회 메서드 */
-  public Double getReviewRating(
-      Long userId, ProfileType type) {
-    return Math.round(reviewRepository.findAvgRatingByTargetIdAndTargetType(userId,
-        type) * 100.0) / 100.0;
+  /* 별점 평균값 조회 메서드 - 판매자, 배달원 */
+  public Double getSellerOrRiderReviewRating(
+      Long userId, ReviewTargetType type) {
+    Double avg = reviewRepository.findAvgRatingByTargetIdAndTargetType(userId, type);
+    if (avg == null) return 0.0;
+    return Math.round(avg * 100.0) / 100.0;
+  }
+
+  /* 별점 평균값 조회 메서드 - 소비자 */
+  public Double getCustomerReviewRating(
+      Long userId) {
+    Double avg = reviewRepository.findAvgRatingByCustomerProfileId(userId);
+    if (avg == null) return 0.0;
+    return Math.round(avg * 100.0) / 100.0;
   }
 }
