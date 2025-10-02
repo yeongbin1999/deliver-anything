@@ -6,13 +6,8 @@ import com.deliveranything.domain.order.dto.OrderCancelRequest;
 import com.deliveranything.domain.order.dto.OrderCreateRequest;
 import com.deliveranything.domain.order.dto.OrderPayRequest;
 import com.deliveranything.domain.order.dto.OrderResponse;
-<<<<<<< HEAD:backend/src/main/java/com/deliveranything/domain/order/controller/CustomerOrderController.java
 import com.deliveranything.domain.order.service.CustomerOrderService;
 import com.deliveranything.domain.order.service.PaymentOrderService;
-=======
-import com.deliveranything.domain.order.service.OrderService;
-import com.deliveranything.domain.user.profile.enums.ProfileType;
->>>>>>> 2511efe (refactor(be) : 기존 user 패키지를 auth 와 user/user , user/profile 로 분리):backend/src/main/java/com/deliveranything/domain/order/controller/OrderController.java
 import com.deliveranything.global.common.ApiResponse;
 import com.deliveranything.global.common.CursorPageResponse;
 import com.deliveranything.global.security.auth.SecurityUser;
