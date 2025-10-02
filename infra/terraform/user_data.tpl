@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euxo pipefail
 
-# Swap (4GB)
+# --- Swap (4GB) ---
 if ! grep -q "/swapfile" /etc/fstab; then
   dd if=/dev/zero of=/swapfile bs=128M count=32
   chmod 600 /swapfile
@@ -10,19 +10,33 @@ if ! grep -q "/swapfile" /etc/fstab; then
   echo "/swapfile swap swap defaults 0 0" >> /etc/fstab
 fi
 
-# Docker
+# --- Docker 설치 ---
 dnf update -y
 dnf install -y docker git
 systemctl enable --now docker
 usermod -aG docker ec2-user || true
 
-# Docker 네트워크/볼륨
+# --- Docker 네트워크 생성 ---
 docker network create common || true
+
+# --- 디렉터리 생성 및 권한 설정 ---
+# Nginx Proxy Manager
 mkdir -p /dockerProjects/npm/volumes/data
 mkdir -p /dockerProjects/npm/volumes/etc/letsencrypt
+chown -R 1000:1000 /dockerProjects/npm/volumes
+
+# Redis
 mkdir -p /dockerProjects/redis/volumes/data
+chown -R 999:999 /dockerProjects/redis/volumes/data
+
+# MySQL
 mkdir -p /dockerProjects/mysql/volumes/var/lib/mysql
 mkdir -p /dockerProjects/mysql/volumes/etc/mysql/conf.d
+chown -R 999:999 /dockerProjects/mysql/volumes
+
+# Elasticsearch
+mkdir -p /dockerProjects/elasticsearch/volumes/data
+chown -R 1000:1000 /dockerProjects/elasticsearch/volumes/data
 
 # --- Nginx Proxy Manager ---
 docker rm -f npm || true
@@ -44,9 +58,8 @@ docker run -d \
   -v /dockerProjects/npm/volumes/etc/letsencrypt:/etc/letsencrypt \
   ${npm_image}
 
-# --- Elasticsearch (내부 전용) ---
+# --- Elasticsearch ---
 docker rm -f elasticsearch || true
-mkdir -p /dockerProjects/elasticsearch/volumes/data
 docker run -d \
   --name elasticsearch \
   --restart unless-stopped \
@@ -57,9 +70,10 @@ docker run -d \
   -e "ES_JAVA_OPTS=-Xms512m -Xmx512m" \
   -e "xpack.security.enabled=false" \
   -v /dockerProjects/elasticsearch/volumes/data:/usr/share/elasticsearch/data \
+  -u 1000:1000 \
   ${elasticsearch_image}
 
-# --- Redis (내부 전용) ---
+# --- Redis ---
 docker rm -f redis || true
 docker run -d \
   --name redis \
@@ -67,10 +81,11 @@ docker run -d \
   --network common \
   -e TZ=${timezone} \
   -v /dockerProjects/redis/volumes/data:/data \
+  -u 999:999 \
   ${redis_image} \
   redis-server --appendonly yes --requirepass ${default_password}
 
-# --- MySQL (기본 내부 전용, 필요 시 공개) ---
+# --- MySQL ---
 docker rm -f mysql || true
 docker run -d \
   --name mysql \
@@ -82,24 +97,25 @@ docker run -d \
   -e MYSQL_ROOT_PASSWORD=${default_password} \
   -v /dockerProjects/mysql/volumes/var/lib/mysql:/var/lib/mysql \
   -v /dockerProjects/mysql/volumes/etc/mysql/conf.d:/etc/mysql/conf.d \
+  -u 999:999 \
   ${mysql_image}
 
-# MySQL 준비 대기
+# --- MySQL 준비 대기 ---
 until docker exec mysql mysql -uroot -p${default_password} -e "SELECT 1" &> /dev/null; do
   sleep 5
 done
 
-# 앱 DB 생성
+# --- 앱 DB 생성 ---
 docker exec mysql mysql -uroot -p${default_password} -e "CREATE DATABASE IF NOT EXISTS \`${app_db_name}\`;"
 
-# 사용자/권한
+# --- 사용자/권한 ---
 %{ for u in mysql_user_list ~}
 docker exec mysql mysql -uroot -p${default_password} -e "CREATE USER IF NOT EXISTS '${u.name}'@'${u.host}' IDENTIFIED WITH caching_sha2_password BY '${u.password}';"
 docker exec mysql mysql -uroot -p${default_password} -e "GRANT ${u.privileges} TO '${u.name}'@'${u.host}';"
 %{ endfor ~}
 docker exec mysql mysql -uroot -p${default_password} -e "FLUSH PRIVILEGES;"
 
-# GHCR 로그인 (값 있을 때만)
+# --- GHCR 로그인 (있을 때만) ---
 if [ -n "${github_token}" ] && [ -n "${github_user}" ]; then
   echo "${github_token}" | docker login ghcr.io -u ${github_user} --password-stdin || true
 fi
