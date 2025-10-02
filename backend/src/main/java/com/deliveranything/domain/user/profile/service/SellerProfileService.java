@@ -200,4 +200,5 @@ public class SellerProfileService {
   public SellerProfile getSellerProfileById(Long sellerProfileId) {
     return sellerProfileRepository.findById(sellerProfileId).orElse(null);
   }
+
 }

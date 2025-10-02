@@ -122,3 +122,4 @@ public class RiderProfile extends BaseProfile {
         && this.toggleStatus == RiderToggleStatus.ON;
   }
 }
+
