@@ -196,8 +196,4 @@ public class SellerProfileService {
     return sellerProfileRepository.findByBusinessCertificateNumber(businessCertificateNumber)
         .orElse(null);
   }
-
-  public SellerProfile getSellerProfileById(Long sellerProfileId) {
-    return sellerProfileRepository.findById(sellerProfileId).orElse(null);
-  }
 }
