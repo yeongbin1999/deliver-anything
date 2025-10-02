@@ -20,7 +20,7 @@ jobs:
     env:
       # --- 프로젝트별 설정 ---
       APP_NAME: deliver-anything-backend
-      IMAGE_REPO: ghcr.io/${{ github.repository_owner }}/deliver-anything-backend
+      IMAGE_REPO: ghcr.io/${{ github.repository_owner }}/deliveranything-backend
 
       # --- Blue/Green 배포 설정 ---
       BLUE_CONTAINER: backend-blue
