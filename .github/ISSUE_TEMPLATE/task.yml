@@ -1,0 +1,51 @@
+name: "📝 Task"
+description: 작업 이슈 (기능, 버그, 리팩터링, 문서, 테스트 등)
+title: "type(scope): 한 줄 요약"
+projects: ["yeongbin1999/9"]
+
+body:
+  - type: dropdown
+    id: type
+    attributes:
+      label: Type
+      description: "작업의 성격 선택"
+      options:
+        - feat (새로운 기능)
+        - fix (버그 수정)
+        - refactor (리팩터링)
+        - docs (문서 작업)
+        - chore (설정/잡일)
+        - test (테스트 코드)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Scope
+      description: "작업 범위 선택"
+      options:
+        - fe (Frontend)
+        - be (Backend)
+        - infra (Infra/배포/환경)
+    validations:
+      required: true
+
+  - type: input
+    id: summary
+    attributes:
+      label: Summary
+      description: "짧은 요약 (브랜치명은 번호 기반)"
+      placeholder: "로그인 API 구현"
+    validations:
+      required: true
+
+  - type: textarea
+    id: details
+    attributes:
+      label: Details / Acceptance Criteria
+      placeholder: |
+        - As a user, ...
+        - Done when: ...
+    validations:
+      required: false

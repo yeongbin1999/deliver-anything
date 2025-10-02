@@ -1,0 +1,84 @@
+package com.deliveranything.domain.user.user.service;
+
+import com.deliveranything.domain.user.user.entity.User;
+import com.deliveranything.domain.user.user.repository.UserRepository;
+import com.deliveranything.global.exception.CustomException;
+import com.deliveranything.global.exception.ErrorCode;
+import java.util.Optional;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Slf4j
+@Service
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
+public class UserService {
+
+  private final UserRepository userRepository;
+  private final PasswordEncoder passwordEncoder;
+
+  // ========== 기본 사용자 관리 ==========
+
+  public User findById(Long id) {
+    return userRepository.findById(id)
+        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+  }
+
+  public Optional<User> findByEmail(String email) {
+    return userRepository.findByEmail(email);
+  }
+
+  public Optional<User> findByApiKey(String apiKey) {
+    return userRepository.findByApiKey(apiKey);
+  }
+
+  public boolean existsByEmail(String email) {
+    return userRepository.existsByEmail(email);
+  }
+
+  public boolean existsByPhoneNumber(String phoneNumber) {
+    return userRepository.existsByPhoneNumber(phoneNumber);
+  }
+
+  public long count() {
+    return userRepository.count();
+  }
+
+  // ========== 계정 관리 ==========
+
+  /**
+   * 비밀번호 변경 (현재 비밀번호 검증 포함)
+   */
+  @Transactional
+  public void changePassword(Long userId, String currentPassword, String newPassword) {
+    User user = findById(userId);
+
+    // 현재 비밀번호 검증
+    if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
+      throw new CustomException(ErrorCode.USER_NOT_FOUND);
+    }
+
+    String encodedNewPassword = passwordEncoder.encode(newPassword);
+    user.updatePassword(encodedNewPassword);
+    userRepository.save(user);
+
+    log.info("사용자 비밀번호 변경 완료: userId={}", userId);
+  }
+
+  /**
+   * 비밀번호 업데이트 (관리자용 또는 비밀번호 재설정용)
+   */
+  @Transactional
+  public void updatePassword(Long userId, String newPassword) {
+    User user = findById(userId);
+
+    String encodedPassword = passwordEncoder.encode(newPassword);
+    user.updatePassword(encodedPassword);
+    userRepository.save(user);
+
+    log.info("사용자 비밀번호 업데이트 완료: userId={}", userId);
+  }
+}

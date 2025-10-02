@@ -1,0 +1,54 @@
+name: Close linked issues on dev merge
+
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  close-issues-and-delete-branch:
+    if: github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'dev'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Close issue from branch number and delete branch
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const pr = context.payload.pull_request;
+            const head = pr.head.ref; // ex) feat/be/123
+            const m = head.match(/(\d+)$/);
+
+            if (m) {
+              const issueNumber = parseInt(m[1], 10);
+              try {
+                await github.rest.issues.update({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issueNumber,
+                  state: "closed"
+                });
+                core.info(`✅ Closed issue #${issueNumber} (from branch ${head})`);
+              } catch (e) {
+                core.warning(`Failed to close issue #${issueNumber}: ${e.message}`);
+              }
+            } else {
+              core.info(`No issue number found in branch "${head}". Skipping close.`);
+            }
+
+            // 병합된 작업 브랜치 삭제 (보호 브랜치 제외)
+            const protectedBranches = ['main', 'dev'];
+            const headBranch = pr.head.ref;
+            if (!protectedBranches.includes(headBranch)) {
+              try {
+                await github.rest.git.deleteRef({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  ref: `heads/${headBranch}`
+                });
+                core.info(`🗑️ Deleted branch: ${headBranch}`);
+              } catch (e) {
+                core.warning(`Failed to delete branch ${headBranch}: ${e.message}`);
+              }
+            } else {
+              core.info(`Skip deleting protected branch: ${headBranch}`);
+            }

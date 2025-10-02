@@ -1,0 +1,43 @@
+package com.deliveranything.domain.delivery.handler;
+
+import com.deliveranything.domain.delivery.event.dto.DeliveryStatusEvent;
+import com.deliveranything.domain.delivery.event.dto.OrderDeliveryCreatedEvent;
+import com.deliveranything.domain.delivery.event.dto.OrderStatusUpdateEvent;
+import com.deliveranything.domain.delivery.event.event.redis.DeliveryStatusRedisPublisher;
+import com.deliveranything.domain.delivery.event.event.redis.OrderAssignmentRedisPublisher;
+import com.deliveranything.domain.delivery.event.event.redis.OrderDeliveryStatusRedisPublisher;
+import com.deliveranything.domain.delivery.service.OrderNotificationService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
+
+@Component
+@RequiredArgsConstructor
+public class DeliveryEventHandler {
+
+  private final OrderNotificationService orderNotificationService;
+  private final OrderAssignmentRedisPublisher orderAssignmentRedisPublisher; // Kafka → Redis 변경
+  private final DeliveryStatusRedisPublisher deliveryStatusRedisPublisher;
+  private final OrderDeliveryStatusRedisPublisher orderDeliveryStatusRedisPublisher; // Kafka → Redis 변경
+
+
+  // 주문 도메인에서 발행한 이벤트 수신
+  @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+  public void handleOrderCreated(OrderDeliveryCreatedEvent orderEvent) {
+    orderNotificationService.processOrderEvent(orderEvent)
+        .subscribe(orderAssignmentRedisPublisher::publish); // Kafka → Redis 변경
+  }
+
+  // 배달 상태 변경 이벤트 발행
+  @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+  public void handleDeliveryStatus(DeliveryStatusEvent orderEvent) {
+    deliveryStatusRedisPublisher.publish(orderEvent);
+  }
+
+  // 배달 수락-거절 이벤트 발행
+  @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+  public void handleOrderDeliveryStatus(OrderStatusUpdateEvent orderEvent) {
+    orderDeliveryStatusRedisPublisher.publish(orderEvent);
+  }
+}
