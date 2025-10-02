@@ -136,11 +136,10 @@ jobs:
             docker stop $NEW_CONTAINER || true
             docker rm $NEW_CONTAINER || true
 
-            # --- 새 컨테이너 실행 (env-file 제거) ---
+            # --- 새 컨테이너 실행 ---
             docker run -d --name $NEW_CONTAINER \
               --network common \
               -p $PORT_INACTIVE:8080 \
-              -e SPRING_PROFILES_ACTIVE=${SPRING_PROFILE} \
               $IMAGE
 
             sleep 20
