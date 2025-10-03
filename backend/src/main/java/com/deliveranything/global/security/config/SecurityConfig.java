@@ -1,5 +1,7 @@
 package com.deliveranything.global.security.config;
 
+import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
+
 import com.deliveranything.global.security.filter.CustomAuthenticationFilter;
 import com.deliveranything.global.security.handler.CustomAccessDeniedHandler;
 import com.deliveranything.global.security.handler.CustomAuthenticationEntryPoint;
@@ -84,7 +86,7 @@ public class SecurityConfig {
         .formLogin(AbstractHttpConfigurer::disable)
         .logout(AbstractHttpConfigurer::disable)
         .httpBasic(AbstractHttpConfigurer::disable)
-        .sessionManagement(AbstractHttpConfigurer::disable)
+        .sessionManagement(sessionManagement -> sessionManagement.sessionCreationPolicy(STATELESS))
         .oauth2Login(oauth2 -> {
         })
 
