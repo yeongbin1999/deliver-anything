@@ -1,5 +1,6 @@
 package com.deliveranything.global.security.handler;
 
+import com.deliveranything.global.common.Rq;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -13,9 +14,11 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class CustomOAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
 
+  private final Rq rq;
+
   @Override
   public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
       Authentication authentication) throws IOException, ServletException {
-    response.sendRedirect("http://localhost:3000");
+    rq.sendRedirect("http://localhost:3000");
   }
 }
