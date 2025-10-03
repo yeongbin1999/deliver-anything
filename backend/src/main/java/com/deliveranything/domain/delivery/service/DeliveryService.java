@@ -408,7 +408,7 @@ public class DeliveryService {
 
   // 오늘 정산 금액 합계 -> 정산 대기 기준
   public Long getTodayEarningAmountByRiderId(Long riderProfileId) {
-    return settlementDetailService.getRiderUnsettledDetail(riderProfileId)
+    return settlementDetailService.getUnsettledDetail(riderProfileId)
         .scheduledSettleAmount();
   }
 
