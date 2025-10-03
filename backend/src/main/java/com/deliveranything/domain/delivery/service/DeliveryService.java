@@ -197,9 +197,6 @@ public class DeliveryService {
         getDeliveredDetailsCursor(riderProfileId, filter, cursor, size != null ? size : 10);
 
     return DeliveredSummaryResponseDto.builder()
-        .thisWeekDeliveredCount(getThisWeekCompletedCount(riderProfileId))
-        .waitingSettlementAmount(getTodayEarningAmountByRiderId(riderProfileId))
-        .completedSettlementAmount(getThisWeekEarningAmountByRiderId(riderProfileId))
         .deliveredDetails(deliveredDetails)
         .build();
   }
