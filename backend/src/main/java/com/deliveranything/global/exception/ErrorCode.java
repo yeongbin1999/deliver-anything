@@ -25,6 +25,7 @@ public enum ErrorCode {
   DELIVERY_NOT_AVAILABLE_IN_PROGRESS(HttpStatus.CONFLICT, "DELIVERY-409",
       "현재 배달 진행 중이므로 해당 작업을 수행할 수 없습니다."),
   DELIVERY_NOT_FOUND(HttpStatus.NOT_FOUND, "DELIVERY-404", "배달을 찾을 수 없습니다."),
+  NO_ACTIVE_DELIVERY(HttpStatus.NOT_FOUND, "DELIVERY-405", "진행 중인 배달이 없습니다."),
 
   // 리뷰 관련 오류
   REVIEW_NO_PERMISSION(HttpStatus.FORBIDDEN, "REVIEW-403", "리뷰를 관리할 권한이 없습니다."),

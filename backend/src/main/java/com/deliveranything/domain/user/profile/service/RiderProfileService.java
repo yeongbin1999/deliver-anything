@@ -116,7 +116,7 @@ public class RiderProfileService {
   @Transactional
   public void startDelivery(Long riderProfileId) {
     RiderProfile profile = getRiderProfileById(riderProfileId);
-    profile.setToggleStatus(RiderToggleStatus.ON);
+    profile.updateToggleStatus(RiderToggleStatus.ON);
     riderProfileRepository.save(profile);
     log.info("배달 시작 - Profile ID: {}", riderProfileId);
   }
@@ -127,7 +127,7 @@ public class RiderProfileService {
   @Transactional
   public void stopDelivery(Long riderProfileId) {
     RiderProfile profile = getRiderProfileById(riderProfileId);
-    profile.setToggleStatus(RiderToggleStatus.OFF);
+    profile.updateToggleStatus(RiderToggleStatus.OFF);
     riderProfileRepository.save(profile);
     log.info("배달 종료 - Profile ID: {}", riderProfileId);
   }
@@ -156,7 +156,7 @@ public class RiderProfileService {
   @Transactional
   public void updateDeliveryArea(Long riderProfileId, String newArea) {
     RiderProfile profile = getRiderProfileById(riderProfileId);
-    profile.setDeliveryArea(newArea);
+    profile.updateDeliveryArea(newArea);
     riderProfileRepository.save(profile);
     log.info("활동 지역 변경 완료 - Profile ID: {}, New Area: {}", riderProfileId, newArea);
   }
