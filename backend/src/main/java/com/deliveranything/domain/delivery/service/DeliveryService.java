@@ -290,6 +290,115 @@ public class DeliveryService {
     );
   }
 
+  // 정산 내역 페이지 조회
+  public DeliverySettlementResponseDto getDeliverySettlementInfo(
+      Long riderProfileId,
+      String filter,
+      String cursor,
+      Integer size
+  ) {
+    RiderProfile riderProfile = riderProfileService.getRiderProfileById(riderProfileId);
+
+    CursorPageResponse<DeliveredSettlementDetailsDto> deliveredSettlementDetails =
+        getDeliveredSettlementDetailsCursor(riderProfileId, filter, cursor, size);
+
+    return DeliverySettlementResponseDto.builder()
+        .totalDeliveredCount(getTotalDeliveredCount(riderProfileId))
+        .thisWeekTotalEarnings(getThisWeekEarningAmountByRiderId(riderProfileId))
+        .thisMonthTotalEarnings(getThisMonthEarningAmountByRiderId(riderProfileId))
+        .pendingSettlementAmount(getTodayEarningAmountByRiderId(riderProfileId)) //
+        .totalEarnings(getTotalEarnings(riderProfileId))
+        .deliveredSettlementDetails(deliveredSettlementDetails)
+        .build();
+  }
+
+  // 정산 내역 커서 페이징 조회
+  private CursorPageResponse<DeliveredSettlementDetailsDto> getDeliveredSettlementDetailsCursor(
+      Long riderProfileId,
+      String filter,
+      String nextPageToken,
+      int size
+  ) {
+    // 커서 디코딩
+    LocalDateTime lastCompletedAt = null;
+    Long lastOrderId = null;
+
+    if (nextPageToken != null) {
+      String[] decoded = CursorUtil.decode(nextPageToken);
+
+      if (decoded != null && decoded.length == 2) {
+        try {
+          lastCompletedAt = LocalDateTime.parse(decoded[0]);
+          lastOrderId = Long.parseLong(decoded[1]);
+        } catch (Exception e) {
+          lastCompletedAt = null;
+          lastOrderId = null;
+        }
+      }
+    }
+
+    final LocalDate finalLastSettlementDate =
+        lastCompletedAt != null ? lastCompletedAt.toLocalDate() : null;
+    final Long finalLastSettlementId = lastOrderId;
+
+    List<SettlementResponse> settlements = null;
+    if (filter.equals("WEEK")) {
+      settlements = settlementBatchService.getRiderWeekSettlementBatches(riderProfileId);
+    } else if (filter.equals("MONTH")) {
+      settlements = settlementBatchService.getRiderMonthSettlementBatches(riderProfileId);
+    }
+
+    // 정렬 및 필터링
+    List<SettlementResponse> filteredSettlement = settlements.stream()
+        .sorted((s1, s2) -> {
+          // 1차: settlementDate 기준 내림차순 (최신순)
+          int dateCompare = s2.settlementDate().compareTo(s1.settlementDate());
+          if (dateCompare != 0) {
+            return dateCompare;
+          }
+          // 2차: id 기준 내림차순
+          return Long.compare(s2.settlementId(), s1.settlementId());
+        })
+        .filter(s -> {
+          if (finalLastSettlementDate == null) {
+            return true;
+          }
+          int compareDate = s.settlementDate().compareTo(finalLastSettlementDate);
+          // 더 이전 날짜
+          if (compareDate < 0) {
+            return true;
+          }
+          if (compareDate == 0 && s.settlementId() < finalLastSettlementId) {
+            return true; // 같은 날짜, 더 작은 ID
+          }
+          return false;
+        })
+        .limit(size + 1) // hasNext 판단용 1개 추가
+        .toList();
+
+    // hasNext 판단
+    boolean hasNext = filteredSettlement.size() > size;
+    List<SettlementResponse> pageSettlements = hasNext ?
+        filteredSettlement.subList(0, size) : filteredSettlement;
+
+    // DTO 변환
+    List<DeliveredSettlementDetailsDto> deliveredDetailsList = pageSettlements.stream()
+        .map(settlement -> new DeliveredSettlementDetailsDto(settlement.settledAmount()))
+        .toList();
+
+    // 다음 페이지 토큰 생성
+    if (hasNext && !pageSettlements.isEmpty()) {
+      SettlementResponse last = pageSettlements.get(pageSettlements.size() - 1);
+      nextPageToken = CursorUtil.encode(last.settlementDate().atStartOfDay(), last.settlementId());
+    }
+
+    return new CursorPageResponse<>(
+        deliveredDetailsList,
+        nextPageToken,
+        hasNext
+    );
+  }
+
   // === 편의 메서드 ===
 
   public Delivery getInProgressDeliveryByRiderId(Long riderProfileId) {
@@ -303,10 +412,40 @@ public class DeliveryService {
     return deliveryRepository.countTodayCompletedDeliveriesByRider(riderProfileId);
   }
 
+  // 이번 주 배달 건 수
+  public Integer getThisWeekCompletedCount(Long riderProfileId) {
+    return settlementBatchService.getRiderWeekSettlementBatches(riderProfileId)
+        .size();
+  }
+
   // 오늘 정산 금액 합계 -> 정산 대기 기준
   public Long getTodayEarningAmountByRiderId(Long riderProfileId) {
     return settlementDetailService.getRiderUnsettledDetail(riderProfileId)
         .scheduledSettleAmount();
+  }
+
+  // 이번 주 정산 금액 합계
+  public Long getThisWeekEarningAmountByRiderId(Long riderProfileId) {
+    return settlementBatchService.getRiderWeekSettlementBatches(riderProfileId)
+        .stream()
+        .map(SettlementResponse::settledAmount)
+        .reduce(0L, Long::sum);
+  }
+
+  // 이번 달 정산 금액 합계
+  public Long getThisMonthEarningAmountByRiderId(Long riderProfileId) {
+    return settlementBatchService.getRiderMonthSettlementBatches(riderProfileId)
+        .stream()
+        .map(SettlementResponse::settledAmount)
+        .reduce(0L, Long::sum);
+  }
+
+  // 모든 기간의 정산 완료 금액
+  public Long getTotalEarnings(Long riderProfileId) {
+    return settlementBatchService.getSettlements(riderProfileId)
+        .stream()
+        .map(SettlementResponse::settledAmount)
+        .reduce(0L, Long::sum);
   }
 
   // 특정 배달 건의 정산 상태 조회
