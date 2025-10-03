@@ -401,51 +401,15 @@ public class DeliveryService {
 
   // === 편의 메서드 ===
 
-  public Delivery getInProgressDeliveryByRiderId(Long riderProfileId) {
-    return deliveryRepository.findFirstByRiderProfileIdAndStatusOrderByStartedAtDesc(
-            riderProfileId, DeliveryStatus.IN_PROGRESS)
-        .orElseThrow(() -> new CustomException(ErrorCode.NO_ACTIVE_DELIVERY));
-  }
-
   // 오늘 배달 건 수
   public Long getTodayCompletedCountByRider(Long riderProfileId) {
     return deliveryRepository.countTodayCompletedDeliveriesByRider(riderProfileId);
-  }
-
-  // 이번 주 배달 건 수
-  public Integer getThisWeekCompletedCount(Long riderProfileId) {
-    return settlementBatchService.getRiderWeekSettlementBatches(riderProfileId)
-        .size();
   }
 
   // 오늘 정산 금액 합계 -> 정산 대기 기준
   public Long getTodayEarningAmountByRiderId(Long riderProfileId) {
     return settlementDetailService.getRiderUnsettledDetail(riderProfileId)
         .scheduledSettleAmount();
-  }
-
-  // 이번 주 정산 금액 합계
-  public Long getThisWeekEarningAmountByRiderId(Long riderProfileId) {
-    return settlementBatchService.getRiderWeekSettlementBatches(riderProfileId)
-        .stream()
-        .map(SettlementResponse::settledAmount)
-        .reduce(0L, Long::sum);
-  }
-
-  // 이번 달 정산 금액 합계
-  public Long getThisMonthEarningAmountByRiderId(Long riderProfileId) {
-    return settlementBatchService.getRiderMonthSettlementBatches(riderProfileId)
-        .stream()
-        .map(SettlementResponse::settledAmount)
-        .reduce(0L, Long::sum);
-  }
-
-  // 모든 기간의 정산 완료 금액
-  public Long getTotalEarnings(Long riderProfileId) {
-    return settlementBatchService.getSettlements(riderProfileId)
-        .stream()
-        .map(SettlementResponse::settledAmount)
-        .reduce(0L, Long::sum);
   }
 
   // 특정 배달 건의 정산 상태 조회
@@ -485,7 +449,4 @@ public class DeliveryService {
     return customerProfileService.getCurrentAddress(defaultAddressId).getAddress();
   }
 
-  private Long getTotalDeliveryCharges(Long riderProfileId) {
-    return deliveryRepository.sumTotalDeliveryChargesByRider(riderProfileId);
-  }
 }
