@@ -1,3 +1,6 @@
+server:
+  forward-headers-strategy: native # 사용자가 HTTP로 접근해도 HTTPS로 올바르게 처리되도록
+
 spring:
   application:
     name: deliver-anything
