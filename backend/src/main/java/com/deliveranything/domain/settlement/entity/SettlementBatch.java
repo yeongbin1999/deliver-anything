@@ -23,7 +23,7 @@ public class SettlementBatch extends BaseEntity {
   private BigDecimal targetTotalAmount;
 
   @Column(nullable = false)
-  private Integer transactionCount;
+  private Long transactionCount;
 
   @Column(nullable = false, precision = 19, scale = 2)
   private BigDecimal totalPlatformFee;
@@ -35,9 +35,8 @@ public class SettlementBatch extends BaseEntity {
   private LocalDate settlementDate;
 
   @Builder
-  public SettlementBatch(Long targetId, BigDecimal targetTotalAmount,
-      Integer transactionCount, BigDecimal totalPlatformFee, BigDecimal settledAmount,
-      LocalDate settlementDate) {
+  public SettlementBatch(Long targetId, BigDecimal targetTotalAmount, Long transactionCount,
+      BigDecimal totalPlatformFee, BigDecimal settledAmount, LocalDate settlementDate) {
     this.targetId = targetId;
     this.targetTotalAmount = targetTotalAmount;
     this.transactionCount = transactionCount;

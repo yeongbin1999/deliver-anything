@@ -6,7 +6,7 @@ import java.util.List;
 
 public record UnsettledResponse(
     Long scheduledSettleAmount,
-    Integer scheduledTransactionCount
+    Long scheduledTransactionCount
 ) {
 
   public static UnsettledResponse from(List<SettlementDetail> settlementDetails) {
@@ -15,7 +15,7 @@ public record UnsettledResponse(
             .map(SettlementDetail::getTargetAmount)
             .reduce(BigDecimal.ZERO, BigDecimal::add)
             .longValue(),
-        settlementDetails.size()
+        (long) settlementDetails.size()
     );
   }
 }

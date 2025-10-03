@@ -1,16 +1,16 @@
 package com.deliveranything.domain.settlement.service;
 
 import com.deliveranything.domain.settlement.dto.SettlementResponse;
+import com.deliveranything.domain.settlement.dto.SummaryResponse;
+import com.deliveranything.domain.settlement.dto.projection.SettlementSummaryProjection;
 import com.deliveranything.domain.settlement.entity.SettlementBatch;
 import com.deliveranything.domain.settlement.entity.SettlementDetail;
-import com.deliveranything.domain.settlement.enums.SettlementStatus;
 import com.deliveranything.domain.settlement.repository.SettlementBatchRepository;
-import com.deliveranything.domain.settlement.repository.SettlementDetailRepository;
 import com.deliveranything.domain.settlement.service.dto.SettlementSummary;
 import com.deliveranything.global.exception.CustomException;
 import com.deliveranything.global.exception.ErrorCode;
 import java.math.BigDecimal;
-import java.time.DayOfWeek;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -24,18 +24,46 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class SettlementBatchService {
 
-  private final SettlementDetailRepository settlementDetailRepository;
+  private final SettlementDetailService settlementDetailService;
+  
   private final SettlementBatchRepository settlementBatchRepository;
 
-  public List<SettlementResponse> getSettlements(Long targetId) {
+  @Transactional(readOnly = true)
+  public List<SettlementResponse> getSettlementsByDay(Long targetId) {
     return settlementBatchRepository.findAllByTargetId(targetId).stream()
         .map(SettlementResponse::from)
         .toList();
   }
 
-  public SettlementResponse getSettlement(Long settlementId) {
-    return SettlementResponse.from(settlementBatchRepository.findById(settlementId)
-        .orElseThrow(() -> new CustomException(ErrorCode.SETTLEMENT_BATCH_NOT_FOUND)));
+  @Transactional(readOnly = true)
+  public List<SettlementResponse> getSettlementsByWeek(Long targetId) {
+    return settlementBatchRepository.findWeeklySettlementsByTargetId(targetId).stream()
+        .map(SettlementResponse::fromProjection)
+        .toList();
+  }
+
+  @Transactional(readOnly = true)
+  public List<SettlementResponse> getSettlementsByMonth(Long targetId) {
+    return settlementBatchRepository.findMonthlySettlementsByTargetId(targetId).stream()
+        .map(SettlementResponse::fromProjection)
+        .toList();
+  }
+
+  @Transactional(readOnly = true)
+  public SettlementResponse getSettlementByPeriod(
+      Long targetId,
+      LocalDate startDate,
+      LocalDate endDate
+  ) {
+    return SettlementResponse.fromProjection(
+        settlementBatchRepository.findSettlementByTargetIdAndPeriod(targetId, startDate, endDate)
+            .orElseThrow(() -> new CustomException(ErrorCode.SETTLEMENT_BATCH_NOT_FOUND)));
+  }
+
+  @Transactional(readOnly = true)
+  public SummaryResponse getSettlementSummary(Long targetId) {
+    return SummaryResponse.fromSettledAndUnsettled(getSettlementBatchSummary(targetId),
+        settlementDetailService.getUnsettledDetail(targetId));
   }
 
   // "초 분 시 일 월 요일"
@@ -43,9 +71,7 @@ public class SettlementBatchService {
   @Scheduled(cron = "0 0 0 * * *")
   @Transactional
   public void processDailySettlements() {
-    LocalDate yesterday = LocalDate.now().minusDays(1);
-    List<SettlementDetail> settlementDetails = settlementDetailRepository.findAllByStatusAndDateTime(
-        SettlementStatus.PENDING, yesterday.atStartOfDay(), LocalDate.now().atStartOfDay());
+    List<SettlementDetail> settlementDetails = settlementDetailService.getYesterdayUnsettledDetails();
 
     if (settlementDetails.isEmpty()) {
       return;
@@ -69,12 +95,14 @@ public class SettlementBatchService {
 
     // 그룹 정산 생성 및 각 정산 대상 상태 업데이트
     summaryMap.forEach((targetId, summary) -> {
+      BigDecimal flooredFee = summary.totalPlatformFee().setScale(0, RoundingMode.FLOOR);
+
       SettlementBatch batch = SettlementBatch.builder()
-          .settlementDate(yesterday)
+          .settlementDate(LocalDate.now().minusDays(1))
           .targetId(targetId)
           .targetTotalAmount(summary.totalTargetAmount())
-          .totalPlatformFee(summary.totalPlatformFee())
-          .settledAmount(summary.totalTargetAmount().subtract(summary.totalPlatformFee()))
+          .totalPlatformFee(flooredFee)
+          .settledAmount(summary.totalTargetAmount().subtract(flooredFee))
           .transactionCount(summary.transactionCount())
           .build();
 
@@ -86,23 +114,9 @@ public class SettlementBatchService {
     });
   }
 
-  // 이번 주 월요일 ~ 어제까지의 정산 목록
-  public List<SettlementResponse> getRiderWeekSettlementBatches(Long riderProfileId) {
-    LocalDate today = LocalDate.now();
-    return settlementBatchRepository.findAllByTargetIdAndSettlementDateBetween(riderProfileId,
-            today.with(DayOfWeek.MONDAY), today.minusDays(1))
-        .stream()
-        .map(SettlementResponse::from)
-        .toList();
-  }
-
-  // 이번 달 1일 ~ 어제까지의 정산 목록
-  public List<SettlementResponse> getRiderMonthSettlementBatches(Long riderProfileId) {
-    LocalDate today = LocalDate.now();
-    return settlementBatchRepository.findAllByTargetIdAndSettlementDateBetween(riderProfileId,
-            today.withDayOfMonth(1), today.minusDays(1))
-        .stream()
-        .map(SettlementResponse::from)
-        .toList();
+  // 요약 카드에 필요한 정산된 데이터 조회
+  private SettlementSummaryProjection getSettlementBatchSummary(Long targetId) {
+    return settlementBatchRepository.findSettlementSummaryByTargetId(targetId)
+        .orElseThrow(() -> new CustomException(ErrorCode.SETTLEMENT_BATCH_NOT_FOUND));
   }
 }
