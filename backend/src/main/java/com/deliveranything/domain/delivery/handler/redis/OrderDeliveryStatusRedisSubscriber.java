@@ -8,8 +8,6 @@ import com.deliveranything.domain.delivery.service.DeliveryService;
 import com.deliveranything.domain.notification.service.NotificationService;
 import com.deliveranything.domain.order.entity.Order;
 import com.deliveranything.domain.order.enums.OrderStatus;
-import com.deliveranything.domain.order.service.DeliveryOrderService;
-import com.deliveranything.domain.user.profile.service.RiderProfileService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
@@ -30,7 +28,6 @@ public class OrderDeliveryStatusRedisSubscriber implements MessageListener {
   private final RedisMessageListenerContainer container;
   private final DeliveryOrderService deliveryOrderService;
   private final DeliveryRepository deliveryRepository;
-  private final RiderProfileService riderProfileService;
   private final DeliveryService deliveryService;
   private final OrderDeliveryStatusSsePublisher orderDeliveryStatusSsePublisher;
 
@@ -63,7 +60,7 @@ public class OrderDeliveryStatusRedisSubscriber implements MessageListener {
 
     // 라이더 수락 시 Delivery 생성
     if (event.status().name().equals("RIDER_ASSIGNED")) {
-      Order order = deliveryOrderService.getOrderById(Long.parseLong(orderId));
+      Order order = orderService.getOrderById(Long.parseLong(orderId));
       order.updateStatus(OrderStatus.RIDER_ASSIGNED);
 
       // Delivery 생성

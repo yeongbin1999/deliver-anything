@@ -17,11 +17,6 @@ import com.deliveranything.domain.delivery.event.dto.OrderStatusUpdateEvent;
 import com.deliveranything.domain.delivery.repository.DeliveryRepository;
 import com.deliveranything.domain.order.dto.OrderResponse;
 import com.deliveranything.domain.order.entity.Order;
-import com.deliveranything.domain.user.profile.entity.RiderProfile;
-import com.deliveranything.domain.user.profile.enums.RiderToggleStatus;
-import com.deliveranything.domain.user.profile.service.RiderProfileService;
-import com.deliveranything.domain.order.service.OrderService;
-import com.deliveranything.domain.settlement.service.SettlementBatchService;
 import com.deliveranything.domain.settlement.service.SettlementDetailService;
 import com.deliveranything.domain.store.store.entity.Store;
 import com.deliveranything.domain.user.profile.entity.CustomerProfile;
@@ -50,11 +45,10 @@ public class DeliveryService {
 
   private final RiderProfileService riderProfileService;
   private final DeliveryRepository deliveryRepository;
-  private final OrderService orderService;
+  private final DeliveryOrderService deliveryOrderService;
   private final SellerProfileService sellerProfileService;
   private final ApplicationEventPublisher eventPublisher;
   private final CustomerProfileService customerProfileService;
-  private final SettlementBatchService settlementBatchService;
   private final SettlementDetailService settlementDetailService;
 
   public void updateRiderStatus(Long riderId, RiderToggleStatusRequestDto riderStatusRequestDto) {
@@ -133,7 +127,7 @@ public class DeliveryService {
 
     return currentDeliveries.stream()
         .map(delivery -> {
-          OrderResponse currentOrder = orderService.getOrderByDeliveryId(
+          OrderResponse currentOrder = deliveryOrderService.getOrderByDeliveryId(
               delivery.getId());  // 이미 JOIN FETCH로 가져옴
           return CurrentDeliveringResponseDto.builder()
               .orderId(delivery.getId())
@@ -151,7 +145,7 @@ public class DeliveryService {
     Delivery currentDelivery = deliveryRepository.findById(deliveryId)
         .orElseThrow(() -> new CustomException(ErrorCode.DELIVERY_NOT_FOUND));
 
-    OrderResponse currentOrder = orderService.getOrderByDeliveryId(currentDelivery.getId());
+    OrderResponse currentOrder = deliveryOrderService.getOrderByDeliveryId(currentDelivery.getId());
     Store currentStore = currentDelivery.getStore();
     SellerProfile sellerProfile = sellerProfileService.getSellerProfileById(
         currentStore.getSellerProfileId());
@@ -270,7 +264,7 @@ public class DeliveryService {
     // DTO 변환 (이미 JOIN FETCH로 Store와 Order를 가져왔으므로 추가 쿼리 없음)
     List<DeliveredDetailsDto> deliveredDetailsList = pageDeliveries.stream()
         .map(delivery -> {
-          OrderResponse order = orderService.getOrderByDeliveryId(delivery.getId());
+          OrderResponse order = deliveryOrderService.getOrderByDeliveryId(delivery.getId());
           return DeliveredDetailsDto.builder()
               .orderId(order.id())
               .storeName(delivery.getStore().getName())
