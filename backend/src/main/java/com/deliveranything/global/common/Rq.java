@@ -10,6 +10,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.util.Arrays;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -265,6 +266,14 @@ public class Rq {
     if (profileId != null) {
       setHeader("X-Current-Profile-Id", profileId.toString());
     }
+  }
+
+  /**
+   * 지정된 URL로 리다이렉트
+   */
+  @SneakyThrows
+  public void sendRedirect(String url) {
+    resp.sendRedirect(url);
   }
 
   /**
