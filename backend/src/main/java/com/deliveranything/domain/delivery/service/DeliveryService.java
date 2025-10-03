@@ -289,7 +289,7 @@ public class DeliveryService {
         hasNext
     );
   }
-  
+
   // === 편의 메서드 ===
 
   // 오늘 배달 건 수
@@ -339,5 +339,4 @@ public class DeliveryService {
   private String getCustomerDefaultAddress(Long defaultAddressId) {
     return customerProfileService.getCurrentAddress(defaultAddressId).getAddress();
   }
-
 }
