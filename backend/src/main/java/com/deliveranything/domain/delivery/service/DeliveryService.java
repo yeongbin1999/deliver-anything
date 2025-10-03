@@ -17,6 +17,7 @@ import com.deliveranything.domain.delivery.event.dto.OrderStatusUpdateEvent;
 import com.deliveranything.domain.delivery.repository.DeliveryRepository;
 import com.deliveranything.domain.order.dto.OrderResponse;
 import com.deliveranything.domain.order.entity.Order;
+import com.deliveranything.domain.order.service.DeliveryOrderService;
 import com.deliveranything.domain.settlement.service.SettlementDetailService;
 import com.deliveranything.domain.store.store.entity.Store;
 import com.deliveranything.domain.user.profile.entity.CustomerProfile;
