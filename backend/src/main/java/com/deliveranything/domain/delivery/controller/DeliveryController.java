@@ -59,29 +59,6 @@ public class DeliveryController {
     return ResponseEntity.ok(ApiResponse.success());
   }
 
-  @GetMapping("/reviews")
-  @Operation(summary = "배달원 리뷰 목록 조회",
-      description = "배달원에게 작성된 리뷰 목록과 함께, 전체 평점 및 별점별 개수를 조회합니다.")
-  public ResponseEntity<ApiResponse<ReviewRatingAndListResponseDto>> getReviews(
-      @AuthenticationPrincipal SecurityUser user,
-      @RequestParam(required = false, defaultValue = "LATEST") MyReviewSortType sort,
-      @RequestParam(required = false) String cursor,
-      @RequestParam(required = false, defaultValue = "10") Integer size
-  ) {
-    ReviewRatingAndListResponseDto response = reviewService.getReviewRatingAndList(
-        user.getCurrentActiveProfileIdSafe(), sort, cursor, size);
-    return ResponseEntity.ok(ApiResponse.success(response));
-  }
-
-  @GetMapping("/reviews/{reviewId}")
-  @Operation(summary = "리뷰 상세 조회", description = "리뷰 ID로 리뷰 상세 정보를 조회합니다.")
-  public ResponseEntity<ApiResponse<ReviewResponse>> getReviewDetail(
-      @PathVariable Long reviewId
-  ) {
-    ReviewResponse response = reviewService.getReview(reviewId);
-    return ResponseEntity.ok(ApiResponse.success(response));
-  }
-
   @PatchMapping("/{deliveryId}/delivery-status")
   @Operation(summary = "배달 상태 변경", description = "배달 ID와 다음 상태를 받아 배달 상태를 변경합니다.")
   public ResponseEntity<Void> updateStatus(
