@@ -18,13 +18,13 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/seller/orders")
+@RequestMapping("/api/v1/stores/{storeId}/orders")
 @RestController
-public class SellerOrderController {
+public class StoreOrderController {
 
   private final StoreOrderService storeOrderService;
 
-  @GetMapping("/{storeId}/history")
+  @GetMapping("/history")
   @Operation(summary = "주문 내역 조회", description = "판매자가 주문 이력을 요청한 경우")
   @PreAuthorize("@profileSecurity.isSeller(#securityUser) and @storeSecurity.isOwner(#storeId,#securityUser)")
   public ResponseEntity<ApiResponse<CursorPageResponse<OrderResponse>>> getOrdersHistory(
@@ -37,7 +37,7 @@ public class SellerOrderController {
         storeOrderService.getStoreOrdersByCursor(storeId, nextPageToken, size)));
   }
 
-  @GetMapping("/{storeId}/pending")
+  @GetMapping("/pending")
   @Operation(summary = "주문 수락 대기 목록 조회", description = "판매자가 상점의 주문 수락 대기 목록을 요청한 경우")
   @PreAuthorize("@profileSecurity.isSeller(#securityUser) and @storeSecurity.isOwner(#storeId,#securityUser)")
   public ResponseEntity<ApiResponse<List<OrderResponse>>> getPendingOrders(
@@ -48,7 +48,7 @@ public class SellerOrderController {
         storeOrderService.getPendingOrders(storeId)));
   }
 
-  @GetMapping("/{storeId}/accepted")
+  @GetMapping("/accepted")
   @Operation(summary = "주문 현황 목록 조회", description = "판매자가 상점의 주문 처리 중인 목록을 요청한 경우")
   @PreAuthorize("@profileSecurity.isSeller(#securityUser) and @storeSecurity.isOwner(#storeId,#securityUser)")
   public ResponseEntity<ApiResponse<List<OrderResponse>>> getAcceptedOrders(
