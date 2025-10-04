@@ -27,7 +27,7 @@ public class PaymentOrderService {
 
     try {
       paymentService.confirmPayment(paymentKey, merchantUid, order.getTotalPrice().longValue());
-      order.updateStatus(OrderStatus.PAID);
+      order.updateStatus(OrderStatus.PENDING);
     } catch (CustomException e) {
       order.updateStatus(OrderStatus.PAYMENT_FAILED);
       throw e;
@@ -41,10 +41,11 @@ public class PaymentOrderService {
     Order order = getOrderWithStoreById(orderId);
 
     try {
+      order.updateStatus(OrderStatus.CANCELLATION_REQUESTED);
       paymentService.cancelPayment(order.getMerchantId(), cancelReason);
       order.updateStatus(OrderStatus.CANCELED);
     } catch (CustomException e) {
-      order.updateStatus(OrderStatus.CANCELLATION_FAILED);
+      order.updateStatus(OrderStatus.PENDING);
       throw e;
     }
 
