@@ -6,6 +6,8 @@ import com.deliveranything.domain.order.enums.OrderStatus;
 import com.deliveranything.domain.order.repository.OrderRepository;
 import com.deliveranything.domain.order.repository.OrderRepositoryCustom;
 import com.deliveranything.global.common.CursorPageResponse;
+import com.deliveranything.global.exception.CustomException;
+import com.deliveranything.global.exception.ErrorCode;
 import com.deliveranything.global.util.CursorUtil;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -75,5 +77,26 @@ public class StoreOrderService {
             List.of(OrderStatus.PREPARING, OrderStatus.RIDER_ASSIGNED, OrderStatus.DELIVERING)).stream()
         .map(OrderResponse::from)
         .toList();
+  }
+
+  @Transactional
+  public OrderResponse acceptOrder(Long orderId, OrderStatus orderStatus) {
+    Order order = getOrderWithStore(orderId);
+    order.updateStatus(orderStatus);
+
+    return OrderResponse.from(order);
+  }
+
+  @Transactional
+  public OrderResponse rejectOrder(Long orderId, OrderStatus orderStatus) {
+    Order order = getOrderWithStore(orderId);
+    order.updateStatus(orderStatus);
+
+    return OrderResponse.from(order);
+  }
+
+  private Order getOrderWithStore(Long orderId) {
+    return orderRepository.findOrderWithStoreById(orderId)
+        .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND));
   }
 }
