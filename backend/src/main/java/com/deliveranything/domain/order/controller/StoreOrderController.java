@@ -82,6 +82,6 @@ public class StoreOrderController {
       @PathVariable Long orderId
   ) {
     return ResponseEntity.ok().body(ApiResponse.success("주문 상태 변경 성공",
-        storeOrderService.acceptOrder(orderId, OrderStatus.REJECTED)));
+        storeOrderService.rejectOrder(orderId, OrderStatus.REJECTED)));
   }
 }
