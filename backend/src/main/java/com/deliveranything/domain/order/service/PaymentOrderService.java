@@ -31,15 +31,6 @@ public class PaymentOrderService {
     eventPublisher.publishEvent(
         new OrderPaymentRequestedEvent(paymentKey, merchantUid, order.getTotalPrice().longValue()));
 
-    //?
-    try {
-      paymentService.confirmPayment(paymentKey, merchantUid, order.getTotalPrice().longValue());
-      order.updateStatus(OrderStatus.PENDING);
-    } catch (CustomException e) {
-      order.updateStatus(OrderStatus.PAYMENT_FAILED);
-      throw e;
-    }
-
     return OrderResponse.from(order);
   }
 
