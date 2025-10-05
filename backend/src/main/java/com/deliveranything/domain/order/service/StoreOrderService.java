@@ -3,6 +3,7 @@ package com.deliveranything.domain.order.service;
 import com.deliveranything.domain.order.dto.OrderResponse;
 import com.deliveranything.domain.order.entity.Order;
 import com.deliveranything.domain.order.enums.OrderStatus;
+import com.deliveranything.domain.order.event.OrderRejectedEvent;
 import com.deliveranything.domain.order.repository.OrderRepository;
 import com.deliveranything.domain.order.repository.OrderRepositoryCustom;
 import com.deliveranything.global.common.CursorPageResponse;
@@ -12,6 +13,7 @@ import com.deliveranything.global.util.CursorUtil;
 import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +23,8 @@ public class StoreOrderService {
 
   private final OrderRepository orderRepository;
   private final OrderRepositoryCustom orderRepositoryCustom;
+
+  private final ApplicationEventPublisher eventPublisher;
 
   // 주문 이력 조회
   @Transactional(readOnly = true)
@@ -90,7 +94,9 @@ public class StoreOrderService {
   @Transactional
   public OrderResponse rejectOrder(Long orderId) {
     Order order = getOrderWithStore(orderId);
-    order.updateStatus(OrderStatus.REJECTED);
+    order.updateStatus(OrderStatus.CANCELLATION_REQUESTED);
+//이후 reject or 취소 실패는 3일후 환불 처리
+    eventPublisher.publishEvent(OrderRejectedEvent.from(order, "상점이 주문을 거절했습니다."));
     // TODO: SSE 알림을 통해 상점에서 거절한 주문 제거하라고 전달
     return OrderResponse.from(order);
   }

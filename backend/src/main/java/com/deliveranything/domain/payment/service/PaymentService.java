@@ -7,7 +7,8 @@ import com.deliveranything.domain.payment.dto.PaymentConfirmRequest;
 import com.deliveranything.domain.payment.dto.PaymentConfirmResponse;
 import com.deliveranything.domain.payment.entitiy.Payment;
 import com.deliveranything.domain.payment.enums.PaymentStatus;
-import com.deliveranything.domain.payment.event.PaymentCompletedEvent;
+import com.deliveranything.domain.payment.event.PaymentCancelSuccessEvent;
+import com.deliveranything.domain.payment.event.PaymentSuccessEvent;
 import com.deliveranything.domain.payment.repository.PaymentRepository;
 import com.deliveranything.global.exception.CustomException;
 import com.deliveranything.global.exception.ErrorCode;
@@ -83,7 +84,7 @@ public class PaymentService {
 
     payment.updateStatus(PaymentStatus.PAID);
 
-    eventPublisher.publishEvent(new PaymentCompletedEvent(payment.getMerchantUid()));
+    eventPublisher.publishEvent(new PaymentSuccessEvent(payment.getMerchantUid()));
   }
 
   @Transactional
@@ -115,6 +116,8 @@ public class PaymentService {
 
     paymentRepository.save(new Payment(merchantUid, payment.getPaymentKey(), payment.getAmount(),
         PaymentStatus.CANCELED));
+
+    eventPublisher.publishEvent(new PaymentCancelSuccessEvent(payment.getMerchantUid()));
   }
 
   private Payment getPayment(String merchantUid, PaymentStatus status) {

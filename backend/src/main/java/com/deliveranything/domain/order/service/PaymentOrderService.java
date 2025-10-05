@@ -28,8 +28,8 @@ public class PaymentOrderService {
     Order order = getOrderByMerchantId(merchantUid);
     order.isPayable();
 
-    eventPublisher.publishEvent(
-        new OrderPaymentRequestedEvent(paymentKey, merchantUid, order.getTotalPrice().longValue()));
+    eventPublisher.publishEvent(new OrderPaymentRequestedEvent(order.getId(), paymentKey,
+        merchantUid, order.getTotalPrice().longValue()));
 
     return OrderResponse.from(order);
   }

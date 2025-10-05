@@ -1,6 +1,7 @@
 package com.deliveranything.domain.order.event;
 
 import com.deliveranything.domain.order.entity.Order;
+import com.deliveranything.domain.order.event.dto.OrderItemInfo;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -11,13 +12,6 @@ public record OrderCreatedEvent(
     BigDecimal totalPrice,
     List<OrderItemInfo> orderItems
 ) {
-
-  public record OrderItemInfo(
-      Long productId,
-      int quantity
-  ) {
-
-  }
 
   public static OrderCreatedEvent from(Order order) {
     return new OrderCreatedEvent(

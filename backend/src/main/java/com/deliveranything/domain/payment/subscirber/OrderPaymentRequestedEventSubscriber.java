@@ -40,7 +40,7 @@ public class OrderPaymentRequestedEventSubscriber implements MessageListener {
       paymentService.confirmPayment(event.paymentKey(), event.merchantUid(), event.amount());
     } catch (CustomException e) {
       if (event != null) {
-        log.warn("Payment failed for order {}: {}", event.merchantUid(), e.getMessage());
+        log.warn("Payment failed for order {}: {}", event.orderId(), e.getMessage());
         eventPublisher.publishEvent(new PaymentFailedEvent(event.merchantUid()));
       } else {
         log.error("Failed to get payment request message from Redis", e);

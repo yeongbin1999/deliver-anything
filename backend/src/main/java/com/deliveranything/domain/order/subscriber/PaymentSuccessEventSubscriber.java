@@ -1,7 +1,7 @@
 package com.deliveranything.domain.order.subscriber;
 
 import com.deliveranything.domain.order.service.OrderService;
-import com.deliveranything.domain.payment.event.PaymentCompletedEvent;
+import com.deliveranything.domain.payment.event.PaymentSuccessEvent;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -16,7 +16,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class PaymentCompletedEventSubscriber implements MessageListener {
+public class PaymentSuccessEventSubscriber implements MessageListener {
 
   private final RedisMessageListenerContainer container;
   private final ObjectMapper objectMapper;
@@ -31,7 +31,7 @@ public class PaymentCompletedEventSubscriber implements MessageListener {
   public void onMessage(@NonNull Message message, byte[] pattern) {
     try {
       orderService.processPaymentCompletion(objectMapper.readValue(new String(message.getBody()),
-          PaymentCompletedEvent.class).merchantUid());
+          PaymentSuccessEvent.class).merchantUid());
     } catch (Exception e) {
       log.error("Failed to process payment completed event from Redis", e);
     }

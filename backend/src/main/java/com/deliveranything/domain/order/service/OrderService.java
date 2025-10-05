@@ -30,6 +30,13 @@ public class OrderService {
     // TODO: SSE 결제 실패했다고 소비자에게 알림
   }
 
+  @Transactional
+  public void processPaymentCancelSuccess(String merchantUid) {
+    Order order = getOrder(merchantUid);
+    order.updateStatus(OrderStatus.REJECTED);
+    // TODO: SSE 상점의 개인 사정으로 주문이 취소됐다고 소비자에게 알림
+  }
+
   private Order getOrder(String merchantUid) {
     return orderRepository.findByMerchantId(merchantUid).orElseThrow(() -> new CustomException(
         ErrorCode.ORDER_NOT_FOUND));

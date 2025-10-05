@@ -1,7 +1,8 @@
 package com.deliveranything.domain.payment.publisher;
 
-import com.deliveranything.domain.payment.event.PaymentCompletedEvent;
+import com.deliveranything.domain.payment.event.PaymentCancelSuccessEvent;
 import com.deliveranything.domain.payment.event.PaymentFailedEvent;
+import com.deliveranything.domain.payment.event.PaymentSuccessEvent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
@@ -15,12 +16,17 @@ public class PaymentEventPublisher {
   private final RedisTemplate<String, Object> redisTemplate;
 
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-  public void handlePaymentCompletedEvent(PaymentCompletedEvent event) {
+  public void handlePaymentCompletedEvent(PaymentSuccessEvent event) {
     redisTemplate.convertAndSend("payment-completed-event", event);
   }
 
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
   public void handlePaymentFailedEvent(PaymentFailedEvent event) {
     redisTemplate.convertAndSend("payment-failed-event", event);
+  }
+
+  @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+  public void handlePaymentCancelSuccessEvent(PaymentCancelSuccessEvent event) {
+    redisTemplate.convertAndSend("payment-cancel-success-event", event);
   }
 }
