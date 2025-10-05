@@ -77,7 +77,11 @@ public enum ErrorCode {
 
   // Redis 관련 오류
   REDIS_MESSAGE_PROCESSING_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "REDIS-500",
-      "Redis 메시지 처리 중 오류가 발생했습니다.");
+      "Redis 메시지 처리 중 오류가 발생했습니다."),
+
+  // WebClient 관련 오류
+  WEBCLIENT_FAILED(HttpStatus.SERVICE_UNAVAILABLE, "WEBCLIENT-503", "외부 서비스 요청에 실패했습니다."),
+  ;
 
   private final HttpStatus httpStatus;
   private final String code;
