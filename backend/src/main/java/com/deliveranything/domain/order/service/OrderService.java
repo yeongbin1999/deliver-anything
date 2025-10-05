@@ -44,6 +44,13 @@ public class OrderService {
     // TODO: SSE 상점의 주문 현황에 준비중이던거 배정 완료로 업데이트 하라고 전달
   }
 
+  @Transactional
+  public void processDeliveryPickedUp(Long orderId) {
+    Order order = getOrderById(orderId);
+    order.updateStatus(OrderStatus.DELIVERING);
+    // TODO: SSE 상점의 주문 현황에 배정 완료이던거 배달 중으로 업데이트 하라고 전달
+  }
+
   private Order getOrderByMerchantId(String merchantUid) {
     return orderRepository.findByMerchantId(merchantUid).orElseThrow(() -> new CustomException(
         ErrorCode.ORDER_NOT_FOUND));
