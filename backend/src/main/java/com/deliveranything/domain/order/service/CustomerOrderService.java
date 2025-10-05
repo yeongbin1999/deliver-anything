@@ -8,7 +8,6 @@ import com.deliveranything.domain.order.entity.OrderItem;
 import com.deliveranything.domain.order.event.OrderCreatedEvent;
 import com.deliveranything.domain.order.repository.OrderRepository;
 import com.deliveranything.domain.order.repository.OrderRepositoryCustom;
-import com.deliveranything.domain.payment.service.PaymentService;
 import com.deliveranything.domain.product.product.service.ProductService;
 import com.deliveranything.domain.store.store.service.StoreService;
 import com.deliveranything.domain.user.profile.service.CustomerProfileService;
@@ -26,7 +25,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class CustomerOrderService {
 
   private final CustomerProfileService customerProfileService;
-  private final PaymentService paymentService;
   private final ProductService productService;
   private final StoreService storeService;
 
