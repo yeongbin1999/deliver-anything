@@ -5,6 +5,7 @@ import com.deliveranything.domain.order.dto.OrderItemRequest;
 import com.deliveranything.domain.order.dto.OrderResponse;
 import com.deliveranything.domain.order.entity.Order;
 import com.deliveranything.domain.order.entity.OrderItem;
+import com.deliveranything.domain.order.event.OrderCreatedEvent;
 import com.deliveranything.domain.order.repository.OrderRepository;
 import com.deliveranything.domain.order.repository.OrderRepositoryCustom;
 import com.deliveranything.domain.payment.service.PaymentService;
@@ -16,6 +17,7 @@ import com.deliveranything.global.exception.CustomException;
 import com.deliveranything.global.exception.ErrorCode;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,6 +32,8 @@ public class CustomerOrderService {
 
   private final OrderRepository orderRepository;
   private final OrderRepositoryCustom orderRepositoryCustom;
+
+  private final ApplicationEventPublisher eventPublisher;
 
   @Transactional
   public OrderResponse createOrder(Long customerId, OrderCreateRequest orderCreateRequest) {
@@ -55,7 +59,8 @@ public class CustomerOrderService {
     }
 
     Order savedOrder = orderRepository.save(order);
-    paymentService.createPayment(savedOrder.getMerchantId(), savedOrder.getTotalPrice());
+    // TODO: 재고가 확인됐다는 이벤트 받으면 재고Sub이 알림 호출해서 SSE로 클랄 전달
+    eventPublisher.publishEvent(OrderCreatedEvent.from(savedOrder));
 
     return OrderResponse.from(savedOrder);
   }
