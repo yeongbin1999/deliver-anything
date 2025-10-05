@@ -3,11 +3,13 @@ package com.deliveranything.domain.order.service;
 import com.deliveranything.domain.order.dto.OrderResponse;
 import com.deliveranything.domain.order.entity.Order;
 import com.deliveranything.domain.order.enums.OrderStatus;
+import com.deliveranything.domain.order.event.OrderPaymentRequestedEvent;
 import com.deliveranything.domain.order.repository.OrderRepository;
 import com.deliveranything.domain.payment.service.PaymentService;
 import com.deliveranything.global.exception.CustomException;
 import com.deliveranything.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,12 +21,17 @@ public class PaymentOrderService {
 
   private final OrderRepository orderRepository;
 
+  private final ApplicationEventPublisher eventPublisher;
+
   @Transactional
   public OrderResponse payOrder(String merchantUid, String paymentKey) {
     Order order = getOrderByMerchantId(merchantUid);
-
     order.isPayable();
 
+    eventPublisher.publishEvent(
+        new OrderPaymentRequestedEvent(paymentKey, merchantUid, order.getTotalPrice().longValue()));
+
+    //?
     try {
       paymentService.confirmPayment(paymentKey, merchantUid, order.getTotalPrice().longValue());
       order.updateStatus(OrderStatus.PENDING);

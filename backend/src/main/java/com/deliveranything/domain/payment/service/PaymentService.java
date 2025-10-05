@@ -7,6 +7,7 @@ import com.deliveranything.domain.payment.dto.PaymentConfirmRequest;
 import com.deliveranything.domain.payment.dto.PaymentConfirmResponse;
 import com.deliveranything.domain.payment.entitiy.Payment;
 import com.deliveranything.domain.payment.enums.PaymentStatus;
+import com.deliveranything.domain.payment.event.PaymentCompletedEvent;
 import com.deliveranything.domain.payment.repository.PaymentRepository;
 import com.deliveranything.global.exception.CustomException;
 import com.deliveranything.global.exception.ErrorCode;
@@ -14,6 +15,7 @@ import jakarta.annotation.PostConstruct;
 import java.math.BigDecimal;
 import java.util.Base64;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +28,7 @@ public class PaymentService {
   private final TossPaymentsConfig tossPaymentsConfig;
   private final WebClient.Builder webClientBuilder;
   private final PaymentRepository paymentRepository;
+  private final ApplicationEventPublisher eventPublisher;
 
   private WebClient tossWebClient;
   private String encodedSecretKey;
@@ -79,6 +82,8 @@ public class PaymentService {
     }
 
     payment.updateStatus(PaymentStatus.PAID);
+
+    eventPublisher.publishEvent(new PaymentCompletedEvent(payment.getMerchantUid()));
   }
 
   @Transactional

@@ -57,6 +57,7 @@ public class CustomerOrderService {
     }
 
     Order savedOrder = orderRepository.save(order);
+    // TODO: 재고가 없다면 주문 CANCELED나 재고 없음 상태로 이벤트 들어서 바꿔야함.
     // TODO: 재고가 확인됐다는 이벤트 받으면 재고Sub이 알림 호출해서 SSE로 클랄 전달
     eventPublisher.publishEvent(OrderCreatedEvent.from(savedOrder));
 
