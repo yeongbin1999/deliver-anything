@@ -35,6 +35,9 @@ public class DeliveryStatusEventSubscriber implements MessageListener {
           DeliveryStatusEvent.class);
       if (event.status() == DeliveryStatus.PICKED_UP) {
         orderService.processDeliveryPickedUp(event.orderId());
+      } else if (event.status() == DeliveryStatus.COMPLETED) {
+        orderService.processDeliveryCompleted(event.orderId(), event.riderProfileId(),
+            event.sellerProfileId());
       }
     } catch (Exception e) {
       log.error("Failed to process delivery status event from Redis", e);

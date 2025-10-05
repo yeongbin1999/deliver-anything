@@ -2,10 +2,12 @@ package com.deliveranything.domain.order.service;
 
 import com.deliveranything.domain.order.entity.Order;
 import com.deliveranything.domain.order.enums.OrderStatus;
+import com.deliveranything.domain.order.event.OrderCompletedEvent;
 import com.deliveranything.domain.order.repository.OrderRepository;
 import com.deliveranything.global.exception.CustomException;
 import com.deliveranything.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class OrderService {
 
+  private final ApplicationEventPublisher eventPublisher;
   private final OrderRepository orderRepository;
 
   @Transactional
@@ -49,6 +52,16 @@ public class OrderService {
     Order order = getOrderById(orderId);
     order.updateStatus(OrderStatus.DELIVERING);
     // TODO: SSE 상점의 주문 현황에 배정 완료이던거 배달 중으로 업데이트 하라고 전달
+  }
+
+  @Transactional
+  public void processDeliveryCompleted(Long orderId, Long riderProfileId, Long sellerProfileId) {
+    Order order = getOrderById(orderId);
+    order.updateStatus(OrderStatus.COMPLETED);
+
+    eventPublisher.publishEvent(new OrderCompletedEvent(orderId, riderProfileId, sellerProfileId,
+        order.getStorePrice(), order.getDeliveryPrice()));
+    // TODO: SSE 상점의 주문 현황에 배정 중이던거 제거하라고 전달
   }
 
   private Order getOrderByMerchantId(String merchantUid) {
