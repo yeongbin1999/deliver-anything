@@ -1,5 +1,7 @@
 package com.deliveranything.domain.payment.event;
 
-public record PaymentCancelSuccessEvent(String merchantUid) {
+import com.deliveranything.domain.order.enums.Publisher;
+
+public record PaymentCancelSuccessEvent(String merchantUid, Publisher publisher) {
 
 }

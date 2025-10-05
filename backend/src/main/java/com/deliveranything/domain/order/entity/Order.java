@@ -101,8 +101,14 @@ public class Order extends BaseEntity {
   }
 
   public void isPayable() {
+    if (this.status != OrderStatus.CREATED) {
+      throw new CustomException(ErrorCode.ORDER_PAY_UNAVAILABLE);
+    }
+  }
+
+  public void isCancelable() {
     if (this.status != OrderStatus.PENDING) {
-      throw new CustomException(ErrorCode.ORDER_PAY_STATUS_UNAVAILABLE);
+      throw new CustomException(ErrorCode.ORDER_CANCEL_UNAVAILABLE);
     }
   }
 }

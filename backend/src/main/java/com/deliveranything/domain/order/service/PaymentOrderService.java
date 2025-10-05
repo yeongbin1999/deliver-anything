@@ -3,9 +3,10 @@ package com.deliveranything.domain.order.service;
 import com.deliveranything.domain.order.dto.OrderResponse;
 import com.deliveranything.domain.order.entity.Order;
 import com.deliveranything.domain.order.enums.OrderStatus;
+import com.deliveranything.domain.order.enums.Publisher;
+import com.deliveranything.domain.order.event.OrderCancelEvent;
 import com.deliveranything.domain.order.event.OrderPaymentRequestedEvent;
 import com.deliveranything.domain.order.repository.OrderRepository;
-import com.deliveranything.domain.payment.service.PaymentService;
 import com.deliveranything.global.exception.CustomException;
 import com.deliveranything.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -17,11 +18,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class PaymentOrderService {
 
-  private final PaymentService paymentService;
-
-  private final OrderRepository orderRepository;
-
   private final ApplicationEventPublisher eventPublisher;
+  private final OrderRepository orderRepository;
 
   @Transactional
   public OrderResponse payOrder(String merchantUid, String paymentKey) {
@@ -37,15 +35,11 @@ public class PaymentOrderService {
   @Transactional
   public OrderResponse cancelOrder(Long orderId, String cancelReason) {
     Order order = getOrderWithStoreById(orderId);
+    order.isCancelable();
 
-    try {
-      order.updateStatus(OrderStatus.CANCELLATION_REQUESTED);
-      paymentService.cancelPayment(order.getMerchantId(), cancelReason);
-      order.updateStatus(OrderStatus.CANCELED);
-    } catch (CustomException e) {
-      order.updateStatus(OrderStatus.PENDING);
-      throw e;
-    }
+    order.updateStatus(OrderStatus.CANCELLATION_REQUESTED);
+
+    eventPublisher.publishEvent(OrderCancelEvent.from(order, cancelReason, Publisher.CUSTOMER));
 
     return OrderResponse.from(order);
   }

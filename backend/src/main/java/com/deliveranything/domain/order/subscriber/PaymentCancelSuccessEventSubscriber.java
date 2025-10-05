@@ -30,8 +30,9 @@ public class PaymentCancelSuccessEventSubscriber implements MessageListener {
   @Override
   public void onMessage(@NonNull Message message, byte[] pattern) {
     try {
-      orderService.processPaymentCancelSuccess(objectMapper.readValue(new String(message.getBody()),
-          PaymentCancelSuccessEvent.class).merchantUid());
+      PaymentCancelSuccessEvent event = objectMapper.readValue(message.getBody(),
+          PaymentCancelSuccessEvent.class);
+      orderService.processPaymentCancelSuccess(event.merchantUid(), event.publisher());
     } catch (Exception e) {
       log.error("Failed to process payment cancel success event from Redis", e);
     }

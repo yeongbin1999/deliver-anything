@@ -1,5 +1,6 @@
 package com.deliveranything.domain.payment.service;
 
+import com.deliveranything.domain.order.enums.Publisher;
 import com.deliveranything.domain.payment.config.TossPaymentsConfig;
 import com.deliveranything.domain.payment.dto.PaymentCancelRequest;
 import com.deliveranything.domain.payment.dto.PaymentCancelResponse;
@@ -88,7 +89,7 @@ public class PaymentService {
   }
 
   @Transactional
-  public void cancelPayment(String merchantUid, String cancelReason) {
+  public void cancelPayment(String merchantUid, String cancelReason, Publisher publisher) {
     Payment payment = getPayment(merchantUid, PaymentStatus.PAID);
 
     // 응답 수신 확인
@@ -117,7 +118,7 @@ public class PaymentService {
     paymentRepository.save(new Payment(merchantUid, payment.getPaymentKey(), payment.getAmount(),
         PaymentStatus.CANCELED));
 
-    eventPublisher.publishEvent(new PaymentCancelSuccessEvent(payment.getMerchantUid()));
+    eventPublisher.publishEvent(new PaymentCancelSuccessEvent(payment.getMerchantUid(), publisher));
   }
 
   private Payment getPayment(String merchantUid, PaymentStatus status) {

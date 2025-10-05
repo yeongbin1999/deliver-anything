@@ -6,7 +6,7 @@ import com.deliveranything.domain.order.event.dto.OrderItemInfo;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public record OrderRejectedEvent(
+public record OrderCancelEvent(
     Long orderId,
     String merchantUid,
     String cancelReason,
@@ -14,8 +14,8 @@ public record OrderRejectedEvent(
     Publisher publisher
 ) {
 
-  public static OrderRejectedEvent from(Order order, String cancelReason, Publisher publisher) {
-    return new OrderRejectedEvent(
+  public static OrderCancelEvent from(Order order, String cancelReason, Publisher publisher) {
+    return new OrderCancelEvent(
         order.getId(),
         order.getMerchantId(),
         cancelReason,

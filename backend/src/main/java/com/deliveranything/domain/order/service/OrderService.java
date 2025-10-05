@@ -2,6 +2,7 @@ package com.deliveranything.domain.order.service;
 
 import com.deliveranything.domain.order.entity.Order;
 import com.deliveranything.domain.order.enums.OrderStatus;
+import com.deliveranything.domain.order.enums.Publisher;
 import com.deliveranything.domain.order.event.OrderCompletedEvent;
 import com.deliveranything.domain.order.repository.OrderRepository;
 import com.deliveranything.global.exception.CustomException;
@@ -34,10 +35,15 @@ public class OrderService {
   }
 
   @Transactional
-  public void processPaymentCancelSuccess(String merchantUid) {
+  public void processPaymentCancelSuccess(String merchantUid, Publisher publisher) {
     Order order = getOrderByMerchantId(merchantUid);
-    order.updateStatus(OrderStatus.REJECTED);
-    // TODO: SSE 상점의 개인 사정으로 주문이 취소됐다고 소비자에게 알림
+    if (publisher == Publisher.CUSTOMER) {
+      order.updateStatus(OrderStatus.CANCELED);
+      // TODO: SSE 주문이 정상적으로 취소됐다고 소비자에게 알림
+    } else if (publisher == Publisher.STORE) {
+      order.updateStatus(OrderStatus.REJECTED);
+      // TODO: SSE 상점의 개인 사정으로 주문이 취소됐다고 소비자에게 알림
+    }
   }
 
   @Transactional

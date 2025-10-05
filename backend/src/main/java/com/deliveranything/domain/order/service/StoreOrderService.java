@@ -3,6 +3,7 @@ package com.deliveranything.domain.order.service;
 import com.deliveranything.domain.order.dto.OrderResponse;
 import com.deliveranything.domain.order.entity.Order;
 import com.deliveranything.domain.order.enums.OrderStatus;
+import com.deliveranything.domain.order.enums.Publisher;
 import com.deliveranything.domain.order.event.OrderAcceptedEvent;
 import com.deliveranything.domain.order.event.OrderRejectedEvent;
 import com.deliveranything.domain.order.repository.OrderRepository;
@@ -98,8 +99,8 @@ public class StoreOrderService {
   public OrderResponse rejectOrder(Long orderId) {
     Order order = getOrderWithStore(orderId);
     order.updateStatus(OrderStatus.CANCELLATION_REQUESTED);
-//이후 reject or 취소 실패는 3일후 환불 처리
-    eventPublisher.publishEvent(OrderRejectedEvent.from(order, "상점이 주문을 거절했습니다."));
+    
+    eventPublisher.publishEvent(OrderRejectedEvent.from(order, "상점이 주문을 거절했습니다.", Publisher.STORE));
     // TODO: SSE 알림을 통해 상점에서 거절한 주문 제거하라고 전달
     return OrderResponse.from(order);
   }

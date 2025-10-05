@@ -1,6 +1,6 @@
 package com.deliveranything.domain.payment.subscirber;
 
-import com.deliveranything.domain.order.event.OrderRejectedEvent;
+import com.deliveranything.domain.order.event.OrderCancelEvent;
 import com.deliveranything.domain.payment.service.PaymentService;
 import com.deliveranything.global.exception.CustomException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class OrderRejectedEventSubscriber implements MessageListener {
+public class OrderCancelEventSubscriber implements MessageListener {
 
   private final RedisMessageListenerContainer container;
   private final ObjectMapper objectMapper;
@@ -25,14 +25,14 @@ public class OrderRejectedEventSubscriber implements MessageListener {
 
   @PostConstruct
   public void registerListener() {
-    container.addMessageListener(this, new ChannelTopic("order-rejected-event"));
+    container.addMessageListener(this, new ChannelTopic("order-cancel-event"));
   }
 
   @Override
   public void onMessage(@NonNull Message message, byte[] pattern) {
-    OrderRejectedEvent event = null;
+    OrderCancelEvent event = null;
     try {
-      event = objectMapper.readValue(new String(message.getBody()), OrderRejectedEvent.class);
+      event = objectMapper.readValue(new String(message.getBody()), OrderCancelEvent.class);
       paymentService.cancelPayment(event.merchantUid(), event.cancelReason(), event.publisher());
     } catch (CustomException e) {
       if (event != null) {
@@ -42,7 +42,7 @@ public class OrderRejectedEventSubscriber implements MessageListener {
         log.error("Failed to get payment request message from Redis", e);
       }
     } catch (Exception e) {
-      log.error("Failed to process order rejected event from Redis", e);
+      log.error("Failed to process order cancel event from Redis", e);
     }
   }
 }
