@@ -3,6 +3,7 @@ package com.deliveranything.domain.order.service;
 import com.deliveranything.domain.order.dto.OrderResponse;
 import com.deliveranything.domain.order.entity.Order;
 import com.deliveranything.domain.order.enums.OrderStatus;
+import com.deliveranything.domain.order.event.OrderAcceptedEvent;
 import com.deliveranything.domain.order.event.OrderRejectedEvent;
 import com.deliveranything.domain.order.repository.OrderRepository;
 import com.deliveranything.domain.order.repository.OrderRepositoryCustom;
@@ -87,6 +88,8 @@ public class StoreOrderService {
   public OrderResponse acceptOrder(Long orderId) {
     Order order = getOrderWithStore(orderId);
     order.updateStatus(OrderStatus.PREPARING);
+    //TODO: SSE가 이거 구독해서 주문 수락화면에 현 리스트에서 주문 제거하라고 전달해야함.
+    eventPublisher.publishEvent(OrderAcceptedEvent.from(order));
 
     return OrderResponse.from(order);
   }
