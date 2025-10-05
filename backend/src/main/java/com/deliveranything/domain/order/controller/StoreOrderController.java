@@ -1,7 +1,6 @@
 package com.deliveranything.domain.order.controller;
 
 import com.deliveranything.domain.order.dto.OrderResponse;
-import com.deliveranything.domain.order.enums.OrderStatus;
 import com.deliveranything.domain.order.service.StoreOrderService;
 import com.deliveranything.global.common.ApiResponse;
 import com.deliveranything.global.common.CursorPageResponse;
@@ -70,7 +69,7 @@ public class StoreOrderController {
       @PathVariable Long orderId
   ) {
     return ResponseEntity.ok().body(ApiResponse.success("주문 상태 변경 성공",
-        storeOrderService.acceptOrder(orderId, OrderStatus.PREPARING)));
+        storeOrderService.acceptOrder(orderId)));
   }
 
   @PatchMapping("/{orderId}/reject")
@@ -82,6 +81,6 @@ public class StoreOrderController {
       @PathVariable Long orderId
   ) {
     return ResponseEntity.ok().body(ApiResponse.success("주문 상태 변경 성공",
-        storeOrderService.rejectOrder(orderId, OrderStatus.REJECTED)));
+        storeOrderService.rejectOrder(orderId)));
   }
 }

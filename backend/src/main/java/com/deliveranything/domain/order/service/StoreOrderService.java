@@ -80,18 +80,18 @@ public class StoreOrderService {
   }
 
   @Transactional
-  public OrderResponse acceptOrder(Long orderId, OrderStatus orderStatus) {
+  public OrderResponse acceptOrder(Long orderId) {
     Order order = getOrderWithStore(orderId);
-    order.updateStatus(orderStatus);
+    order.updateStatus(OrderStatus.PREPARING);
 
     return OrderResponse.from(order);
   }
 
   @Transactional
-  public OrderResponse rejectOrder(Long orderId, OrderStatus orderStatus) {
+  public OrderResponse rejectOrder(Long orderId) {
     Order order = getOrderWithStore(orderId);
-    order.updateStatus(orderStatus);
-
+    order.updateStatus(OrderStatus.REJECTED);
+    // TODO: SSE 알림을 통해 상점에서 거절한 주문 제거하라고 전달
     return OrderResponse.from(order);
   }
 
