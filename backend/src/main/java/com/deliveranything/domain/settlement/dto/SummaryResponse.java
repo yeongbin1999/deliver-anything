@@ -1,12 +1,13 @@
 package com.deliveranything.domain.settlement.dto;
 
 import com.deliveranything.domain.settlement.dto.projection.SettlementSummaryProjection;
+import java.math.BigDecimal;
 
 public record SummaryResponse(
     Long totalTransactionCount,
     Long weeklyTransactionCount,
-    Long weeklySettledAmount,
-    Long monthlySettledAmount,
+    BigDecimal weeklySettledAmount,
+    BigDecimal monthlySettledAmount,
     Long totalSettledAmount,
     Long scheduledSettleAmount
 ) {
