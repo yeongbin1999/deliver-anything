@@ -110,8 +110,7 @@ public class SecurityConfig {
         "https://*.deliver-anything.shop",  // 배포 도메인
         "https://deliver-anything.shop",
         "https://cdpn.io",          // CodePen 테스트
-        "https://www.deliver-anything.shop",       // www 서브도메인
-        "https://api.deliver-anything.shop"        // api 서브도메인
+        "https://www.deliver-anything.shop"       // www 서브도메인
     ));
 
     configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
