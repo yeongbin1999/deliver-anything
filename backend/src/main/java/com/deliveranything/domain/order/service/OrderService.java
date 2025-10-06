@@ -31,7 +31,7 @@ public class OrderService {
   public void processPaymentFailure(String merchantUid) {
     Order order = getOrderByMerchantId(merchantUid);
     order.updateStatus(OrderStatus.PAYMENT_FAILED);
-    // TODO: SSE 결제 실패했다고 소비자에게 알림
+    // TODO: SSE 결제 실패했다고 결제 재요청 소비자에게 알림
   }
 
   @Transactional

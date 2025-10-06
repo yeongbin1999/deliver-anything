@@ -4,7 +4,7 @@ import com.deliveranything.domain.order.dto.OrderResponse;
 import com.deliveranything.domain.order.entity.Order;
 import com.deliveranything.domain.order.enums.OrderStatus;
 import com.deliveranything.domain.order.enums.Publisher;
-import com.deliveranything.domain.order.event.OrderAcceptedEvent;
+import com.deliveranything.domain.order.event.OrderDeliveryCreatedEvent;
 import com.deliveranything.domain.order.event.OrderRejectedEvent;
 import com.deliveranything.domain.order.repository.OrderRepository;
 import com.deliveranything.domain.order.repository.OrderRepositoryCustom;
@@ -90,7 +90,7 @@ public class StoreOrderService {
     Order order = getOrderWithStore(orderId);
     order.updateStatus(OrderStatus.PREPARING);
     //TODO: SSE가 이거 구독해서 주문 수락화면에 현 리스트에서 주문 제거하라고 전달해야함.
-    eventPublisher.publishEvent(OrderAcceptedEvent.from(order));
+    eventPublisher.publishEvent(OrderDeliveryCreatedEvent.from(order));
 
     return OrderResponse.from(order);
   }
@@ -99,7 +99,7 @@ public class StoreOrderService {
   public OrderResponse rejectOrder(Long orderId) {
     Order order = getOrderWithStore(orderId);
     order.updateStatus(OrderStatus.CANCELLATION_REQUESTED);
-    
+
     eventPublisher.publishEvent(OrderRejectedEvent.from(order, "상점이 주문을 거절했습니다.", Publisher.STORE));
     // TODO: SSE 알림을 통해 상점에서 거절한 주문 제거하라고 전달
     return OrderResponse.from(order);

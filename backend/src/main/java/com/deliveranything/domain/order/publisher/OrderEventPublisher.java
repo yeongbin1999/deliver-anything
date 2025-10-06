@@ -1,6 +1,5 @@
 package com.deliveranything.domain.order.publisher;
 
-import com.deliveranything.domain.order.event.OrderAcceptedEvent;
 import com.deliveranything.domain.order.event.OrderCancelEvent;
 import com.deliveranything.domain.order.event.OrderCompletedEvent;
 import com.deliveranything.domain.order.event.OrderCreatedEvent;
@@ -31,11 +30,6 @@ public class OrderEventPublisher {
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
   public void handleOrderRejectedEvent(OrderRejectedEvent event) {
     redisTemplate.convertAndSend("order-rejected-event", event);
-  }
-
-  @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-  public void handleOrderAcceptedEvent(OrderAcceptedEvent event) {
-    redisTemplate.convertAndSend("order-accepted-event", event);
   }
 
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)

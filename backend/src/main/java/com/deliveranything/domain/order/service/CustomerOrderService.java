@@ -14,6 +14,7 @@ import com.deliveranything.domain.user.profile.service.CustomerProfileService;
 import com.deliveranything.global.common.CursorPageResponse;
 import com.deliveranything.global.exception.CustomException;
 import com.deliveranything.global.exception.ErrorCode;
+import com.deliveranything.global.util.PointUtil;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -39,6 +40,7 @@ public class CustomerOrderService {
         .customer(customerProfileService.getProfile(customerId))
         .store(storeService.getStoreById(orderCreateRequest.storeId()))
         .address(orderCreateRequest.address())
+        .destination(PointUtil.createPoint(orderCreateRequest.lat(), orderCreateRequest.lng()))
         .riderNote(orderCreateRequest.riderNote())
         .storeNote(orderCreateRequest.storeNote())
         .totalPrice(orderCreateRequest.totalPrice())

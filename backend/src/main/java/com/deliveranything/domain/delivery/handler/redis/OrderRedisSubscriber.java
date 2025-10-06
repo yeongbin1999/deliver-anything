@@ -1,8 +1,8 @@
 package com.deliveranything.domain.delivery.handler.redis;
 
-import com.deliveranything.domain.delivery.event.dto.OrderDeliveryCreatedEvent;
 import com.deliveranything.domain.delivery.event.event.redis.OrderAssignmentRedisPublisher;
 import com.deliveranything.domain.delivery.service.OrderNotificationService;
+import com.deliveranything.domain.order.event.OrderDeliveryCreatedEvent;
 import com.deliveranything.global.exception.CustomException;
 import com.deliveranything.global.exception.ErrorCode;
 import com.fasterxml.jackson.databind.ObjectMapper;
