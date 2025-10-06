@@ -5,8 +5,8 @@ import java.math.BigDecimal;
 public record SettlementSummaryProjection(
     Long totalTransactionCount,
     Long weeklyTransactionCount,
-    Long weeklySettledAmount,
-    Long monthlySettledAmount,
+    BigDecimal weeklySettledAmount,
+    BigDecimal monthlySettledAmount,
     BigDecimal totalSettledAmount
 ) {
 
