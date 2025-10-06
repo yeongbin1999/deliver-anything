@@ -3,7 +3,7 @@ package com.deliveranything.domain.delivery.service;
 import com.deliveranything.domain.delivery.dto.OrderDetailsDto;
 import com.deliveranything.domain.delivery.event.dto.RiderNotificationDto;
 import com.deliveranything.domain.order.enums.OrderStatus;
-import com.deliveranything.domain.order.event.OrderDeliveryCreatedEvent;
+import com.deliveranything.domain.order.event.OrderAcceptedEvent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -18,7 +18,7 @@ public class OrderNotificationService {
   private final ReactiveRiderEtaService reactiveRiderEtaService;
   private final EtaService etaService;
 
-  public Mono<List<RiderNotificationDto>> processOrderEvent(OrderDeliveryCreatedEvent orderEvent) {
+  public Mono<List<RiderNotificationDto>> processOrderEvent(OrderAcceptedEvent orderEvent) {
     double storeLat = orderEvent.storeLat();
     double storeLon = orderEvent.storeLon();
     double customerLat = orderEvent.customerLat();
