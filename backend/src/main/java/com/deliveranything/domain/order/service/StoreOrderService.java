@@ -3,13 +3,19 @@ package com.deliveranything.domain.order.service;
 import com.deliveranything.domain.order.dto.OrderResponse;
 import com.deliveranything.domain.order.entity.Order;
 import com.deliveranything.domain.order.enums.OrderStatus;
+import com.deliveranything.domain.order.enums.Publisher;
+import com.deliveranything.domain.order.event.OrderAcceptedEvent;
+import com.deliveranything.domain.order.event.OrderRejectedEvent;
 import com.deliveranything.domain.order.repository.OrderRepository;
 import com.deliveranything.domain.order.repository.OrderRepositoryCustom;
 import com.deliveranything.global.common.CursorPageResponse;
+import com.deliveranything.global.exception.CustomException;
+import com.deliveranything.global.exception.ErrorCode;
 import com.deliveranything.global.util.CursorUtil;
 import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +25,8 @@ public class StoreOrderService {
 
   private final OrderRepository orderRepository;
   private final OrderRepositoryCustom orderRepositoryCustom;
+
+  private final ApplicationEventPublisher eventPublisher;
 
   // 주문 이력 조회
   @Transactional(readOnly = true)
@@ -75,5 +83,30 @@ public class StoreOrderService {
             List.of(OrderStatus.PREPARING, OrderStatus.RIDER_ASSIGNED, OrderStatus.DELIVERING)).stream()
         .map(OrderResponse::from)
         .toList();
+  }
+
+  @Transactional
+  public OrderResponse acceptOrder(Long orderId) {
+    Order order = getOrderWithStore(orderId);
+    order.updateStatus(OrderStatus.PREPARING);
+    //TODO: SSE가 이거 구독해서 주문 수락화면에 현 리스트에서 주문 제거하라고 전달해야함.
+    eventPublisher.publishEvent(OrderAcceptedEvent.from(order));
+
+    return OrderResponse.from(order);
+  }
+
+  @Transactional
+  public OrderResponse rejectOrder(Long orderId) {
+    Order order = getOrderWithStore(orderId);
+    order.updateStatus(OrderStatus.CANCELLATION_REQUESTED);
+
+    eventPublisher.publishEvent(OrderRejectedEvent.from(order, "상점이 주문을 거절했습니다.", Publisher.STORE));
+    // TODO: SSE 알림을 통해 상점에서 거절한 주문 제거하라고 전달
+    return OrderResponse.from(order);
+  }
+
+  private Order getOrderWithStore(Long orderId) {
+    return orderRepository.findOrderWithStoreById(orderId)
+        .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND));
   }
 }

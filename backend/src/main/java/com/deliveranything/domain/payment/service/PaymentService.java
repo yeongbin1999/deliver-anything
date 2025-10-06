@@ -1,5 +1,6 @@
 package com.deliveranything.domain.payment.service;
 
+import com.deliveranything.domain.order.enums.Publisher;
 import com.deliveranything.domain.payment.config.TossPaymentsConfig;
 import com.deliveranything.domain.payment.dto.PaymentCancelRequest;
 import com.deliveranything.domain.payment.dto.PaymentCancelResponse;
@@ -7,6 +8,8 @@ import com.deliveranything.domain.payment.dto.PaymentConfirmRequest;
 import com.deliveranything.domain.payment.dto.PaymentConfirmResponse;
 import com.deliveranything.domain.payment.entitiy.Payment;
 import com.deliveranything.domain.payment.enums.PaymentStatus;
+import com.deliveranything.domain.payment.event.PaymentCancelSuccessEvent;
+import com.deliveranything.domain.payment.event.PaymentSuccessEvent;
 import com.deliveranything.domain.payment.repository.PaymentRepository;
 import com.deliveranything.global.exception.CustomException;
 import com.deliveranything.global.exception.ErrorCode;
@@ -14,6 +17,7 @@ import jakarta.annotation.PostConstruct;
 import java.math.BigDecimal;
 import java.util.Base64;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +30,7 @@ public class PaymentService {
   private final TossPaymentsConfig tossPaymentsConfig;
   private final WebClient.Builder webClientBuilder;
   private final PaymentRepository paymentRepository;
+  private final ApplicationEventPublisher eventPublisher;
 
   private WebClient tossWebClient;
   private String encodedSecretKey;
@@ -79,10 +84,12 @@ public class PaymentService {
     }
 
     payment.updateStatus(PaymentStatus.PAID);
+
+    eventPublisher.publishEvent(new PaymentSuccessEvent(payment.getMerchantUid()));
   }
 
   @Transactional
-  public void cancelPayment(String merchantUid, String cancelReason) {
+  public void cancelPayment(String merchantUid, String cancelReason, Publisher publisher) {
     Payment payment = getPayment(merchantUid, PaymentStatus.PAID);
 
     // 응답 수신 확인
@@ -110,6 +117,8 @@ public class PaymentService {
 
     paymentRepository.save(new Payment(merchantUid, payment.getPaymentKey(), payment.getAmount(),
         PaymentStatus.CANCELED));
+
+    eventPublisher.publishEvent(new PaymentCancelSuccessEvent(payment.getMerchantUid(), publisher));
   }
 
   private Payment getPayment(String merchantUid, PaymentStatus status) {
