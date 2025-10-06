@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public record OrderDeliveryCreatedEvent(
-    Long orderId,
+    String orderId,
     List<OrderItemInfo> orderItems,
     String storeName,
     double storeLon,
@@ -17,7 +17,7 @@ public record OrderDeliveryCreatedEvent(
 
   public static OrderDeliveryCreatedEvent from(Order order) {
     return new OrderDeliveryCreatedEvent(
-        order.getId(),
+        order.getId().toString(),
         order.getOrderItems().stream()
             .map(orderItem -> new OrderItemInfo(
                 orderItem.getProduct().getId(),
