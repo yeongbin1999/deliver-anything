@@ -1,6 +1,6 @@
 package com.deliveranything.domain.delivery.handler.redis;
 
-import com.deliveranything.domain.delivery.event.event.sse.OrderAssignmentSsePublisher;
+import com.deliveranything.domain.delivery.event.event.sse.OrderAcceptedSsePublisher;
 import com.deliveranything.domain.delivery.service.OrderNotificationService;
 import com.deliveranything.domain.order.event.OrderAcceptedEvent;
 import com.deliveranything.global.exception.CustomException;
@@ -24,7 +24,7 @@ public class OrderAcceptedRedisSubscriber implements MessageListener {
   private static final String CHANNEL = "order-accepted-event";
   private final ObjectMapper objectMapper;
   private final RedisMessageListenerContainer container;
-  private final OrderAssignmentSsePublisher orderAssignmentSsePublisher;
+  private final OrderAcceptedSsePublisher orderAssignmentSsePublisher;
   private final OrderNotificationService orderNotificationService;
 
   @PostConstruct

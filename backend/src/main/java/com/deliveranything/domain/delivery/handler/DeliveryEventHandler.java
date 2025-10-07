@@ -1,12 +1,9 @@
 package com.deliveranything.domain.delivery.handler;
 
 import com.deliveranything.domain.delivery.event.dto.DeliveryStatusEvent;
-import com.deliveranything.domain.delivery.event.dto.OrderDeliveryCreatedEvent;
 import com.deliveranything.domain.delivery.event.dto.OrderStatusUpdateEvent;
 import com.deliveranything.domain.delivery.event.event.redis.DeliveryStatusRedisPublisher;
-import com.deliveranything.domain.delivery.event.event.redis.OrderAssignmentRedisPublisher;
 import com.deliveranything.domain.delivery.event.event.redis.OrderDeliveryStatusRedisPublisher;
-import com.deliveranything.domain.delivery.service.OrderNotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
