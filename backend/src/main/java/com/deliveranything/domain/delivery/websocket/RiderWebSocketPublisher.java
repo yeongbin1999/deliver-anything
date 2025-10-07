@@ -17,8 +17,8 @@ public class RiderWebSocketPublisher {
 //    messagingTemplate.convertAndSend(destination, dto);
 //  }
 
-  public void publishLocation(RiderLocationDto location) {
-    String destination = "/topic/rider/location";
+  public void publishLocation(Long riderProfileId, RiderLocationDto location) {
+    String destination = "/topic/rider/location" + riderProfileId;
     messagingTemplate.convertAndSend(destination, location);
   }
 }
