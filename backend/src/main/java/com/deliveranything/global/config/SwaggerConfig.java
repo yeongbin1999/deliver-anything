@@ -4,17 +4,13 @@ import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.info.Info;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.servers.Server;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-/**
- * Swagger/OpenAPI 설정 클래스
- * Swagger UI: http://localhost:8080/swagger-ui/index.html
- * JWT 인증 설정 포함
- */
 @OpenAPIDefinition(
     info = @Info(
         title = "뭐든배달 API 명세서",
@@ -43,6 +39,7 @@ public class SwaggerConfig {
 
     // OpenAPI 객체 구성
     return new OpenAPI()
+        .addServersItem(new Server().url("https://api.deliver-anything.shop"))
         .components(new Components().addSecuritySchemes("Bearer Token", apiKey))
         .addSecurityItem(securityRequirement);
   }
