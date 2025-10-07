@@ -16,7 +16,7 @@ public enum ErrorCode {
   USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER-404", "사용자를 찾을 수 없습니다."),
   USER_EMAIL_ALREADY_EXIST(HttpStatus.CONFLICT, "USER-409", "이미 존재하는 이메일 입니다."),
   USER_PHONE_ALREADY_EXIST(HttpStatus.CONFLICT, "USER-409", "이미 존재하는 핸드폰 번호 입니다."),
-  
+
   // 인가 관련 오류
   PROFILE_NOT_ALLOWED(HttpStatus.FORBIDDEN, "AUTH-403", "해당 프로필로 사용할 권한이 없습니다."),
 
@@ -25,6 +25,7 @@ public enum ErrorCode {
   DELIVERY_NOT_AVAILABLE_IN_PROGRESS(HttpStatus.CONFLICT, "DELIVERY-409",
       "현재 배달 진행 중이므로 해당 작업을 수행할 수 없습니다."),
   DELIVERY_NOT_FOUND(HttpStatus.NOT_FOUND, "DELIVERY-404", "배달을 찾을 수 없습니다."),
+  NO_ACTIVE_DELIVERY(HttpStatus.NOT_FOUND, "DELIVERY-405", "진행 중인 배달이 없습니다."),
 
   // 리뷰 관련 오류
   REVIEW_NO_PERMISSION(HttpStatus.FORBIDDEN, "REVIEW-403", "리뷰를 관리할 권한이 없습니다."),
@@ -36,7 +37,8 @@ public enum ErrorCode {
   // 주문 관련 오류
   ORDER_NOT_FOUND(HttpStatus.NOT_FOUND, "ORDER-404", "주문 정보를 찾을 수 없습니다."),
   CUSTOMER_ORDER_NOT_FOUND(HttpStatus.NOT_FOUND, "ORDER-CUSTOMER-404", "소비자의 주문을 찾을 수 없습니다."),
-  ORDER_PAY_STATUS_UNAVAILABLE(HttpStatus.CONFLICT, "ORDER-409", "결제 대기 중인 주문이 아닙니다."),
+  ORDER_PAY_UNAVAILABLE(HttpStatus.CONFLICT, "ORDER-409", "결제가 불가능한 주문입니다."),
+  ORDER_CANCEL_UNAVAILABLE(HttpStatus.CONFLICT, "ORDER-410", "결제 취소가 불가능한 주문입니다."),
 
   // 결제 관련 오류
   PG_PAYMENT_CONFIRM_FAILED(HttpStatus.BAD_REQUEST, "PG-PAYMENT-001",

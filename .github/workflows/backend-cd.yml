@@ -124,6 +124,7 @@ jobs:
 
             # 새 컨테이너 실행
             docker run -d --name $NEW_CONTAINER \
+              --restart unless-stopped \
               --network common \
               -p $PORT_INACTIVE:8080 \
               $IMAGE

@@ -1,8 +1,8 @@
 package com.deliveranything.domain.delivery.handler.redis;
 
-import com.deliveranything.domain.delivery.event.dto.OrderDeliveryCreatedEvent;
 import com.deliveranything.domain.delivery.event.event.redis.OrderAssignmentRedisPublisher;
 import com.deliveranything.domain.delivery.service.OrderNotificationService;
+import com.deliveranything.domain.order.event.OrderAcceptedEvent;
 import com.deliveranything.global.exception.CustomException;
 import com.deliveranything.global.exception.ErrorCode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -34,8 +34,8 @@ public class OrderRedisSubscriber implements MessageListener {
   public void onMessage(Message message, byte[] pattern) {
     try {
       String body = new String(message.getBody());
-      OrderDeliveryCreatedEvent event = objectMapper.readValue(body,
-          OrderDeliveryCreatedEvent.class);
+      OrderAcceptedEvent event = objectMapper.readValue(body,
+          OrderAcceptedEvent.class);
 
       // orderNotificationService.processOrderEvent() 과정 진행
       // 반경 내 라이더 ETA 조회 후 주문 정보, 라이더 Id, eta minute, 주문 상태 포함한 List<RiderNotificationDto> 생성

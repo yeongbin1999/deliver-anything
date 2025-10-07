@@ -13,6 +13,8 @@ public record OrderCreateRequest(
     @NotNull @Positive Long storeId,
     @NotNull @NotEmpty @Valid List<OrderItemRequest> orderItemRequests,
     @NotBlank @Size(max = 100) String address,
+    @NotNull Double lat,
+    @NotNull Double lng,
     @Size(max = 30) String riderNote,
     @Size(max = 30) String storeNote,
     @NotNull @Positive BigDecimal totalPrice,

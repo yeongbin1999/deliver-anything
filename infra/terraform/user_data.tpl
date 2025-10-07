@@ -24,6 +24,35 @@ docker network create common || true
 mkdir -p /dockerProjects/elasticsearch/volumes/data
 chown -R 1000:1000 /dockerProjects/elasticsearch/volumes/data
 
+# --- GHCR 로그인 systemd 등록 (자동 재로그인용) ---
+if [ -n "${github_token}" ] && [ -n "${github_user}" ]; then
+  cat >/etc/systemd/system/ghcr-login.service <<'EOF'
+[Unit]
+Description=GHCR Docker Login
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+EnvironmentFile=/etc/ghcr-login.env
+ExecStart=/bin/bash -c 'echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_USER" --password-stdin || true'
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+  cat >/etc/ghcr-login.env <<EOF
+GITHUB_USER=${github_user}
+GITHUB_TOKEN=${github_token}
+EOF
+
+  chmod 600 /etc/ghcr-login.env
+  systemctl daemon-reload
+  systemctl enable ghcr-login.service
+  systemctl start ghcr-login.service
+fi
+
 # --- Nginx Proxy Manager ---
 docker rm -f npm || true
 docker run -d \
@@ -97,8 +126,3 @@ docker exec mysql mysql -uroot -p${default_password} -e "CREATE USER IF NOT EXIS
 docker exec mysql mysql -uroot -p${default_password} -e "GRANT ${u.privileges} TO '${u.name}'@'${u.host}';"
 %{ endfor ~}
 docker exec mysql mysql -uroot -p${default_password} -e "FLUSH PRIVILEGES;"
-
-# --- GHCR 로그인 (있을 때만) ---
-if [ -n "${github_token}" ] && [ -n "${github_user}" ]; then
-  echo "${github_token}" | docker login ghcr.io -u ${github_user} --password-stdin || true
-fi

@@ -25,6 +25,7 @@ import java.util.UUID;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.locationtech.jts.geom.Point;
 
 @Getter
 @NoArgsConstructor
@@ -57,6 +58,9 @@ public class Order extends BaseEntity {
   @Column(nullable = false, length = 100)
   private String address;
 
+  @Column(columnDefinition = "POINT SRID 4326", nullable = false)
+  private Point destination;
+
   @Column(length = 30)
   private String riderNote;
 
@@ -73,11 +77,13 @@ public class Order extends BaseEntity {
   private BigDecimal deliveryPrice;
 
   @Builder
-  public Order(CustomerProfile customer, Store store, String address, String riderNote,
-      String storeNote, BigDecimal totalPrice, BigDecimal storePrice, BigDecimal deliveryPrice) {
+  public Order(CustomerProfile customer, Store store, String address, Point destination,
+      String riderNote, String storeNote, BigDecimal totalPrice, BigDecimal storePrice,
+      BigDecimal deliveryPrice) {
     this.customer = customer;
     this.store = store;
     this.address = address;
+    this.destination = destination;
     this.riderNote = riderNote;
     this.storeNote = storeNote;
     this.totalPrice = totalPrice;
@@ -101,8 +107,14 @@ public class Order extends BaseEntity {
   }
 
   public void isPayable() {
+    if (this.status != OrderStatus.CREATED) {
+      throw new CustomException(ErrorCode.ORDER_PAY_UNAVAILABLE);
+    }
+  }
+
+  public void isCancelable() {
     if (this.status != OrderStatus.PENDING) {
-      throw new CustomException(ErrorCode.ORDER_PAY_STATUS_UNAVAILABLE);
+      throw new CustomException(ErrorCode.ORDER_CANCEL_UNAVAILABLE);
     }
   }
 }

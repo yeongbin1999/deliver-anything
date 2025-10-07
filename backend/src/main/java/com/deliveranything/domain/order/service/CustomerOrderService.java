@@ -5,17 +5,19 @@ import com.deliveranything.domain.order.dto.OrderItemRequest;
 import com.deliveranything.domain.order.dto.OrderResponse;
 import com.deliveranything.domain.order.entity.Order;
 import com.deliveranything.domain.order.entity.OrderItem;
+import com.deliveranything.domain.order.event.OrderCreatedEvent;
 import com.deliveranything.domain.order.repository.OrderRepository;
 import com.deliveranything.domain.order.repository.OrderRepositoryCustom;
-import com.deliveranything.domain.payment.service.PaymentService;
 import com.deliveranything.domain.product.product.service.ProductService;
 import com.deliveranything.domain.store.store.service.StoreService;
 import com.deliveranything.domain.user.profile.service.CustomerProfileService;
 import com.deliveranything.global.common.CursorPageResponse;
 import com.deliveranything.global.exception.CustomException;
 import com.deliveranything.global.exception.ErrorCode;
+import com.deliveranything.global.util.PointUtil;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,12 +26,13 @@ import org.springframework.transaction.annotation.Transactional;
 public class CustomerOrderService {
 
   private final CustomerProfileService customerProfileService;
-  private final PaymentService paymentService;
   private final ProductService productService;
   private final StoreService storeService;
 
   private final OrderRepository orderRepository;
   private final OrderRepositoryCustom orderRepositoryCustom;
+
+  private final ApplicationEventPublisher eventPublisher;
 
   @Transactional
   public OrderResponse createOrder(Long customerId, OrderCreateRequest orderCreateRequest) {
@@ -37,6 +40,7 @@ public class CustomerOrderService {
         .customer(customerProfileService.getProfile(customerId))
         .store(storeService.getStoreById(orderCreateRequest.storeId()))
         .address(orderCreateRequest.address())
+        .destination(PointUtil.createPoint(orderCreateRequest.lat(), orderCreateRequest.lng()))
         .riderNote(orderCreateRequest.riderNote())
         .storeNote(orderCreateRequest.storeNote())
         .totalPrice(orderCreateRequest.totalPrice())
@@ -55,7 +59,9 @@ public class CustomerOrderService {
     }
 
     Order savedOrder = orderRepository.save(order);
-    paymentService.createPayment(savedOrder.getMerchantId(), savedOrder.getTotalPrice());
+    // TODO: 재고가 없다면 주문 CANCELED나 재고 없음 상태로 이벤트 들어서 바꿔야함.
+    // TODO: 재고가 확인됐다는 이벤트 받으면 재고Sub이 알림 호출해서 SSE로 클랄 전달
+    eventPublisher.publishEvent(OrderCreatedEvent.from(savedOrder));
 
     return OrderResponse.from(savedOrder);
   }

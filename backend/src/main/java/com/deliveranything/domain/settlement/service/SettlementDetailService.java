@@ -10,6 +10,7 @@ import com.deliveranything.global.exception.ErrorCode;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -57,10 +58,18 @@ public class SettlementDetailService {
             .orElseThrow(() -> new CustomException(ErrorCode.SETTLEMENT_DETAIL_NOT_FOUND)));
   }
 
-  // 배달원의 금일 정산 대기 정보
-  public UnsettledResponse getRiderUnsettledDetail(Long riderProfileId) {
+  // 금일 미정산 정보
+  @Transactional(readOnly = true)
+  public UnsettledResponse getUnsettledDetail(Long targetId) {
     LocalDate today = LocalDate.now();
-    return UnsettledResponse.from(settlementDetailRepository.findAllUnsettledDetails(riderProfileId,
+    return UnsettledResponse.from(settlementDetailRepository.findAllUnsettledDetails(targetId,
         SettlementStatus.PENDING, today.atStartOfDay(), today.plusDays(1).atStartOfDay()));
+  }
+
+  @Transactional(readOnly = true)
+  public List<SettlementDetail> getYesterdayUnsettledDetails() {
+    LocalDate today = LocalDate.now();
+    return settlementDetailRepository.findAllByStatusAndDateTime(SettlementStatus.PENDING,
+        today.minusDays(1).atStartOfDay(), today.atStartOfDay());
   }
 }

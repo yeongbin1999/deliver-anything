@@ -3,11 +3,14 @@ package com.deliveranything.domain.order.service;
 import com.deliveranything.domain.order.dto.OrderResponse;
 import com.deliveranything.domain.order.entity.Order;
 import com.deliveranything.domain.order.enums.OrderStatus;
+import com.deliveranything.domain.order.enums.Publisher;
+import com.deliveranything.domain.order.event.OrderCancelEvent;
+import com.deliveranything.domain.order.event.OrderPaymentRequestedEvent;
 import com.deliveranything.domain.order.repository.OrderRepository;
-import com.deliveranything.domain.payment.service.PaymentService;
 import com.deliveranything.global.exception.CustomException;
 import com.deliveranything.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,23 +18,16 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class PaymentOrderService {
 
-  private final PaymentService paymentService;
-
+  private final ApplicationEventPublisher eventPublisher;
   private final OrderRepository orderRepository;
 
   @Transactional
   public OrderResponse payOrder(String merchantUid, String paymentKey) {
     Order order = getOrderByMerchantId(merchantUid);
-
     order.isPayable();
 
-    try {
-      paymentService.confirmPayment(paymentKey, merchantUid, order.getTotalPrice().longValue());
-      order.updateStatus(OrderStatus.PAID);
-    } catch (CustomException e) {
-      order.updateStatus(OrderStatus.PAYMENT_FAILED);
-      throw e;
-    }
+    eventPublisher.publishEvent(new OrderPaymentRequestedEvent(order.getId(), paymentKey,
+        merchantUid, order.getTotalPrice().longValue()));
 
     return OrderResponse.from(order);
   }
@@ -39,14 +35,11 @@ public class PaymentOrderService {
   @Transactional
   public OrderResponse cancelOrder(Long orderId, String cancelReason) {
     Order order = getOrderWithStoreById(orderId);
+    order.isCancelable();
 
-    try {
-      paymentService.cancelPayment(order.getMerchantId(), cancelReason);
-      order.updateStatus(OrderStatus.CANCELED);
-    } catch (CustomException e) {
-      order.updateStatus(OrderStatus.CANCELLATION_FAILED);
-      throw e;
-    }
+    order.updateStatus(OrderStatus.CANCELLATION_REQUESTED);
+
+    eventPublisher.publishEvent(OrderCancelEvent.from(order, cancelReason, Publisher.CUSTOMER));
 
     return OrderResponse.from(order);
   }

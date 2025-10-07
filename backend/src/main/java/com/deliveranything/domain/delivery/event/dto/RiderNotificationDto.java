@@ -8,7 +8,7 @@ import lombok.Builder;
 public record RiderNotificationDto(
     OrderDetailsDto orderDetailsDto,
     String riderId,
-    double etaMinutes, // riderId → ETA (분)
+    Double etaMinutes, // riderId → ETA (분)
     OrderStatus orderDeliveryStatus
 ) {
 
