@@ -39,8 +39,7 @@ public class KeywordGenerationService {
     String prompt = createPrompt(product.getName(), product.getDescription());
 
     GeminiRequest.Content promptContent = new GeminiRequest.Content(List.of(new GeminiRequest.Part(prompt)));
-    GeminiRequest.GenerationConfig config = new GeminiRequest.GenerationConfig(new GeminiRequest.ThinkingConfig(0));
-    GeminiRequest request = new GeminiRequest(List.of(promptContent), config);
+    GeminiRequest request = new GeminiRequest(List.of(promptContent));
 
     try {
       GeminiResponse response = webClientBuilder.build()
@@ -85,12 +84,10 @@ public class KeywordGenerationService {
                 """, productName, productDescription);
   }
 
-  // --- 공식 가이드에 맞춘 DTO ---
-  private record GeminiRequest(List<Content> contents, GenerationConfig generationConfig) {
+  // --- DTO for Gemini API ---
+  private record GeminiRequest(List<Content> contents) {
     private record Content(List<Part> parts) {}
     private record Part(String text) {}
-    private record GenerationConfig(ThinkingConfig thinkingConfig) {}
-    private record ThinkingConfig(Integer thinkingBudget) {}
   }
 
   private record GeminiResponse(List<Candidate> candidates) {
