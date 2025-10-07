@@ -73,9 +73,9 @@ public class SecurityConfig {
 //
 //            // 배달 관련
 //            .requestMatchers(HttpMethod.PUT, "/api/v1/deliveries/*/status").hasRole("RIDER")
-
-            // 나머지 API는 인증 필요
-            .requestMatchers("/api/v1/**").authenticated()
+//
+//            // 나머지 API는 인증 필요
+//            .requestMatchers("/api/v1/**").authenticated()
 
             // 그 외 요청 허용
             .anyRequest().permitAll()
