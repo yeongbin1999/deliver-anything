@@ -7,11 +7,11 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -29,72 +29,69 @@ public class SecurityConfig {
   private final CustomAccessDeniedHandler customAccessDeniedHandler;
 
   @Bean
-  public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+  public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
     http
-        .authorizeHttpRequests(auth -> auth
-            // 정적 리소스 허용
-            .requestMatchers("/favicon.ico", "/error").permitAll()
-            .requestMatchers("/h2-console/**").permitAll()
-
-            // Swagger 관련 허용
-            .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
-
-            // 공개 API 엔드포인트
-            .requestMatchers("/api/v1/auth/signup", "/api/v1/auth/login", "/api/v1/auth/logout")
-            .permitAll()
-            .requestMatchers("/api/v1/auth/verification/**").permitAll()
-            .requestMatchers("/api/v1/auth/oauth2/**").permitAll()
-
-            // 관리자 전용 API
-            .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
-
-            // 프로필별 API 권한 (Method Security로 세밀한 제어)
-            .requestMatchers("/api/v1/users/me/customer/**").hasRole("CUSTOMER")
-            .requestMatchers("/api/v1/users/me/seller/**").hasRole("SELLER")
-            .requestMatchers("/api/v1/users/me/rider/**").hasRole("RIDER")
-
-            // 판매자 관련 API
-            .requestMatchers("/api/v1/stores/**").hasAnyRole("SELLER", "CUSTOMER", "ADMIN")
-            .requestMatchers(HttpMethod.POST, "/api/v1/stores/**").hasRole("SELLER")
-            .requestMatchers(HttpMethod.PUT, "/api/v1/stores/**").hasRole("SELLER")
-            .requestMatchers(HttpMethod.DELETE, "/api/v1/stores/**").hasRole("SELLER")
-
-            // 주문 관련 API
-            .requestMatchers("/api/v1/orders/**").hasAnyRole("CUSTOMER", "SELLER", "RIDER", "ADMIN")
-            .requestMatchers(HttpMethod.POST, "/api/v1/orders").hasRole("CUSTOMER")
-
-            // 배달 관련 API
-            .requestMatchers("/api/v1/deliveries/**")
-            .hasAnyRole("RIDER", "CUSTOMER", "SELLER", "ADMIN")
-            .requestMatchers(HttpMethod.PUT, "/api/v1/deliveries/*/status").hasRole("RIDER")
-
-            // 인증이 필요한 나머지 API
-            .requestMatchers("/api/v1/**").authenticated()
-
-            // 그 외 모든 요청 허용
-            .anyRequest().permitAll()
-        )
-        .headers(headers -> headers
-            .frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin)
-        )
-
-        // ✅ CORS 설정 적용 추가
-        .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-
+        // CSRF, FormLogin, Logout, Basic Auth 모두 비활성화
         .csrf(AbstractHttpConfigurer::disable)
         .formLogin(AbstractHttpConfigurer::disable)
         .logout(AbstractHttpConfigurer::disable)
         .httpBasic(AbstractHttpConfigurer::disable)
-        .sessionManagement(AbstractHttpConfigurer::disable)
 
-        // 커스텀 인증 필터 등록
-        .addFilterBefore(customAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+        // 세션 완전 비활성화 (JWT 환경)
+        .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+
+        // CORS
+        .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+
+        // 권한 설정
+        .authorizeHttpRequests(auth -> auth
+            // 정적 리소스 및 H2 콘솔
+            .requestMatchers("/favicon.ico", "/error", "/h2-console/**").permitAll()
+
+            // Swagger
+            .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+
+            // 인증 관련 엔드포인트
+            .requestMatchers("/api/v1/auth/**").permitAll()
+
+//            현재 필요없음
+//            // 관리자
+//            .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+//
+//            // 사용자별 권한
+//            .requestMatchers("/api/v1/users/me/customer/**").hasRole("CUSTOMER")
+//            .requestMatchers("/api/v1/users/me/seller/**").hasRole("SELLER")
+//            .requestMatchers("/api/v1/users/me/rider/**").hasRole("RIDER")
+//
+//            // 판매자 관련
+//            .requestMatchers(HttpMethod.POST, "/api/v1/stores/**").hasRole("SELLER")
+//            .requestMatchers(HttpMethod.PUT, "/api/v1/stores/**").hasRole("SELLER")
+//            .requestMatchers(HttpMethod.DELETE, "/api/v1/stores/**").hasRole("SELLER")
+//
+//            // 주문 관련
+//            .requestMatchers(HttpMethod.POST, "/api/v1/orders").hasRole("CUSTOMER")
+//
+//            // 배달 관련
+//            .requestMatchers(HttpMethod.PUT, "/api/v1/deliveries/*/status").hasRole("RIDER")
+
+            // 나머지 API는 인증 필요
+            .requestMatchers("/api/v1/**").authenticated()
+
+            // 그 외 요청 허용
+            .anyRequest().permitAll()
+        )
+
+        // H2 콘솔 frame 옵션 허용
+        .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))
 
         // 예외 처리
-        .exceptionHandling(exceptionHandling -> exceptionHandling
+        .exceptionHandling(ex -> ex
             .authenticationEntryPoint(customAuthenticationEntryPoint)
             .accessDeniedHandler(customAccessDeniedHandler)
-        );
+        )
+
+        // 커스텀 인증 필터
+        .addFilterBefore(customAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
     return http.build();
   }
@@ -103,28 +100,29 @@ public class SecurityConfig {
   public UrlBasedCorsConfigurationSource corsConfigurationSource() {
     CorsConfiguration configuration = new CorsConfiguration();
 
-    // 허용할 오리진 설정
+    // 허용할 오리진
     configuration.setAllowedOriginPatterns(List.of(
-        "http://localhost:3000",    // React 개발 서버
-        "http://localhost:8080",    // Spring Boot 서버
-        "https://*.deliver-anything.shop",  // 배포 도메인
-        "https://deliver-anything.shop",
-        "https://cdpn.io",          // CodePen 테스트
-        "https://www.deliver-anything.shop"       // www 서브도메인
+        "http://localhost:3000",              // 로컬
+        "https://www.deliver-anything.shop",  // 프론트 도메인
+        "https://api.deliver-anything.shop",  // 서버 스웨거 문서에서 요청
+        "https://cdpn.io"                     // 코드펜
     ));
 
     configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
     configuration.setAllowedHeaders(List.of("*"));
     configuration.setAllowCredentials(true);
 
-    // Authorization 헤더 노출 (JWT 토큰용)
+    // Authorization 헤더 노출 (JWT)
     configuration.setExposedHeaders(List.of("Authorization"));
 
     UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-    source.registerCorsConfiguration("/api/**", configuration);
+
+    // 전체 경로에 적용 → Swagger + API 모두 CORS 허용
+    source.registerCorsConfiguration("/**", configuration);
 
     return source;
   }
+
 
   @Bean
   public PasswordEncoder passwordEncoder() {
