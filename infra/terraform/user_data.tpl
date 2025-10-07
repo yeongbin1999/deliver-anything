@@ -89,7 +89,6 @@ docker run -d \
   ${elasticsearch_image}
 
 # --- Redis ---
-docker rm -f redis || true
 docker run -d \
   --name redis \
   --restart unless-stopped \
@@ -101,7 +100,6 @@ docker run -d \
   redis-server --appendonly yes --requirepass ${default_password}
 
 # --- MySQL ---
-docker rm -f mysql || true
 docker run -d \
   --name mysql \
   --restart unless-stopped \
