@@ -108,6 +108,7 @@ public class NotificationService {
             .data(payload));
       } catch (IOException e) {
         emitter.completeWithError(e);
+        emitterRepository.remove(profileId, deviceId);
       }
     });
   }

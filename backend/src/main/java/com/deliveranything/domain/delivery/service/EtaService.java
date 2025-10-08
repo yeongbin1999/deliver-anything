@@ -22,7 +22,7 @@ public class EtaService {
 
   private static final String KAKAO_BASE_URL = "https://apis-navi.kakaomobility.com/v1";
 
-  // OSRM Table API 호출 (Reactive)
+  // Kakao Map API 호출 (Reactive)
   public Mono<Map<String, Double>> getEtaForMultipleReactive(
       // double storeLat, double storeLon,
       double userLat, double userLon,
