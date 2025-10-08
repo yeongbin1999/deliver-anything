@@ -25,15 +25,19 @@ public class OrderNotificationService {
     double customerLon = orderEvent.customerLon();
     String orderId = orderEvent.orderId();
 
-    // 1️⃣ 상점 → 고객 거리 계산
+    // 상점 → 고객 거리 계산
     Mono<Map<String, Double>> distanceKmMono = etaService.getDistance(storeLat, storeLon,
         customerLat, customerLon);
 
     return distanceKmMono.flatMap(distanceMap -> {
       double distanceKm = distanceMap.getOrDefault("distance", 0.0);
-      int expectedCharge = 1000 + (int) (distanceKm * 500); // 임시 배달료 계산
-
-      // 2️⃣ 반경 내 라이더 ETA 조회
+      int expectedCharge = 3000;
+      if (distanceKm > 3.0) {
+        expectedCharge += (int) Math.ceil((distanceKm - 3.0) * 1000); // 3km 초과 시 추가 요금
+      }
+      
+      // 반경 내 라이더 ETA 조회
+      int finalExpectedCharge = expectedCharge;
       return reactiveRiderEtaService.findNearbyRidersEta(customerLat, customerLon, 3.0)
           .map(etaMap -> {
             List<RiderNotificationDto> dtoList = new ArrayList<>();
@@ -44,7 +48,7 @@ public class OrderNotificationService {
                           .orderId(orderId)
                           .storeName(orderEvent.storeName())
                           .distance(distanceKm)
-                          .expectedCharge(expectedCharge)
+                          .expectedCharge(finalExpectedCharge)
                           .build()
                   )
                   .riderId(riderId)
@@ -53,7 +57,7 @@ public class OrderNotificationService {
                   .build();
               dtoList.add(dto);
             });
-            return dtoList; // Kafka 발행은 여기서 하지 않음
+            return dtoList;
           });
     });
   }
