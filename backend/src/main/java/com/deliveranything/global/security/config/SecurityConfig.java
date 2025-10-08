@@ -102,10 +102,10 @@ public class SecurityConfig {
 
     // 허용할 오리진
     configuration.setAllowedOriginPatterns(List.of(
-        "http://localhost:3000",              // 로컬
-        "https://www.deliver-anything.shop",  // 프론트 도메인
-        "https://api.deliver-anything.shop",  // 서버 스웨거 문서에서 요청
-        "https://cdpn.io"                     // 코드펜
+        "http://localhost:*",
+        "https://www.deliver-anything.shop",
+        "https://api.deliver-anything.shop",
+        "https://cdpn.io"
     ));
 
     configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
