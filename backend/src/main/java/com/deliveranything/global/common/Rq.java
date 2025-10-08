@@ -231,11 +231,24 @@ public class Rq {
   }
 
   /**
-   * 새로운 Access Token을 Authorization 헤더와 쿠키에 설정
+   * Access Token을 Authorization 헤더에만 설정
    */
   public void setAccessToken(String accessToken) {
     setHeader("Authorization", "Bearer " + accessToken);
-    setCookie("accessToken", accessToken);
+  }
+
+  /**
+   * Refresh Token을 쿠키에만 설정
+   */
+  public void setRefreshToken(String refreshToken) {
+    setCookie("refreshToken", refreshToken);
+  }
+
+  /**
+   * Refresh Token 쿠키 삭제
+   */
+  public void deleteRefreshToken() {
+    deleteCookie("refreshToken");
   }
 
   /**
