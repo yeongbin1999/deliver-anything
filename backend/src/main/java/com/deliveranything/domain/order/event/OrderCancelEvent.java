@@ -4,7 +4,6 @@ import com.deliveranything.domain.order.entity.Order;
 import com.deliveranything.domain.order.enums.Publisher;
 import com.deliveranything.domain.order.event.dto.OrderItemInfo;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public record OrderCancelEvent(
     Long orderId,
@@ -20,11 +19,8 @@ public record OrderCancelEvent(
         order.getMerchantId(),
         cancelReason,
         order.getOrderItems().stream()
-            .map(orderItem -> new OrderItemInfo(
-                orderItem.getProduct().getId(),
-                orderItem.getQuantity()
-            ))
-            .collect(Collectors.toList()),
+            .map(OrderItemInfo::fromOrderItem)
+            .toList(),
         publisher
     );
   }

@@ -4,7 +4,6 @@ import com.deliveranything.domain.order.entity.Order;
 import com.deliveranything.domain.order.event.dto.OrderItemInfo;
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public record OrderCreatedEvent(
     Long orderId,
@@ -19,11 +18,8 @@ public record OrderCreatedEvent(
         order.getMerchantId(),
         order.getTotalPrice(),
         order.getOrderItems().stream()
-            .map(orderItem -> new OrderItemInfo(
-                orderItem.getProduct().getId(),
-                orderItem.getQuantity()
-            ))
-            .collect(Collectors.toList())
+            .map(OrderItemInfo::fromOrderItem)
+            .toList()
     );
   }
 }

@@ -4,6 +4,8 @@ import com.deliveranything.domain.order.entity.Order;
 import com.deliveranything.domain.order.enums.OrderStatus;
 import com.deliveranything.domain.order.enums.Publisher;
 import com.deliveranything.domain.order.event.OrderCompletedEvent;
+import com.deliveranything.domain.order.event.sse.OrderPaidForCustomerEvent;
+import com.deliveranything.domain.order.event.sse.OrderPaidForSellerEvent;
 import com.deliveranything.domain.order.repository.OrderRepository;
 import com.deliveranything.global.exception.CustomException;
 import com.deliveranything.global.exception.ErrorCode;
@@ -21,10 +23,11 @@ public class OrderService {
 
   @Transactional
   public void processPaymentCompletion(String merchantUid) {
-    Order order = getOrderByMerchantId(merchantUid);
+    Order order = getOrderWithStoreByMerchantId(merchantUid);
     order.updateStatus(OrderStatus.PENDING);
-    // TODO: SSE 새 주문이 생성됐다고 상점에 전달
-    // TODO: SSE 결제 성공했다고 소비자에게 전달
+
+    eventPublisher.publishEvent(OrderPaidForCustomerEvent.fromOrder(order));
+    eventPublisher.publishEvent(OrderPaidForSellerEvent.fromOrder(order));
   }
 
   @Transactional
@@ -68,6 +71,12 @@ public class OrderService {
     eventPublisher.publishEvent(new OrderCompletedEvent(orderId, riderProfileId, sellerProfileId,
         order.getStorePrice(), order.getDeliveryPrice()));
     // TODO: SSE 상점의 주문 현황에 배정 중이던거 제거하라고 전달
+  }
+
+  private Order getOrderWithStoreByMerchantId(String merchantUid) {
+    return orderRepository.findOrderWithStoreByMerchantId(merchantUid)
+        .orElseThrow(() -> new CustomException(
+            ErrorCode.ORDER_NOT_FOUND));
   }
 
   private Order getOrderByMerchantId(String merchantUid) {
