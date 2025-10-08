@@ -7,5 +7,6 @@ public enum NotificationType {
   ORDER_REJECTED,     // 소비자에게 주문 거절 알림
   NEW_REVIEW,         // 판매자 or 배달원에게 새 리뷰 알림
   ORDER_PAID_CUSTOMER,
-  ORDER_PAID_SELLER
+  ORDER_PAID_SELLER,
+  ORDER_PAYMENT_FAILED_CUSTOMER
 }

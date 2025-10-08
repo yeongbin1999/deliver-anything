@@ -8,6 +8,7 @@ import com.deliveranything.domain.order.event.OrderPaymentRequestedEvent;
 import com.deliveranything.domain.order.event.OrderRejectedEvent;
 import com.deliveranything.domain.order.event.sse.OrderPaidForCustomerEvent;
 import com.deliveranything.domain.order.event.sse.OrderPaidForSellerEvent;
+import com.deliveranything.domain.order.event.sse.OrderPaymentFailedForCustomerEvent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
@@ -58,5 +59,10 @@ public class OrderEventPublisher {
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
   public void handleOrderPaidForSellerEvent(OrderPaidForSellerEvent event) {
     redisTemplate.convertAndSend("order-paid-for-seller-event", event);
+  }
+
+  @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+  public void handleOrderPaymentFailedForCustomerEvent(OrderPaymentFailedForCustomerEvent event) {
+    redisTemplate.convertAndSend("order-payment-failed-for-customer-event", event);
   }
 }

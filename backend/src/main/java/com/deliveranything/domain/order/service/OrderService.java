@@ -6,6 +6,7 @@ import com.deliveranything.domain.order.enums.Publisher;
 import com.deliveranything.domain.order.event.OrderCompletedEvent;
 import com.deliveranything.domain.order.event.sse.OrderPaidForCustomerEvent;
 import com.deliveranything.domain.order.event.sse.OrderPaidForSellerEvent;
+import com.deliveranything.domain.order.event.sse.OrderPaymentFailedForCustomerEvent;
 import com.deliveranything.domain.order.repository.OrderRepository;
 import com.deliveranything.global.exception.CustomException;
 import com.deliveranything.global.exception.ErrorCode;
@@ -34,7 +35,8 @@ public class OrderService {
   public void processPaymentFailure(String merchantUid) {
     Order order = getOrderByMerchantId(merchantUid);
     order.updateStatus(OrderStatus.PAYMENT_FAILED);
-    // TODO: SSE 결제 실패했다고 결제 재요청 소비자에게 알림
+
+    eventPublisher.publishEvent(OrderPaymentFailedForCustomerEvent.fromOrder(order));
   }
 
   @Transactional
