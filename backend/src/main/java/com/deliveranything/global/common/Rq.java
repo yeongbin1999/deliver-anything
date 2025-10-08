@@ -3,6 +3,7 @@ package com.deliveranything.global.common;
 import com.deliveranything.domain.user.profile.entity.Profile;
 import com.deliveranything.domain.user.profile.enums.ProfileType;
 import com.deliveranything.domain.user.user.entity.User;
+import com.deliveranything.domain.user.user.service.UserService;
 import com.deliveranything.global.security.auth.SecurityUser;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -24,6 +25,7 @@ public class Rq {
 
   private final HttpServletRequest req;
   private final HttpServletResponse resp;
+  private final UserService userService;
 
   /**
    * 현재 인증된 사용자 조회 (멀티 프로필 정보 포함)
@@ -36,9 +38,9 @@ public class Rq {
         .map(securityUser -> {
           // SecurityUser에서 User 객체 생성 (프로필 정보 포함)
           User user = User.builder()
-              .email(securityUser.getUsername())
+              .email(securityUser.getEmail())
               .password(null)
-              .name(securityUser.getName())
+              .username(securityUser.getUserName())
               .phoneNumber(null)
               .socialProvider(null)
               .socialId(null)
@@ -48,6 +50,16 @@ public class Rq {
           return user;
         })
         .orElse(null);
+  }
+
+  public User getActorFromDb() {
+    User actor = getActor();
+
+    if (actor == null) {
+      return null;
+    }
+
+    return userService.findById(actor.getId());
   }
 
   /**

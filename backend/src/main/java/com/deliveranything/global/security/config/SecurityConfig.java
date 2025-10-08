@@ -3,6 +3,7 @@ package com.deliveranything.global.security.config;
 import com.deliveranything.global.security.filter.CustomAuthenticationFilter;
 import com.deliveranything.global.security.handler.CustomAccessDeniedHandler;
 import com.deliveranything.global.security.handler.CustomAuthenticationEntryPoint;
+import com.deliveranything.global.security.resolver.CustomOAuth2AuthorizationRequestResolver;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -12,8 +13,6 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -29,6 +28,7 @@ public class SecurityConfig {
   private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
   private final CustomAccessDeniedHandler customAccessDeniedHandler;
   private final AuthenticationSuccessHandler customOAuth2LoginSuccessHandler;
+  private final CustomOAuth2AuthorizationRequestResolver customOAuth2AuthorizationRequestResolver;
 
   @Bean
   public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -46,6 +46,12 @@ public class SecurityConfig {
         // OAuth2 로그인 설정 (소셜 로그인)
         .oauth2Login(oauth2Login -> oauth2Login
             .successHandler(customOAuth2LoginSuccessHandler)
+            .authorizationEndpoint(authorizationEndpoint ->
+                    authorizationEndpoint.authorizationRequestResolver(
+                        customOAuth2AuthorizationRequestResolver)
+                // 커스텀 리졸버(RedirectUrl을 State에 암호화하여 저장) 설정
+            )
+
         )
 
         // CORS
@@ -127,9 +133,5 @@ public class SecurityConfig {
 
     return source;
   }
-
-  @Bean
-  public PasswordEncoder passwordEncoder() {
-    return new BCryptPasswordEncoder();
-  }
+  
 }

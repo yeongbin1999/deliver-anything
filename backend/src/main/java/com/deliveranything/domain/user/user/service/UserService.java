@@ -81,4 +81,27 @@ public class UserService {
 
     log.info("사용자 비밀번호 업데이트 완료: userId={}", userId);
   }
+
+  /**
+   * 관리자 권한 부여 ( 최상위 관리자만 호출 가능) - isAdmin이 있어 우선 추가만 해놓음
+   */
+  @Transactional
+  public void grantAdminRole(Long userId) {
+    User user = findById(userId);
+    user.grantAdminRole();  // 위에서 추가한 메서드
+    userRepository.save(user);
+    log.info("관리자 권한 부여 완료: userId={}", userId);
+  }
+
+  /**
+   * 관리자 권한 제거
+   */
+  @Transactional
+  public void revokeAdminRole(Long userId) {
+    User user = findById(userId);
+    user.revokeAdminRole();
+    userRepository.save(user);
+    log.info("관리자 권한 제거 완료: userId={}", userId);
+  }
+
 }

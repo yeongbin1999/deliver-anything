@@ -18,7 +18,7 @@ public record SignupRequest(
 
     @NotBlank(message = "이름은 필수 입력 사항입니다.")
     @Size(min = 2, max = 50, message = "이름은 2자 이상 50자 이하로 입력해주세요.")
-    String name,
+    String username,
 
     @NotBlank(message = "휴대폰 번호는 필수 입력 사항입니다.")
     @Pattern(regexp = "^01[0-9]{8,9}$", message = "올바른 휴대폰 번호 형식이 아닙니다.")

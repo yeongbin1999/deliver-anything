@@ -52,14 +52,14 @@ public class AuthController {
     User user = authService.signup(
         request.email(),
         request.password(),
-        request.name(),
+        request.username(),
         request.phoneNumber()
     );
 
     SignupResponse response = SignupResponse.builder()
         .userId(user.getId())
         .email(user.getEmail())
-        .name(user.getName())
+        .username(user.getUsername())
         .isOnboardingCompleted(user.isOnboardingCompleted())
         .build();
 
@@ -94,7 +94,7 @@ public class AuthController {
     LoginResponse response = LoginResponse.builder()
         .userId(user.getId())
         .email(user.getEmail())
-        .name(user.getName())
+        .username(user.getUsername())
         .currentActiveProfileType(user.getCurrentActiveProfileType())
         .currentActiveProfileId(user.getCurrentActiveProfileId())
         .isOnboardingCompleted(user.isOnboardingCompleted())

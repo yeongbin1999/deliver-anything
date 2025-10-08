@@ -30,34 +30,66 @@ public class AuthService {
   private final PasswordEncoder passwordEncoder;
 
   /**
-   * 회원가입 (멀티 프로필 지원)
+   * 일반 회원가입
    */
   @Transactional
-  public User signup(String email, String password, String name, String phoneNumber) {
+  public User signup(String email, String password, String username, String phoneNumber) {
+    return signup(email, password, username, phoneNumber, SocialProvider.LOCAL, null);
+  }
+
+  /**
+   * OAuth2 회원가입 (내부용)
+   */
+  @Transactional
+  public User signupOAuth2(String email, String username, SocialProvider socialProvider,
+      String socialId) {
+    return signup(email, null, username, null, socialProvider, socialId);
+  }
+
+  /**
+   * 통합 회원가입 로직 (멀티 프로필 지원) - private - 순수 비즈니스 로직만 구현하여 캡슐화
+   */
+  private User signup(
+      String email,
+      String password,
+      String username,
+      String phoneNumber,
+      SocialProvider socialProvider,
+      String socialId
+  ) {
     // 중복 체크
-    if (userRepository.existsByEmail(email)) {
+    if (email != null && userRepository.existsByEmail(email)) {
       log.warn("이미 존재하는 이메일: {}", email);
       throw new CustomException(ErrorCode.USER_EMAIL_ALREADY_EXIST);
     }
 
-    if (userRepository.existsByPhoneNumber(phoneNumber)) {
+    if (phoneNumber != null && userRepository.existsByPhoneNumber(phoneNumber)) {
       log.warn("이미 존재하는 전화번호: {}", phoneNumber);
       throw new CustomException(ErrorCode.USER_PHONE_ALREADY_EXIST);
     }
 
-    // 비밀번호 암호화
-    String encodedPassword = passwordEncoder.encode(password);
+    // 비밀번호 암호화 (있는 경우만) -> OAuth2는 null이 되도록 처리
+    String encodedPassword = (password != null && !password.isBlank())
+        ? passwordEncoder.encode(password)
+        : "";
 
     User newUser = User.builder()
         .email(email)
         .password(encodedPassword)
-        .name(name)
+        .username(username)
         .phoneNumber(phoneNumber)
-        .socialProvider(SocialProvider.LOCAL)
+        .socialProvider(socialProvider)
+        .socialId(socialId)
         .build();
 
+    // OAuth2는 이메일 인증 자동 완료
+    if (socialProvider != SocialProvider.LOCAL) {
+      newUser.verifyEmail();
+    }
+
     User savedUser = userRepository.save(newUser);
-    log.info("신규 사용자 가입 완료: userId={}, email={}", savedUser.getId(), email);
+    log.info("신규 사용자 가입 완료: userId={}, email={}, provider={}",
+        savedUser.getId(), email, socialProvider);
 
     return savedUser;
   }
@@ -93,6 +125,34 @@ public class AuthService {
 
     return new LoginResult(user, accessToken, refreshToken.getTokenValue());
   }
+
+  /**
+   * OAuth2 로그인 또는 회원가입
+   */
+  @Transactional
+  public User oAuth2SignupOrLogin(
+      String email,
+      String username,
+      SocialProvider socialProvider,
+      String socialId
+  ) {
+    // 1. socialId로 기존 사용자 찾기
+    User user = userRepository.findBySocialProviderAndSocialId(socialProvider, socialId)
+        .orElse(null);
+
+    // 2. 기존 사용자면 로그인 + 소셜 정보 업데이트
+    if (user != null) {
+      log.info("기존 OAuth2 사용자 로그인: userId={}, provider={}", user.getId(), socialProvider);
+      user.updateSocialInfo(username, email);
+      user.updateLastLoginAt();
+      return userRepository.save(user);
+    }
+
+    // 3. 신규 사용자 - signupOAuth2를 통한 회원가입
+    log.info("신규 OAuth2 사용자 가입: email={}, provider={}", email, socialProvider);
+    return signupOAuth2(email, username, socialProvider, socialId);
+  }
+
 
   /**
    * 로그아웃

@@ -8,7 +8,7 @@ import lombok.Builder;
 public record LoginResponse(
     Long userId,
     String email,
-    String name,
+    String username,
     ProfileType currentActiveProfileType,
     Long currentActiveProfileId,
     boolean isOnboardingCompleted,

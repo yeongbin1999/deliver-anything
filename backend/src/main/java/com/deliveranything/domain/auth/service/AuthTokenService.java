@@ -29,7 +29,7 @@ public class AuthTokenService {
    */
   public String genAccessToken(User user) {
     long id = user.getId();
-    String name = user.getName();
+    String username = user.getUsername();
 
     // 멀티 프로필 정보 (이제 전역 고유 Profile ID)
     ProfileType currentActiveProfileType = user.getCurrentActiveProfileType();
@@ -39,7 +39,7 @@ public class AuthTokenService {
 
     // 필수 정보 + UI용 name
     claimsBuilder.add("id", id);
-    claimsBuilder.add("name", name);
+    claimsBuilder.add("username", username);
     claimsBuilder.add("currentActiveProfile",
         currentActiveProfileType != null ? currentActiveProfileType.name() : null);
     claimsBuilder.add("currentActiveProfileId", currentActiveProfileId);
@@ -75,7 +75,7 @@ public class AuthTokenService {
 
       // 필수 정보 + UI용 name 추출
       Long id = claims.get("id", Long.class);
-      String name = claims.get("name", String.class);
+      String username = claims.get("username", String.class);
 
       // 멀티 프로필 정보 추출 (전역 고유 Profile ID)
       String currentActiveProfileStr = claims.get("currentActiveProfile", String.class);
@@ -85,7 +85,7 @@ public class AuthTokenService {
 
       return Map.of(
           "id", id,
-          "name", name != null ? name : "",
+          "username", username != null ? username : "",
           "currentActiveProfile", currentActiveProfile,
           "currentActiveProfileId", currentActiveProfileId != null ? currentActiveProfileId : 0L
       );

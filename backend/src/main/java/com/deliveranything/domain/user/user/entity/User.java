@@ -35,8 +35,8 @@ public class User extends BaseEntity {
   @Column(name = "password", columnDefinition = "VARCHAR(255)")
   private String password;
 
-  @Column(name = "name", nullable = false, columnDefinition = "VARCHAR(50)")
-  private String name;
+  @Column(name = "username", nullable = false, columnDefinition = "VARCHAR(50)")
+  private String username;
 
   @Column(name = "phone_number", unique = true, columnDefinition = "VARCHAR(20)")
   private String phoneNumber;
@@ -76,11 +76,11 @@ public class User extends BaseEntity {
   private List<Profile> profiles = new ArrayList<>();
 
   @Builder
-  public User(String email, String password, String name, String phoneNumber,
+  public User(String email, String password, String username, String phoneNumber,
       SocialProvider socialProvider, String socialId, Profile currentActiveProfile) {
     this.email = email;
     this.password = password;
-    this.name = name;
+    this.username = username;
     this.phoneNumber = phoneNumber;
     this.socialProvider = socialProvider != null ? socialProvider : SocialProvider.LOCAL;
     this.socialId = socialId;
@@ -180,6 +180,31 @@ public class User extends BaseEntity {
         .filter(profile -> profile.getType() == profileType && profile.isActive())
         .findFirst()
         .orElse(null);
+  }
+
+
+  public void updateSocialInfo(String username, String email) {
+    if (username != null && !username.isBlank()) {
+      this.username = username;
+    }
+    // 이메일이 없었는데 새로 제공된 경우 (카카오 동의 추가 등)
+    if (email != null && !email.isBlank() && this.email == null) {
+      this.email = email;
+    }
+  }
+
+  /**
+   * 관리자 권한 부여
+   */
+  public void grantAdminRole() {
+    this.isAdmin = true;
+  }
+
+  /**
+   * 관리자 권한 제거
+   */
+  public void revokeAdminRole() {
+    this.isAdmin = false;
   }
 
   // ========== 인증/인가 관련 ==========
