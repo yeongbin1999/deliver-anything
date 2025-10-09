@@ -1,6 +1,5 @@
 package com.deliveranything.global.security.handler;
 
-import com.deliveranything.domain.auth.entity.RefreshToken;
 import com.deliveranything.domain.auth.service.TokenService;
 import com.deliveranything.domain.user.user.entity.User;
 import com.deliveranything.global.common.Rq;
@@ -39,12 +38,12 @@ public class CustomOAuth2LoginSuccessHandler implements AuthenticationSuccessHan
     // 토큰 발급
     String accessToken = tokenService.genAccessToken(actor);
     String deviceInfo = request.getHeader("User-Agent");
-    RefreshToken refreshToken = tokenService.genRefreshToken(actor, deviceInfo);
+    String refreshToken = tokenService.genRefreshToken(actor, deviceInfo);
 
     // 쿠키 설정
-    rq.setCookie("apiKey", actor.getApiKey());
-    rq.setCookie("accessToken", accessToken);
-    rq.setCookie("refreshToken", refreshToken.getTokenValue());
+    rq.setAccessToken(accessToken);         // 헤더만
+    rq.setRefreshToken(refreshToken);       // 쿠키만
+    rq.setApiKey(actor.getApiKey());
 
     log.info("OAuth2 로그인 성공: userId={}", userId);
 

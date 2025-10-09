@@ -1,7 +1,7 @@
 package com.deliveranything.global.security.filter;
 
-import com.deliveranything.domain.auth.entity.RefreshToken;
-import com.deliveranything.domain.auth.repository.RefreshTokenRepository;
+import com.deliveranything.domain.auth.dto.RedisRefreshTokenDto;
+import com.deliveranything.domain.auth.repository.RedisRefreshTokenRepository;
 import com.deliveranything.domain.auth.service.AuthTokenService;
 import com.deliveranything.domain.auth.service.UserAuthorityProvider;
 import com.deliveranything.domain.user.profile.entity.Profile;
@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.lang.NonNull;
@@ -41,7 +42,7 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 
   private final UserRepository userRepository;
   private final ProfileRepository profileRepository;
-  private final RefreshTokenRepository refreshTokenRepository;
+  private final RedisRefreshTokenRepository redisRefreshTokenRepository;
   private final AuthTokenService authTokenService;
   private final UserAuthorityProvider userAuthorityProvider;
   private final ObjectMapper objectMapper;
@@ -215,13 +216,12 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
    * RefreshToken 또는 apiKey로 인증
    */
   private User authenticateWithRefreshTokenOrApiKey(String token) {
-    // 1순위: RefreshToken 테이블에서 확인
-    RefreshToken refreshToken = refreshTokenRepository
-        .findByTokenValueAndIsActiveTrue(token)
-        .orElse(null);
+    // 1순위: Redis RefreshToken 확인
+    Optional<RedisRefreshTokenDto> redisToken = redisRefreshTokenRepository
+        .findByTokenValue(token);
 
-    if (refreshToken != null && refreshToken.isValid()) {
-      return refreshToken.getUser();
+    if (redisToken.isPresent() && redisToken.get().isValid()) {
+      return userRepository.findById(redisToken.get().getUserId()).orElse(null);
     }
 
     // 2순위: apiKey로 확인 (강사님 방식 호환)

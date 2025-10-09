@@ -1,6 +1,5 @@
 package com.deliveranything.domain.auth.service;
 
-import com.deliveranything.domain.auth.entity.RefreshToken;
 import com.deliveranything.domain.auth.enums.SocialProvider;
 import com.deliveranything.domain.user.profile.dto.SwitchProfileResponse;
 import com.deliveranything.domain.user.profile.entity.Profile;
@@ -121,9 +120,9 @@ public class AuthService {
 
     // 토큰 발급
     String accessToken = tokenService.genAccessToken(user);
-    RefreshToken refreshToken = tokenService.genRefreshToken(user, deviceInfo);
+    String refreshToken = tokenService.genRefreshToken(user, deviceInfo); // 이제 String 반환
 
-    return new LoginResult(user, accessToken, refreshToken.getTokenValue());
+    return new LoginResult(user, accessToken, refreshToken);
   }
 
   /**
@@ -155,11 +154,21 @@ public class AuthService {
 
 
   /**
-   * 로그아웃
+   * 로그아웃 (현재 기기만)
    */
   @Transactional
-  public void logout(Long userId) {
+  public void logout(Long userId, String deviceInfo) {
+    tokenService.invalidateRefreshToken(userId, deviceInfo);
+    log.info("로그아웃 완료: userId={}, deviceInfo={}", userId, deviceInfo);
+  }
+
+  /**
+   * 전체 로그아웃 (모든 기기)
+   */
+  @Transactional
+  public void logoutAll(Long userId) {
     tokenService.invalidateAllRefreshTokens(userId);
+    log.info("전체 로그아웃 완료: userId={}", userId);
   }
 
   /**
