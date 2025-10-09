@@ -6,11 +6,13 @@ import com.deliveranything.domain.order.event.OrderCompletedEvent;
 import com.deliveranything.domain.order.event.OrderCreatedEvent;
 import com.deliveranything.domain.order.event.OrderPaymentRequestedEvent;
 import com.deliveranything.domain.order.event.OrderRejectedEvent;
-import com.deliveranything.domain.order.event.sse.OrderCanceledForCustomerEvent;
-import com.deliveranything.domain.order.event.sse.OrderCanceledForSellerEvent;
-import com.deliveranything.domain.order.event.sse.OrderPaidForCustomerEvent;
-import com.deliveranything.domain.order.event.sse.OrderPaidForSellerEvent;
-import com.deliveranything.domain.order.event.sse.OrderPaymentFailedForCustomerEvent;
+import com.deliveranything.domain.order.event.sse.customer.OrderCanceledForCustomerEvent;
+import com.deliveranything.domain.order.event.sse.customer.OrderPaidForCustomerEvent;
+import com.deliveranything.domain.order.event.sse.customer.OrderPaymentFailedForCustomerEvent;
+import com.deliveranything.domain.order.event.sse.customer.OrderStatusChangedForCustomerEvent;
+import com.deliveranything.domain.order.event.sse.seller.OrderCanceledForSellerEvent;
+import com.deliveranything.domain.order.event.sse.seller.OrderPaidForSellerEvent;
+import com.deliveranything.domain.order.event.sse.seller.OrderStatusChangedForSellerEvent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
@@ -76,5 +78,15 @@ public class OrderEventPublisher {
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
   public void handleOrderCanceledForSellerEvent(OrderCanceledForSellerEvent event) {
     redisTemplate.convertAndSend("order-canceled-for-seller-event", event);
+  }
+
+  @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+  public void handleOrderStatusChangedForCustomerEvent(OrderStatusChangedForCustomerEvent event) {
+    redisTemplate.convertAndSend("order-status-changed-for-customer-event", event);
+  }
+
+  @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+  public void handleOrderStatusChangedForSellerEvent(OrderStatusChangedForSellerEvent event) {
+    redisTemplate.convertAndSend("order-status-changed-for-seller-event", event);
   }
 }

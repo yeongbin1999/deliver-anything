@@ -4,11 +4,13 @@ import com.deliveranything.domain.order.entity.Order;
 import com.deliveranything.domain.order.enums.OrderStatus;
 import com.deliveranything.domain.order.enums.Publisher;
 import com.deliveranything.domain.order.event.OrderCompletedEvent;
-import com.deliveranything.domain.order.event.sse.OrderCanceledForCustomerEvent;
-import com.deliveranything.domain.order.event.sse.OrderCanceledForSellerEvent;
-import com.deliveranything.domain.order.event.sse.OrderPaidForCustomerEvent;
-import com.deliveranything.domain.order.event.sse.OrderPaidForSellerEvent;
-import com.deliveranything.domain.order.event.sse.OrderPaymentFailedForCustomerEvent;
+import com.deliveranything.domain.order.event.sse.customer.OrderCanceledForCustomerEvent;
+import com.deliveranything.domain.order.event.sse.customer.OrderPaidForCustomerEvent;
+import com.deliveranything.domain.order.event.sse.customer.OrderPaymentFailedForCustomerEvent;
+import com.deliveranything.domain.order.event.sse.customer.OrderStatusChangedForCustomerEvent;
+import com.deliveranything.domain.order.event.sse.seller.OrderCanceledForSellerEvent;
+import com.deliveranything.domain.order.event.sse.seller.OrderPaidForSellerEvent;
+import com.deliveranything.domain.order.event.sse.seller.OrderStatusChangedForSellerEvent;
 import com.deliveranything.domain.order.repository.OrderRepository;
 import com.deliveranything.global.exception.CustomException;
 import com.deliveranything.global.exception.ErrorCode;
@@ -58,24 +60,28 @@ public class OrderService {
   public void processDeliveryRiderAssigned(Long orderId) {
     Order order = getOrderById(orderId);
     order.updateStatus(OrderStatus.RIDER_ASSIGNED);
-    // TODO: SSE 상점의 주문 현황에 준비중이던거 배정 완료로 업데이트 하라고 전달
+
+    eventPublisher.publishEvent(OrderStatusChangedForCustomerEvent.fromOrder(order));
+    eventPublisher.publishEvent(OrderStatusChangedForSellerEvent.fromOrder(order));
   }
 
   @Transactional
   public void processDeliveryPickedUp(Long orderId) {
     Order order = getOrderById(orderId);
     order.updateStatus(OrderStatus.DELIVERING);
-    // TODO: SSE 상점의 주문 현황에 배정 완료이던거 배달 중으로 업데이트 하라고 전달
+
+    eventPublisher.publishEvent(OrderStatusChangedForCustomerEvent.fromOrder(order));
+    eventPublisher.publishEvent(OrderStatusChangedForSellerEvent.fromOrder(order));
   }
 
   @Transactional
-  public void processDeliveryCompleted(Long orderId, Long riderProfileId, Long sellerProfileId) {
+  public void processDeliveryCompleted(Long orderId, Long riderId, Long sellerId) {
     Order order = getOrderById(orderId);
     order.updateStatus(OrderStatus.COMPLETED);
 
-    eventPublisher.publishEvent(new OrderCompletedEvent(orderId, riderProfileId, sellerProfileId,
-        order.getStorePrice(), order.getDeliveryPrice()));
-    // TODO: SSE 상점의 주문 현황에 배정 중이던거 제거하라고 전달
+    eventPublisher.publishEvent(OrderCompletedEvent.fromOrder(order, riderId, sellerId));
+    eventPublisher.publishEvent(OrderStatusChangedForCustomerEvent.fromOrder(order));
+    eventPublisher.publishEvent(OrderStatusChangedForSellerEvent.fromOrder(order));
   }
 
   private Order getOrderWithStoreByMerchantId(String merchantUid) {

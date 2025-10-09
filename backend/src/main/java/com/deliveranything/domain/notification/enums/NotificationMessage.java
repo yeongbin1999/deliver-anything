@@ -1,5 +1,6 @@
 package com.deliveranything.domain.notification.enums;
 
+import com.deliveranything.domain.order.enums.OrderStatus;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -14,4 +15,13 @@ public enum NotificationMessage {
   ORDER_CANCELED_SELLER("주문이 정상적으로 거절되었습니다.");
 
   private final String message;
+
+  public static String getMessageByOrderStatus(OrderStatus orderStatus) {
+    return switch (orderStatus) {
+      case OrderStatus.RIDER_ASSIGNED -> "배달원이 배정됐습니다.";
+      case OrderStatus.DELIVERING -> "음식이 배달중입니다.";
+      case OrderStatus.COMPLETED -> "배달이 완료되었습니다.";
+      default -> "정의하지 않은 SSE 주문 상태 알림입니다. -> " + orderStatus;
+    };
+  }
 }

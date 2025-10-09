@@ -1,4 +1,4 @@
-package com.deliveranything.domain.order.event.sse;
+package com.deliveranything.domain.order.event.sse.seller;
 
 import com.deliveranything.domain.order.entity.Order;
 import com.deliveranything.domain.order.event.dto.OrderItemInfo;

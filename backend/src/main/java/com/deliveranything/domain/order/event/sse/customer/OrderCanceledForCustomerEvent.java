@@ -1,4 +1,4 @@
-package com.deliveranything.domain.order.event.sse;
+package com.deliveranything.domain.order.event.sse.customer;
 
 import com.deliveranything.domain.order.entity.Order;
 
