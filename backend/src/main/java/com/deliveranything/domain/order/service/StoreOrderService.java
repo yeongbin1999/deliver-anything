@@ -101,7 +101,7 @@ public class StoreOrderService {
     order.updateStatus(OrderStatus.CANCELLATION_REQUESTED);
 
     eventPublisher.publishEvent(OrderRejectedEvent.from(order, "상점이 주문을 거절했습니다.", Publisher.STORE));
-    // TODO: SSE 알림을 통해 상점에서 거절한 주문 제거하라고 전달
+
     return OrderResponse.from(order);
   }
 
