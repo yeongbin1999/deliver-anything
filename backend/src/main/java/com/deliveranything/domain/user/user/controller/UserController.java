@@ -8,7 +8,11 @@ import com.deliveranything.domain.user.profile.dto.SwitchProfileRequest;
 import com.deliveranything.domain.user.profile.dto.SwitchProfileResponse;
 import com.deliveranything.domain.user.profile.enums.ProfileType;
 import com.deliveranything.domain.user.profile.service.ProfileService;
+import com.deliveranything.domain.user.user.dto.ChangePasswordRequest;
+import com.deliveranything.domain.user.user.dto.UpdateUserRequest;
+import com.deliveranything.domain.user.user.dto.UserInfoResponse;
 import com.deliveranything.domain.user.user.entity.User;
+import com.deliveranything.domain.user.user.service.UserService;
 import com.deliveranything.global.common.ApiResponse;
 import com.deliveranything.global.common.Rq;
 import io.swagger.v3.oas.annotations.Operation;
@@ -20,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -33,7 +38,72 @@ public class UserController {
 
   private final ProfileService profileService;
   private final AuthService authService;
+  private final UserService userService;
   private final Rq rq;
+
+  // ========== 기본 사용자 정보 ==========
+
+  @GetMapping
+  @Operation(
+      summary = "내 정보 조회",
+      description = "현재 로그인한 사용자의 상세 정보를 조회합니다."
+  )
+  public ResponseEntity<ApiResponse<UserInfoResponse>> getMyInfo() {
+    User currentUser = rq.getActorFromDb();
+    log.info("사용자 정보 조회: userId={}", currentUser.getId());
+
+    UserInfoResponse response = UserInfoResponse.from(currentUser);
+
+    return ResponseEntity.ok(ApiResponse.success(response));
+  }
+
+  @PutMapping
+  @Operation(
+      summary = "내 정보 수정",
+      description = "사용자 이름, 전화번호 등 기본 정보를 수정합니다."
+  )
+  public ResponseEntity<ApiResponse<UserInfoResponse>> updateMyInfo(
+      @Valid @RequestBody UpdateUserRequest request) {
+
+    User currentUser = rq.getActor();
+    log.info("사용자 정보 수정 요청: userId={}", currentUser.getId());
+
+    User updatedUser = userService.updateUserInfo(
+        currentUser.getId(),
+        request.username(),
+        request.phoneNumber()
+    );
+
+    UserInfoResponse response = UserInfoResponse.from(updatedUser);
+
+    return ResponseEntity.ok(
+        ApiResponse.success("사용자 정보가 수정되었습니다.", response)
+    );
+  }
+
+  @PutMapping("/password")
+  @Operation(
+      summary = "비밀번호 변경",
+      description = "현재 비밀번호를 확인하고 새로운 비밀번호로 변경합니다."
+  )
+  public ResponseEntity<ApiResponse<Void>> changePassword(
+      @Valid @RequestBody ChangePasswordRequest request) {
+
+    User currentUser = rq.getActor();
+    log.info("비밀번호 변경 요청: userId={}", currentUser.getId());
+
+    userService.changePassword(
+        currentUser.getId(),
+        request.currentPassword(),
+        request.newPassword()
+    );
+
+    return ResponseEntity.ok(
+        ApiResponse.success("비밀번호가 변경되었습니다.", null)
+    );
+  }
+
+  // ========== 프로필 관리 ==========
 
   @PostMapping("/onboarding")
   @Operation(
@@ -59,7 +129,7 @@ public class UserController {
     }
 
     // 온보딩 완료 후 사용자 정보 다시 조회
-    User updatedUser = rq.getActor();
+    User updatedUser = rq.getActorFromDb();
 
     OnboardingResponse response = OnboardingResponse.builder()
         .userId(updatedUser.getId())

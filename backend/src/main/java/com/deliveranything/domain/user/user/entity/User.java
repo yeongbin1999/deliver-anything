@@ -177,6 +177,22 @@ public class User extends BaseEntity {
         .orElse(null);
   }
 
+  /**
+   * 사용자 정보 업데이트 (일반 사용자용)
+   */
+
+  public void updateUserInfo(String username, String phoneNumber) {
+    if (username != null && !username.isBlank()) {
+      this.username = username;
+    }
+    if (phoneNumber != null && !phoneNumber.isBlank()) {
+      this.phoneNumber = phoneNumber;
+    }
+  }
+
+  /**
+   * 소셜 로그인 정보 업데이트 (OAuth2용)
+   */
 
   public void updateSocialInfo(String username, String email) {
     if (username != null && !username.isBlank()) {
@@ -215,5 +231,5 @@ public class User extends BaseEntity {
   public void updateLastLoginAt() {
     this.lastLoginAt = LocalDateTime.now();
   }
-  
+
 }

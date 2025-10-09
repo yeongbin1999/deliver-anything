@@ -30,7 +30,7 @@ public class UserService {
   public Optional<User> findByEmail(String email) {
     return userRepository.findByEmail(email);
   }
-  
+
   public boolean existsByEmail(String email) {
     return userRepository.existsByEmail(email);
   }
@@ -41,6 +41,30 @@ public class UserService {
 
   public long count() {
     return userRepository.count();
+  }
+
+  // ========== 사용자 정보 수정 ==========
+
+  /**
+   * 사용자 정보 수정 (이름, 전화번호)
+   */
+  @Transactional
+  public User updateUserInfo(Long userId, String username, String phoneNumber) {
+    User user = findById(userId);
+
+    // 전화번호 중복 체크 (자신의 전화번호가 아닌 경우만)
+    if (phoneNumber != null && !phoneNumber.equals(user.getPhoneNumber())) {
+      if (userRepository.existsByPhoneNumber(phoneNumber)) {
+        throw new CustomException(ErrorCode.USER_PHONE_ALREADY_EXIST);
+      }
+    }
+
+    // User 엔티티에 업데이트 메서드 호출
+    user.updateUserInfo(username, phoneNumber);
+    User updatedUser = userRepository.save(user);
+
+    log.info("사용자 정보 수정 완료: userId={}, username={}", userId, username);
+    return updatedUser;
   }
 
   // ========== 계정 관리 ==========
