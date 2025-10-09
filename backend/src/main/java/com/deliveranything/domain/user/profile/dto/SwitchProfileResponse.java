@@ -15,8 +15,7 @@ public record SwitchProfileResponse(
     Long currentProfileId,
     Long storeId,            // 판매자 프로필의 상점 ID (없으면 null)
     Object currentProfileDetail,  // 추가: 현재 활성 프로필 상세 정보
-    String accessToken,      // 내부 전용
-    String refreshToken      // 내부 전용
+    String accessToken      // 내부 전용
 ) {
 
   // API 응답용 변환 - 토큰 제거

@@ -164,6 +164,9 @@ public class UserController {
     // 새 Access Token을 쿠키와 헤더에 설정
     rq.setAccessToken(result.accessToken());
 
+    log.info("프로필 전환 완료 및 Access Token 재발급: userId={}, {} -> {}",
+        currentUser.getId(), result.previousProfileType(), result.currentProfileType());
+
     // ✅ storeId + 프로필 상세 정보 포함된 API 응답용으로 변환 (토큰 제거)
     SwitchProfileResponse response = result.toResponse();
 

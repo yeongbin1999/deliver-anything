@@ -92,53 +92,68 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
     }
 
     if (user == null) {
-      throw new CustomException(ErrorCode.USER_NOT_FOUND);
+      throw new CustomException(ErrorCode.TOKEN_INVALID);
     }
 
-    // ========== A안: Access Token 자동 재발급 (현재 적용) ==========
-    // Access Token이 만료되었으면 새로 발급
+    // ========== Access Token 자동 재발급 ==========
     if (StringUtils.hasText(accessToken) && !isAccessTokenValid) {
       String newAccessToken = authTokenService.genAccessToken(user);
       setCookieAndHeader(response, "accessToken", newAccessToken);
       log.info("Access Token 자동 재발급: userId={}", user.getId());
     }
 
-    /* ========== B안: 명시적 /refresh 호출 방식 (일단 주석 처리) ==========
-     *
-     * 장점:
-     * - 깔끔한 책임 분리 (Filter는 인증만, /refresh는 재발급만)
-     * - 보안 강화 (Refresh Token 없이는 재발급 불가)
-     * - REST API 표준에 부합
-     *
-     * 프론트엔드 구현 필요:
-     * - Axios Interceptor로 401 응답 시 자동으로 /refresh 호출
-     * - 새 Access Token 받아서 원래 요청 재시도
-     *
-     * 예시 코드:
-     * axios.interceptors.response.use(
-     *   (response) => response,
-     *   async (error) => {
-     *     if (error.response?.status === 401) {
-     *       const newToken = await fetch('/api/v1/auth/refresh', {
-     *         method: 'POST',
-     *         body: JSON.stringify({ refreshToken: getCookie('refreshToken') })
-     *       });
-     *       error.config.headers['Authorization'] = `Bearer ${newToken}`;
-     *       return axios.request(error.config);
-     *     }
-     *   }
-     * );
-     *
-     * B안 적용 시:
-     * 1. 위의 A안 코드 블록 제거
-     * 2. 이 주석 블록 제거
-     * 3. /refresh 엔드포인트는 이미 구현되어 있음 (AuthController.java)
-     */
+    // 온보딩 필수 엔드포인트 체크
+    if (requiresOnboarding(request.getRequestURI()) && !user.isOnboardingCompleted()) {
+      log.warn("온보딩 미완료 사용자의 보호된 엔드포인트 접근 시도: userId={}, uri={}",
+          user.getId(), request.getRequestURI());
+      throw new CustomException(ErrorCode.ONBOARDING_NOT_COMPLETED);
+    }
 
     // SecurityContext에 인증 정보 설정
     setAuthentication(user);
 
     filterChain.doFilter(request, response);
+  }
+
+  /**
+   * 온보딩 필수 엔드포인트 체크
+   */
+  private boolean requiresOnboarding(String uri) {
+    // 온보딩 완료 전에는 접근 불가한 엔드포인트 목록
+    List<String> protectedPaths = List.of(
+        "/api/v1/users/me/profile/switch",  // 프로필 전환
+        "/api/v1/stores",                    // 상점 관리
+        "/api/v1/products",                  // 상품 관리
+        "/api/v1/orders",                    // 주문 관리
+        "/api/v1/deliveries",                // 배달 관리
+        "/api/v1/reviews",                   // 리뷰 관리
+        "/api/v1/payments",                  // 결제 관리
+        "/api/v1/settlements"                // 정산 관리
+    );
+
+    // 온보딩 완료 전에도 접근 가능한 예외 엔드포인트
+    List<String> allowedPaths = List.of(
+        "/api/v1/users/me/onboarding",      // 온보딩 처리
+        "/api/v1/users/me/profiles",         // 프로필 목록 조회 (온보딩 선택용)
+        "/api/v1/users/me",                  // 내 정보 조회
+        "/api/v1/auth/logout"                // 로그아웃
+    );
+
+    // 예외 엔드포인트는 온보딩 불필요
+    for (String allowed : allowedPaths) {
+      if (uri.startsWith(allowed)) {
+        return false;
+      }
+    }
+
+    // 보호된 엔드포인트는 온보딩 필수
+    for (String protected_ : protectedPaths) {
+      if (uri.startsWith(protected_)) {
+        return true;
+      }
+    }
+
+    return false;  // 기타 엔드포인트는 온보딩 불필요
   }
 
   /**
@@ -163,26 +178,31 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
   private String extractAccessToken(HttpServletRequest request) {
     String authorization = request.getHeader("Authorization");
 
-    // Authorization 헤더에서 추출
     if (StringUtils.hasText(authorization) && authorization.startsWith("Bearer ")) {
       return authorization.substring(7);
     }
 
-    // Fallback 제거: 헤더에 없으면 null 반환
     return null;
   }
-
 
   /**
    * Access Token으로 인증 (Profile ID 정보 포함)
    */
   private User authenticateWithAccessToken(String accessToken) {
+    // ✅ 토큰 유효성 검증 추가
+    if (!authTokenService.isValidToken(accessToken)) {
+      throw new CustomException(ErrorCode.TOKEN_INVALID);
+    }
+
+    if (authTokenService.isTokenExpired(accessToken)) {
+      throw new CustomException(ErrorCode.TOKEN_EXPIRED);
+    }
+
     Map<String, Object> payload = authTokenService.payload(accessToken);
 
     if (payload != null) {
       Long userId = (Long) payload.get("id");
 
-      // 안전한 타입 변환
       String profileStr = (String) payload.get("currentActiveProfile");
       ProfileType currentActiveProfileType = null;
       if (profileStr != null) {
@@ -195,8 +215,8 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 
       Long currentActiveProfileId = (Long) payload.get("currentActiveProfileId");
 
-      // JWT에서 사용자 정보 복원 (DB 조회 최소화)
       User user = userRepository.findById(userId).orElse(null);
+
       // JWT - DB간 불일치 체크
       if (user != null) {
         Long dbProfileId = user.getCurrentActiveProfileId();
@@ -208,7 +228,6 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
             return null;
           }
         }
-        // Profile은 User.getCurrentActiveProfile() 호출 시 JPA가 자동으로 로드
         return user;
       }
     }
@@ -217,17 +236,16 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
   }
 
   /**
-   * SecurityContext에 인증 정보 설정 -  UserAuthorityProvider 사용으로 변경 (Oauth2에 확장성 고려)
+   * SecurityContext에 인증 정보 설정
    */
   private void setAuthentication(User user) {
-    //  Auth 도메인의 UserAuthorityProvider를 통해 권한 생성
     Collection<? extends GrantedAuthority> authorities = userAuthorityProvider.getAuthorities(user);
 
     UserDetails securityUser = new SecurityUser(
         user.getId(),
         user.getUsername(),
         user.getEmail(),
-        "",  // 비밀번호는 빈 문자열
+        "",
         user.getCurrentActiveProfile(),
         authorities
     );
@@ -242,29 +260,13 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
   }
 
   /**
-   * 쿠키 값 추출
-   */
-  private String getCookieValue(HttpServletRequest request, String name) {
-    if (request.getCookies() != null) {
-      for (var cookie : request.getCookies()) {
-        if (name.equals(cookie.getName())) {
-          return StringUtils.hasText(cookie.getValue()) ? cookie.getValue() : null;
-        }
-      }
-    }
-    return null;
-  }
-
-  /**
    * 쿠키 및 헤더 설정
    */
   private void setCookieAndHeader(HttpServletResponse response, String name, String value) {
-    // 쿠키 설정
     response.addHeader("Set-Cookie",
         String.format("%s=%s; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=31536000",
             name, value));
 
-    // Authorization 헤더 설정
     if ("accessToken".equals(name)) {
       response.setHeader("Authorization", "Bearer " + value);
     }

@@ -49,13 +49,13 @@ public class ProfileService {
     User user = userRepository.findById(userId)
         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-    // ✅ 이미 온보딩 완료된 경우 방어
+    // 이미 온보딩 완료된 경우 방어
     if (user.isOnboardingCompleted()) {
       log.warn("이미 온보딩이 완료되었습니다: userId={}", userId);
       return false;
     }
 
-    // ✅ 이미 해당 타입의 프로필이 존재하는지 확인
+    // 이미 해당 타입의 프로필이 존재하는지 확인
     Profile existingProfile = profileRepository.findByUserIdAndType(userId, selectedProfile)
         .orElse(null);
 
@@ -77,7 +77,7 @@ public class ProfileService {
       return false;
     }
 
-    // 3단계: ✅ 온보딩 완료 처리
+    // 3단계: 온보딩 완료 처리
     user.completeOnboarding(profile);
     userRepository.save(user);
 
@@ -87,31 +87,37 @@ public class ProfileService {
   }
 
   /**
-   * 프로필 전환
+   * 프로필 전환 - 구체적 에러 처리 추가
    */
   @Transactional
   public boolean switchProfile(Long userId, ProfileType targetProfile) {
     User user = userRepository.findById(userId)
         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-
+    // 온보딩 미완료 체크
     if (!user.isOnboardingCompleted()) {
       log.warn("온보딩이 완료되지 않은 사용자입니다: userId={}", userId);
-      return false;
+      throw new CustomException(ErrorCode.ONBOARDING_NOT_COMPLETED);
     }
 
     // 타겟 프로필 조회
     Profile targetProfileEntity = profileRepository
         .findByUserIdAndType(userId, targetProfile)
-        .orElse(null);
-
-    if (targetProfileEntity == null) {
-      log.warn("해당 프로필을 찾을 수 없습니다: userId={}, targetProfile={}", userId, targetProfile);
-      return false;
-    }
+        .orElseThrow(() -> {
+          log.warn("해당 프로필을 찾을 수 없습니다: userId={}, targetProfile={}",
+              userId, targetProfile);
+          return new CustomException(ErrorCode.PROFILE_NOT_FOUND);
+        });
 
     if (user.getCurrentActiveProfileType() == targetProfile) {
       log.info("이미 활성화된 프로필입니다: userId={}, targetProfile={}", userId, targetProfile);
-      return true;
+      throw new CustomException(ErrorCode.PROFILE_ALREADY_ACTIVE);
+    }
+
+    // 프로필 활성화 상태 체크
+    if (!targetProfileEntity.isActive()) {
+      log.warn("비활성화된 프로필로는 전환할 수 없습니다: userId={}, targetProfile={}",
+          userId, targetProfile);
+      throw new CustomException(ErrorCode.PROFILE_INACTIVE);
     }
 
     try {
@@ -123,7 +129,7 @@ public class ProfileService {
     } catch (IllegalStateException e) {
       log.warn("프로필 전환 실패: userId={}, targetProfile={}, error={}",
           userId, targetProfile, e.getMessage());
-      return false;
+      throw new CustomException(ErrorCode.PROFILE_NOT_OWNED);
     }
   }
 

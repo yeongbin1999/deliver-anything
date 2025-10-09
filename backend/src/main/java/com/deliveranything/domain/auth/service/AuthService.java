@@ -1,10 +1,10 @@
 package com.deliveranything.domain.auth.service;
 
 import com.deliveranything.domain.auth.enums.SocialProvider;
-import com.deliveranything.domain.user.profile.dto.CustomerProfileDetail;
-import com.deliveranything.domain.user.profile.dto.RiderProfileDetail;
-import com.deliveranything.domain.user.profile.dto.SellerProfileDetail;
 import com.deliveranything.domain.user.profile.dto.SwitchProfileResponse;
+import com.deliveranything.domain.user.profile.dto.customer.CustomerProfileDetail;
+import com.deliveranything.domain.user.profile.dto.rider.RiderProfileDetail;
+import com.deliveranything.domain.user.profile.dto.seller.SellerProfileDetail;
 import com.deliveranything.domain.user.profile.entity.CustomerProfile;
 import com.deliveranything.domain.user.profile.entity.Profile;
 import com.deliveranything.domain.user.profile.entity.RiderProfile;
@@ -37,12 +37,12 @@ public class AuthService {
   private final ProfileService profileService;
   private final PasswordEncoder passwordEncoder;
 
-  // ✅ 프로필 상세 조회용 Repository 추가
+  //  프로필 상세 조회용 Repository 추가
   private final CustomerProfileRepository customerProfileRepository;
   private final SellerProfileRepository sellerProfileRepository;
   private final RiderProfileRepository riderProfileRepository;
 
-  // ✅ StoreService 추가 (상점 조회용)
+  // StoreService 추가 (상점 조회용)
   // private final StoreService storeService;  // TODO: 주석 해제 후 사용
 
   /**
@@ -139,10 +139,10 @@ public class AuthService {
     String accessToken = tokenService.genAccessToken(user);
     String refreshToken = tokenService.genRefreshToken(user, deviceInfo);
 
-    // ✅ 추가: storeId 조회
+    //  추가: storeId 조회
     Long storeId = getStoreIdIfSeller(user);
 
-    // ✅ 추가: 프로필 상세 정보 조회
+    //  추가: 프로필 상세 정보 조회
     Object profileDetail = getCurrentProfileDetail(user);
 
     return new LoginResult(user, accessToken, refreshToken, storeId, profileDetail);
@@ -209,9 +209,8 @@ public class AuthService {
   }
 
   /**
-   * 프로필 전환 + 토큰 재발급 (storeId + 프로필 상세 정보 포함)
+   * 프로필 전환 + Access Token 재발급 (Refresh Token 유지)
    */
-  // 4. switchProfileWithTokenReissue() 메서드 수정
   @Transactional
   public SwitchProfileResponse switchProfileWithTokenReissue(
       Long userId,
@@ -222,7 +221,7 @@ public class AuthService {
 
     if (!user.isOnboardingCompleted()) {
       log.warn("온보딩이 완료되지 않은 사용자입니다: userId={}", userId);
-      throw new CustomException(ErrorCode.USER_NOT_FOUND);
+      throw new CustomException(ErrorCode.ONBOARDING_NOT_COMPLETED);
     }
 
     // 현재 프로필 정보 저장
@@ -235,20 +234,20 @@ public class AuthService {
         .orElseThrow(() -> {
           log.warn("해당 프로필을 찾을 수 없습니다: userId={}, targetProfile={}",
               userId, targetProfileType);
-          return new CustomException(ErrorCode.USER_NOT_FOUND);
+          return new CustomException(ErrorCode.PROFILE_NOT_FOUND);
         });
 
-    // 이미 활성화된 프로필인 경우
+    // 이미 활성화된 프로필인 경우 - Access Token만 재발급
     if (user.getCurrentActiveProfileType() == targetProfileType) {
       log.info("이미 활성화된 프로필입니다: userId={}, targetProfile={}",
           userId, targetProfileType);
 
       String newAccessToken = tokenService.genAccessToken(user);
 
-      // ✅ 추가: storeId 조회
+      // storeId 조회
       Long storeId = getStoreIdIfSeller(user);
 
-      // ✅ 추가: 프로필 상세 조회
+      // 프로필 상세 정보 조회
       Object profileDetail = getCurrentProfileDetail(user);
 
       return SwitchProfileResponse.builder()
@@ -263,23 +262,29 @@ public class AuthService {
           .build();
     }
 
-    // 프로필 전환
+    // 프로필 전환 수행
     boolean switched = profileService.switchProfile(userId, targetProfileType);
+
     if (!switched) {
-      log.warn("프로필 전환 실패: userId={}, targetProfile={}", userId, targetProfileType);
-      throw new CustomException(ErrorCode.USER_NOT_FOUND);
+      log.error("프로필 전환 실패: userId={}, targetProfile={}", userId, targetProfileType);
+      throw new CustomException(ErrorCode.PROFILE_NOT_FOUND);
     }
 
-    // 전환된 user로 새 토큰 생성
+    // 전환된 user로 새 Access Token 생성
     User updatedUser = userRepository.findById(userId)
         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+    // Access Token만 재발급 (Refresh Token 유지)
     String newAccessToken = tokenService.genAccessToken(updatedUser);
 
-    // ✅ storeId 조회
+    // storeId 조회
     Long storeId = getStoreIdIfSeller(updatedUser);
 
-    // ✅ 프로필 상세 정보 조회
+    // 프로필 상세 정보 조회
     Object profileDetail = getCurrentProfileDetail(updatedUser);
+
+    log.info("프로필 전환 완료 및 Access Token 재발급: userId={}, {} -> {}",
+        userId, previousProfileType, targetProfileType);
 
     return SwitchProfileResponse.builder()
         .userId(userId)
@@ -294,7 +299,7 @@ public class AuthService {
   }
 
   /**
-   * ✅ 판매자 프로필인 경우 상점 ID 조회 판매자가 아니거나 상점이 없으면 null 반환
+   * 판매자 프로필인 경우 상점 ID 조회 판매자가 아니거나 상점이 없으면 null 반환
    */
   private Long getStoreIdIfSeller(User user) {
     // 판매자 프로필이 아니면 null
@@ -307,7 +312,7 @@ public class AuthService {
       return null;
     }
 
-    // ✅ StoreService를 통해 상점 ID 조회
+    // StoreService를 통해 상점 ID 조회
     // TODO: StoreService 의존성 주입 후 주석 해제
     // return storeService.getStoreIdBySellerProfileId(sellerProfileId);
 
@@ -317,7 +322,7 @@ public class AuthService {
   }
 
   /**
-   * ✅ 현재 활성 프로필의 상세 정보 조회 온보딩 미완료 또는 프로필 없으면 null 반환
+   * 현재 활성 프로필의 상세 정보 조회 온보딩 미완료 또는 프로필 없으면 null 반환
    */
   private Object getCurrentProfileDetail(User user) {
     // 온보딩 미완료면 null
@@ -356,8 +361,8 @@ public class AuthService {
       User user,
       String accessToken,
       String refreshToken,
-      Long storeId,  // ✅ 상점 ID
-      Object currentProfileDetail  // ✅ 프로필 상세 정보
+      Long storeId,  // 상점 ID
+      Object currentProfileDetail  // 프로필 상세 정보
   ) {
 
   }

@@ -1,4 +1,4 @@
-package com.deliveranything.domain.user.profile.dto;
+package com.deliveranything.domain.user.profile.dto.seller;
 
 import com.deliveranything.domain.user.profile.entity.SellerProfile;
 import lombok.Builder;
