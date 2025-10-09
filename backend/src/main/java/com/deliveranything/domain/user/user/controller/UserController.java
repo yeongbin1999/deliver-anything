@@ -4,9 +4,9 @@ import com.deliveranything.domain.auth.service.AuthService;
 import com.deliveranything.domain.user.profile.dto.AddProfileRequest;
 import com.deliveranything.domain.user.profile.dto.AddProfileResponse;
 import com.deliveranything.domain.user.profile.dto.AvailableProfilesResponse;
-import com.deliveranything.domain.user.profile.dto.OnboardingRequest;
 import com.deliveranything.domain.user.profile.dto.SwitchProfileRequest;
 import com.deliveranything.domain.user.profile.dto.SwitchProfileResponse;
+import com.deliveranything.domain.user.profile.dto.onboard.OnboardingRequest;
 import com.deliveranything.domain.user.profile.dto.onboard.OnboardingResponse;
 import com.deliveranything.domain.user.profile.entity.Profile;
 import com.deliveranything.domain.user.profile.enums.ProfileType;
@@ -110,8 +110,8 @@ public class UserController {
 
   @PostMapping("/onboarding")
   @Operation(
-      summary = "온보딩 완료",
-      description = "회원가입 후 첫 프로필을 생성하고 온보딩을 완료합니다. CUSTOMER, SELLER, RIDER 중 하나를 선택할 수 있습니다."
+      summary = "온보딩 시작 및 첫 프로필 생성",
+      description = "회원가입 후 첫 프로필을 생성하고 온보딩을 시작합니다. CUSTOMER, SELLER, RIDER 중 하나를 선택할 수 있습니다."
   )
   public ResponseEntity<ApiResponse<OnboardingResponse>> completeOnboarding(
       @Valid @RequestBody OnboardingRequest request) {
