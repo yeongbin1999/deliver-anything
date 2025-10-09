@@ -1,4 +1,4 @@
-package com.deliveranything.domain.user.profile.dto;
+package com.deliveranything.domain.user.profile.dto.onboard;
 
 import com.deliveranything.domain.user.profile.enums.ProfileType;
 import lombok.Builder;

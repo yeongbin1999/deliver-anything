@@ -10,6 +10,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
@@ -21,6 +22,9 @@ public class CustomOAuth2LoginSuccessHandler implements AuthenticationSuccessHan
 
   private final Rq rq;
   private final TokenService tokenService;
+
+  @Value("${custom.frontend.url}")
+  private String frontendUrl;
 
   @Override
   public void onAuthenticationSuccess(
@@ -46,13 +50,13 @@ public class CustomOAuth2LoginSuccessHandler implements AuthenticationSuccessHan
 
     log.info("OAuth2 로그인 성공: userId={}", userId);
 
-    // 온보딩 여부에 따라 리다이렉트
+    // ✅ 온보딩 여부에 따라 리다이렉트
     if (actor.getCurrentActiveProfile() == null) {
       log.info("온보딩 미완료 사용자, 온보딩 페이지로 이동: userId={}", userId);
-      rq.sendRedirect("http://localhost:3000/onboarding");
+      rq.sendRedirect(frontendUrl + "/onboarding");
     } else {
       log.info("온보딩 완료 사용자, 메인 페이지로 이동: userId={}", userId);
-      rq.sendRedirect("http://localhost:3000");
+      rq.sendRedirect(frontendUrl);
     }
   }
 }

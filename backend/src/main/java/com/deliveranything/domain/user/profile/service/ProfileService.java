@@ -1,5 +1,8 @@
 package com.deliveranything.domain.user.profile.service;
 
+import com.deliveranything.domain.user.profile.dto.onboard.CustomerOnboardingData;
+import com.deliveranything.domain.user.profile.dto.onboard.RiderOnboardingData;
+import com.deliveranything.domain.user.profile.dto.onboard.SellerOnboardingData;
 import com.deliveranything.domain.user.profile.entity.CustomerProfile;
 import com.deliveranything.domain.user.profile.entity.Profile;
 import com.deliveranything.domain.user.profile.entity.RiderProfile;
@@ -15,7 +18,6 @@ import com.deliveranything.domain.user.user.repository.UserRepository;
 import com.deliveranything.global.exception.CustomException;
 import com.deliveranything.global.exception.ErrorCode;
 import java.util.List;
-import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -39,31 +41,43 @@ public class ProfileService {
   // ========== 온보딩 및 프로필 관리 ==========
 
   /**
-   * 온보딩 완료 처리 (Profile 기반)
+   * 온보딩 완료 처리 (Profile 기반) - 타입 안전하게 개선
    */
   @Transactional
   public boolean completeOnboarding(Long userId, ProfileType selectedProfile,
-      Map<String, Object> profileData) {
+      Object profileData) {
     User user = userRepository.findById(userId)
         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-    // 이미 온보딩 완료된 경우
+    // ✅ 이미 온보딩 완료된 경우 방어
     if (user.isOnboardingCompleted()) {
       log.warn("이미 온보딩이 완료되었습니다: userId={}", userId);
       return false;
     }
 
+    // ✅ 이미 해당 타입의 프로필이 존재하는지 확인
+    Profile existingProfile = profileRepository.findByUserIdAndType(userId, selectedProfile)
+        .orElse(null);
+
+    if (existingProfile != null) {
+      log.warn("이미 해당 프로필이 존재합니다: userId={}, profileType={}", userId, selectedProfile);
+      // 이미 있으면 그냥 온보딩 완료 처리
+      user.completeOnboarding(existingProfile);
+      userRepository.save(user);
+      return true;
+    }
+
     // 1단계: Profile 먼저 생성
     Profile profile = createProfile(user, selectedProfile);
 
-    // 2단계: 세부 프로필 생성
+    // 2단계: 세부 프로필 생성 (타입별 DTO로 처리)
     boolean profileCreated = createDetailedProfile(profile, selectedProfile, profileData);
     if (!profileCreated) {
       log.warn("세부 프로필 생성 실패: userId={}, selectedProfile={}", userId, selectedProfile);
       return false;
     }
 
-    // 3단계: 온보딩 완료 처리
+    // 3단계: ✅ 온보딩 완료 처리
     user.completeOnboarding(profile);
     userRepository.save(user);
 
@@ -142,67 +156,78 @@ public class ProfileService {
   }
 
   /**
-   * 프로필 타입별 세부 프로필 생성
+   * 프로필 타입별 세부 프로필 생성 (타입 안전하게 개선)
    */
   private boolean createDetailedProfile(Profile profile, ProfileType profileType,
-      Map<String, Object> profileData) {
-    switch (profileType) {
-      case CUSTOMER -> {
-        String nickname = (String) profileData.get("nickname");
-        CustomerProfile customerProfile = CustomerProfile.builder()
-            .profile(profile)
-            .nickname(nickname)
-            .profileImageUrl(null)
-            .build();
-        customerProfileRepository.save(customerProfile);
-      }
-      case SELLER -> {
-        String nickname = (String) profileData.get("nickname");
-        String businessName = (String) profileData.get("businessName");
-        String businessCertificateNumber = (String) profileData.get("businessCertificateNumber");
-        String businessPhoneNumber = (String) profileData.get("businessPhoneNumber");
-        String bankName = (String) profileData.get("bankName");
-        String accountNumber = (String) profileData.get("accountNumber");
-        String accountHolder = (String) profileData.get("accountHolder");
+      Object profileData) {
+    try {
+      switch (profileType) {
+        case CUSTOMER -> {
+          if (!(profileData instanceof CustomerOnboardingData data)) {
+            log.error("잘못된 고객 프로필 데이터 타입: {}", profileData.getClass());
+            return false;
+          }
 
-        SellerProfile sellerProfile = SellerProfile.builder()
-            .profile(profile)
-            .nickname(nickname)
-            .profileImageUrl(null)
-            .businessName(businessName)
-            .businessCertificateNumber(businessCertificateNumber)
-            .businessPhoneNumber(businessPhoneNumber)
-            .bankName(bankName)
-            .accountNumber(accountNumber)
-            .accountHolder(accountHolder)
-            .build();
-        sellerProfileRepository.save(sellerProfile);
-      }
-      case RIDER -> {
-        String nickname = (String) profileData.get("nickname");
-        String licenseNumber = (String) profileData.get("licenseNumber");
-        String area = (String) profileData.getOrDefault("area", "서울");
-        String profileImageUrl = (String) profileData.get("profileImageUrl");
+          CustomerProfile customerProfile = CustomerProfile.builder()
+              .profile(profile)
+              .nickname(data.nickname())
+              .profileImageUrl(data.profileImageUrl())
+              .build();
+          customerProfileRepository.save(customerProfile);
+          log.info("고객 프로필 생성 완료: profileId={}", profile.getId());
+        }
+        case SELLER -> {
+          if (!(profileData instanceof SellerOnboardingData data)) {
+            log.error("잘못된 판매자 프로필 데이터 타입: {}", profileData.getClass());
+            return false;
+          }
 
-        RiderProfile riderProfile = RiderProfile.builder()
-            .nickname(nickname)
-            .toggleStatus(RiderToggleStatus.OFF)
-            .area(area)
-            .profileImageUrl(profileImageUrl)
-            .licenseNumber(licenseNumber)
-            .bankName("")
-            .bankAccountNumber("")
-            .bankAccountHolderName("")
-            .profile(profile)
-            .build();
-        riderProfileRepository.save(riderProfile);
+          SellerProfile sellerProfile = SellerProfile.builder()
+              .profile(profile)
+              .nickname(data.nickname())
+              .profileImageUrl(data.profileImageUrl())
+              .businessName(data.businessName())
+              .businessCertificateNumber(data.businessCertificateNumber())
+              .businessPhoneNumber(data.businessPhoneNumber())
+              .bankName(data.bankName())
+              .accountNumber(data.accountNumber())
+              .accountHolder(data.accountHolder())
+              .build();
+          sellerProfileRepository.save(sellerProfile);
+          log.info("판매자 프로필 생성 완료: profileId={}", profile.getId());
+        }
+        case RIDER -> {
+          if (!(profileData instanceof RiderOnboardingData data)) {
+            log.error("잘못된 배달원 프로필 데이터 타입: {}", profileData.getClass());
+            return false;
+          }
+
+          String area = data.area() != null && !data.area().isBlank() ? data.area() : "서울";
+
+          RiderProfile riderProfile = RiderProfile.builder()
+              .profile(profile)
+              .nickname(data.nickname())
+              .profileImageUrl(data.profileImageUrl())
+              .toggleStatus(RiderToggleStatus.OFF)
+              .area(area)
+              .licenseNumber(data.licenseNumber())
+              .bankName("")
+              .bankAccountNumber("")
+              .bankAccountHolderName("")
+              .build();
+          riderProfileRepository.save(riderProfile);
+          log.info("배달원 프로필 생성 완료: profileId={}", profile.getId());
+        }
+        default -> {
+          log.error("지원하지 않는 프로필 타입: {}", profileType);
+          return false;
+        }
       }
-      default -> {
-        log.error("지원하지 않는 프로필 타입: {}", profileType);
-        return false;
-      }
+      return true;
+    } catch (Exception e) {
+      log.error("세부 프로필 생성 중 오류 발생: profileType={}, error={}", profileType, e.getMessage(), e);
+      return false;
     }
-    return true;
   }
 
   /**

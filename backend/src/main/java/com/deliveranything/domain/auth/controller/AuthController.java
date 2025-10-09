@@ -42,7 +42,6 @@ public class AuthController {
   private final TokenService tokenService;
   private final ProfileService profileService;
   private final UserAgentUtil userAgentUtil;
-
   private final Rq rq;
 
   @PostMapping("/signup")
@@ -73,7 +72,7 @@ public class AuthController {
   @PostMapping("/login")
   @Operation(
       summary = "로그인",
-      description = "이메일과 비밀번호로 로그인합니다. Access Token과 Refresh Token이 발급됩니다."
+      description = "이메일과 비밀번호로 로그인합니다. Access Token과 Refresh Token이 발급되며, 판매자 프로필인 경우 storeId와 함께 프로필 상세 정보도 반환됩니다."
   )
   public ResponseEntity<ApiResponse<LoginResponse>> login(
       @Valid @RequestBody LoginRequest request,
@@ -83,7 +82,7 @@ public class AuthController {
     String deviceInfo = userAgentUtil.extractDeviceInfo(httpRequest);
     log.info("로그인 시도 - 기기 정보: {}", deviceInfo);
 
-    // 로그인 처리
+    // 로그인 처리 (storeId + 프로필 상세 정보 포함)
     AuthService.LoginResult result = authService.login(
         request.email(),
         request.password(),
@@ -93,7 +92,7 @@ public class AuthController {
     User user = result.user();
     List<ProfileType> availableProfiles = profileService.getAvailableProfiles(user.getId());
 
-    // 응답 생성
+    // ✅ storeId + 프로필 상세 정보 포함 응답 생성
     LoginResponse response = LoginResponse.builder()
         .userId(user.getId())
         .email(user.getEmail())
@@ -102,6 +101,8 @@ public class AuthController {
         .currentActiveProfileId(user.getCurrentActiveProfileId())
         .isOnboardingCompleted(user.isOnboardingCompleted())
         .availableProfiles(availableProfiles)
+        .storeId(result.storeId())  // ✅ 상점 ID
+        .currentProfileDetail(result.currentProfileDetail())  // ✅ 프로필 상세 정보
         .build();
 
     // 토큰 설정 (쿠키 + 헤더)

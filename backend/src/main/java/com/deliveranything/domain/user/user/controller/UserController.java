@@ -3,9 +3,9 @@ package com.deliveranything.domain.user.user.controller;
 import com.deliveranything.domain.auth.service.AuthService;
 import com.deliveranything.domain.user.profile.dto.AvailableProfilesResponse;
 import com.deliveranything.domain.user.profile.dto.OnboardingRequest;
-import com.deliveranything.domain.user.profile.dto.OnboardingResponse;
 import com.deliveranything.domain.user.profile.dto.SwitchProfileRequest;
 import com.deliveranything.domain.user.profile.dto.SwitchProfileResponse;
+import com.deliveranything.domain.user.profile.dto.onboard.OnboardingResponse;
 import com.deliveranything.domain.user.profile.enums.ProfileType;
 import com.deliveranything.domain.user.profile.service.ProfileService;
 import com.deliveranything.domain.user.user.dto.ChangePasswordRequest;
@@ -146,7 +146,7 @@ public class UserController {
   @PostMapping("/profile/switch")
   @Operation(
       summary = "프로필 전환",
-      description = "사용자가 보유한 다른 프로필로 전환합니다. 프로필 전환 시 새로운 Access Token이 자동으로 발급됩니다."
+      description = "사용자가 보유한 다른 프로필로 전환합니다. 프로필 전환 시 새로운 Access Token이 자동으로 발급되며, 판매자 프로필인 경우 storeId와 프로필 상세 정보도 함께 반환됩니다."
   )
   public ResponseEntity<ApiResponse<SwitchProfileResponse>> switchProfile(
       @Valid @RequestBody SwitchProfileRequest request) {
@@ -155,7 +155,7 @@ public class UserController {
     log.info("프로필 전환 요청: userId={}, targetProfile={}",
         currentUser.getId(), request.targetProfileType());
 
-    // AuthService가 프로필 전환 + 토큰 재발급 orchestration
+    // AuthService가 프로필 전환 + 토큰 재발급 + storeId + 프로필 상세 조회
     SwitchProfileResponse result = authService.switchProfileWithTokenReissue(
         currentUser.getId(),
         request.targetProfileType()
@@ -164,7 +164,7 @@ public class UserController {
     // 새 Access Token을 쿠키와 헤더에 설정
     rq.setAccessToken(result.accessToken());
 
-    // API 응답용으로 변환 (토큰 제거)
+    // ✅ storeId + 프로필 상세 정보 포함된 API 응답용으로 변환 (토큰 제거)
     SwitchProfileResponse response = result.toResponse();
 
     return ResponseEntity.ok(

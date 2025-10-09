@@ -158,7 +158,7 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
   }
 
   /**
-   * 요청에서 Access Token 추출 (Authorization 헤더 또는 쿠키)
+   * 요청에서 Access Token 추출 (Authorization 헤더)
    */
   private String extractAccessToken(HttpServletRequest request) {
     String authorization = request.getHeader("Authorization");
@@ -168,8 +168,8 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
       return authorization.substring(7);
     }
 
-    // 쿠키에서 추출 (fallback)
-    return getCookieValue(request, "accessToken");
+    // Fallback 제거: 헤더에 없으면 null 반환
+    return null;
   }
 
 

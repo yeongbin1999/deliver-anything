@@ -150,6 +150,9 @@ custom:
   accessToken:
     expirationSeconds: "#{60*20}"
 
+  frontend:
+    url: ${FRONTEND_URL:http://localhost:3000}  # ✅ 추가
+
 gemini:
   api:
     key: ${GEMINI_API_KEY:임시키}
