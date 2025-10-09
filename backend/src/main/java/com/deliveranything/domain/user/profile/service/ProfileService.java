@@ -41,7 +41,7 @@ public class ProfileService {
   // ========== 온보딩 및 프로필 관리 ==========
 
   /**
-   * 온보딩 완료 처리 (Profile 기반) - 타입 안전하게 개선
+   * 온보딩 완료 처리 (Profile 기반)
    */
   @Transactional
   public boolean completeOnboarding(Long userId, ProfileType selectedProfile,
@@ -87,12 +87,54 @@ public class ProfileService {
   }
 
   /**
+   * 추가 프로필 생성 (온보딩 완료 후)
+   */
+  @Transactional
+  public Profile addProfile(Long userId, ProfileType profileType, Object profileData) {
+    User user = userRepository.findById(userId)
+        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+    // 온보딩 완료 체크
+    if (!user.isOnboardingCompleted()) {
+      log.warn("온보딩이 완료되지 않은 사용자입니다: userId={}", userId);
+      throw new CustomException(ErrorCode.ONBOARDING_NOT_COMPLETED);
+    }
+
+    // 이미 해당 타입의 프로필이 존재하는지 확인
+    Profile existingProfile = profileRepository.findByUserIdAndType(userId, profileType)
+        .orElse(null);
+
+    if (existingProfile != null) {
+      log.warn("이미 해당 타입의 프로필이 존재합니다: userId={}, profileType={}",
+          userId, profileType);
+      throw new CustomException(ErrorCode.PROFILE_ALREADY_ACTIVE);
+    }
+
+    // 1단계: Profile 생성
+    Profile profile = createProfile(user, profileType);
+
+    // 2단계: 세부 프로필 생성
+    boolean profileCreated = createDetailedProfile(profile, profileType, profileData);
+
+    if (!profileCreated) {
+      log.error("세부 프로필 생성 실패: userId={}, profileType={}", userId, profileType);
+      throw new CustomException(ErrorCode.PROFILE_NOT_FOUND);
+    }
+
+    log.info("추가 프로필 생성 완료: userId={}, profileType={}, profileId={}",
+        userId, profileType, profile.getId());
+
+    return profile;
+  }
+
+  /**
    * 프로필 전환 - 구체적 에러 처리 추가
    */
   @Transactional
   public boolean switchProfile(Long userId, ProfileType targetProfile) {
     User user = userRepository.findById(userId)
         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
     // 온보딩 미완료 체크
     if (!user.isOnboardingCompleted()) {
       log.warn("온보딩이 완료되지 않은 사용자입니다: userId={}", userId);
@@ -162,7 +204,7 @@ public class ProfileService {
   }
 
   /**
-   * 프로필 타입별 세부 프로필 생성 (타입 안전하게 개선)
+   * 프로필 타입별 세부 프로필 생성
    */
   private boolean createDetailedProfile(Profile profile, ProfileType profileType,
       Object profileData) {
@@ -186,6 +228,13 @@ public class ProfileService {
           if (!(profileData instanceof SellerOnboardingData data)) {
             log.error("잘못된 판매자 프로필 데이터 타입: {}", profileData.getClass());
             return false;
+          }
+
+          // 사업자등록번호 중복 체크
+          if (sellerProfileRepository.existsByBusinessCertificateNumber(
+              data.businessCertificateNumber())) {
+            log.warn("이미 존재하는 사업자등록번호: {}", data.businessCertificateNumber());
+            throw new CustomException(ErrorCode.USER_EMAIL_ALREADY_EXIST); // 적절한 ErrorCode로 변경 필요
           }
 
           SellerProfile sellerProfile = SellerProfile.builder()
@@ -231,7 +280,8 @@ public class ProfileService {
       }
       return true;
     } catch (Exception e) {
-      log.error("세부 프로필 생성 중 오류 발생: profileType={}, error={}", profileType, e.getMessage(), e);
+      log.error("세부 프로필 생성 중 오류 발생: profileType={}, error={}",
+          profileType, e.getMessage(), e);
       return false;
     }
   }
