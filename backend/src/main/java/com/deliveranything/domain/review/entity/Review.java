@@ -37,7 +37,7 @@ public class Review extends BaseEntity {
   @Column(nullable = false)
   private ReviewTargetType targetType;
 
-  @Schema(description = "대상 ID (상점 or 배달원)")
+  @Schema(description = "대상 ID (판매자 or 배달원)")
   @Column(name = "target_id", nullable = false)
   private Long targetId;
 

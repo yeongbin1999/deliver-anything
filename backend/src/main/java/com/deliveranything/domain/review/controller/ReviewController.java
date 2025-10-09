@@ -3,6 +3,8 @@ package com.deliveranything.domain.review.controller;
 import com.deliveranything.domain.review.dto.ReviewCreateRequest;
 import com.deliveranything.domain.review.dto.ReviewCreateResponse;
 import com.deliveranything.domain.review.dto.ReviewLikeResponse;
+import com.deliveranything.domain.review.dto.ReviewListRequest;
+import com.deliveranything.domain.review.dto.ReviewRatingAndListResponseDto;
 import com.deliveranything.domain.review.dto.ReviewResponse;
 import com.deliveranything.domain.review.dto.ReviewUpdateRequest;
 import com.deliveranything.domain.review.dto.StoreReviewListRequest;
@@ -97,14 +99,27 @@ public class ReviewController {
         .body(ApiResponse.success(response));
   }
 
+  @GetMapping("api/v1/me/reviews")
+  @Operation(summary = "내 리뷰 리스트 & 평점 조회", description = "sort, cursor, size와 사용자의 프로필에 따라 작성한 리뷰 or 내게 달린 리뷰 리스트 및 평균 평점을 조회합니다.")
+  public ResponseEntity<ApiResponse<ReviewRatingAndListResponseDto>> getMyReviews(
+      @AuthenticationPrincipal SecurityUser user,
+      @RequestBody ReviewListRequest request
+  ) {
+    ReviewRatingAndListResponseDto response = reviewService.getMyReviews(user.getCurrentActiveProfileIdSafe(), user.getCurrentActiveProfile(), request.sort(), request.cursor(), request.size());
+
+    return ResponseEntity.status(HttpStatus.OK)
+        .body(ApiResponse.success(response));
+  }
+
   @GetMapping("api/v1/stores/{storeId}/reviews")
-  @Operation(summary = "특정 상점 리뷰 리스트 조회", description = "sort, cursor, size 를 받아 특정 상점의 리뷰 리스트를 조회합니다.")
+  @Operation(summary = "특정 상점 리뷰 리스트 & 평점 조회", description = "sort, cursor, size 를 받아 특정 상점의 리뷰 리스트 및 평균 평점을 조회합니다.")
   @PreAuthorize("hasRole('USER')")
-  public  ResponseEntity<ApiResponse<CursorPageResponse<ReviewResponse>>> getStoreReviews(
+  public  ResponseEntity<ApiResponse<ReviewRatingAndListResponseDto>> getStoreReviews(
       @PathVariable Long storeId,
       @ModelAttribute StoreReviewListRequest request) {
-    CursorPageResponse<ReviewResponse> response = reviewService.getStoreReviews(storeId, request.sort(), request.cursor(), request.size());
+    ReviewRatingAndListResponseDto response = reviewService.getStoreReviews(storeId, request.sort(), request.cursor(), request.size());
 
+    //TODO: ReviewRating 포함
     return ResponseEntity.status(HttpStatus.OK)
         .body(ApiResponse.success(response));
   }
