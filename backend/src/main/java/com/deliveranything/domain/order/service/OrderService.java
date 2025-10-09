@@ -50,7 +50,7 @@ public class OrderService {
       order.updateStatus(OrderStatus.REJECTED);
     }
 
-    eventPublisher.publishEvent(new OrderCanceledForCustomerEvent());
+    eventPublisher.publishEvent(OrderCanceledForCustomerEvent.fromOrder(order));
     eventPublisher.publishEvent(OrderCanceledForSellerEvent.fromOrder(order));
   }
 
