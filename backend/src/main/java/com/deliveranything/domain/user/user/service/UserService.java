@@ -63,7 +63,7 @@ public class UserService {
     user.updateUserInfo(username, phoneNumber);
     User updatedUser = userRepository.save(user);
 
-    log.info("사용자 정보 수정 완료: userId={}, username={}", userId, username);
+    log.info("사용자 정보 수정 완료: userId={}, name={}", userId, username);
     return updatedUser;
   }
 

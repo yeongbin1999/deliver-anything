@@ -54,7 +54,7 @@ public class AuthController {
     User user = authService.signup(
         request.email(),
         request.password(),
-        request.username(),
+        request.name(),
         request.phoneNumber()
     );
 

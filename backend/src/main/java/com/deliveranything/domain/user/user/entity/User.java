@@ -34,7 +34,7 @@ public class User extends BaseEntity {
   @Column(name = "password", columnDefinition = "VARCHAR(255)")
   private String password;
 
-  @Column(name = "username", nullable = false, columnDefinition = "VARCHAR(50)")
+  @Column(name = "name", nullable = false, columnDefinition = "VARCHAR(50)")
   private String username;
 
   @Column(name = "phone_number", unique = true, columnDefinition = "VARCHAR(20)")

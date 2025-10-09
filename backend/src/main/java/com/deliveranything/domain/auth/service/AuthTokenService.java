@@ -39,7 +39,7 @@ public class AuthTokenService {
 
     // 필수 정보 + UI용 name
     claimsBuilder.add("id", id);
-    claimsBuilder.add("username", username);
+    claimsBuilder.add("name", username);
     claimsBuilder.add("currentActiveProfile",
         currentActiveProfileType != null ? currentActiveProfileType.name() : null);
     claimsBuilder.add("currentActiveProfileId", currentActiveProfileId);
@@ -75,7 +75,7 @@ public class AuthTokenService {
 
       // 필수 정보 + UI용 name 추출
       Long id = claims.get("id", Long.class);
-      String username = claims.get("username", String.class);
+      String username = claims.get("name", String.class);
 
       // 멀티 프로필 정보 추출 (전역 고유 Profile ID)
       String currentActiveProfileStr = claims.get("currentActiveProfile", String.class);
@@ -85,7 +85,7 @@ public class AuthTokenService {
 
       return Map.of(
           "id", id,
-          "username", username != null ? username : "",
+          "name", username != null ? username : "",
           "currentActiveProfile", currentActiveProfile,
           "currentActiveProfileId", currentActiveProfileId != null ? currentActiveProfileId : 0L
       );
