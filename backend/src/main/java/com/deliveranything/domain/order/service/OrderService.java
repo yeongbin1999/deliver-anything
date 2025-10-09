@@ -4,6 +4,8 @@ import com.deliveranything.domain.order.entity.Order;
 import com.deliveranything.domain.order.enums.OrderStatus;
 import com.deliveranything.domain.order.enums.Publisher;
 import com.deliveranything.domain.order.event.OrderCompletedEvent;
+import com.deliveranything.domain.order.event.sse.OrderCanceledForCustomerEvent;
+import com.deliveranything.domain.order.event.sse.OrderCanceledForSellerEvent;
 import com.deliveranything.domain.order.event.sse.OrderPaidForCustomerEvent;
 import com.deliveranything.domain.order.event.sse.OrderPaidForSellerEvent;
 import com.deliveranything.domain.order.event.sse.OrderPaymentFailedForCustomerEvent;
@@ -44,11 +46,12 @@ public class OrderService {
     Order order = getOrderByMerchantId(merchantUid);
     if (publisher == Publisher.CUSTOMER) {
       order.updateStatus(OrderStatus.CANCELED);
-      // TODO: SSE 주문이 정상적으로 취소됐다고 소비자에게 알림
     } else if (publisher == Publisher.STORE) {
       order.updateStatus(OrderStatus.REJECTED);
-      // TODO: SSE 상점의 개인 사정으로 주문이 취소됐다고 소비자에게 알림
     }
+
+    eventPublisher.publishEvent(new OrderCanceledForCustomerEvent());
+    eventPublisher.publishEvent(OrderCanceledForSellerEvent.fromOrder(order));
   }
 
   @Transactional

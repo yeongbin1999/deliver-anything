@@ -18,9 +18,7 @@ public record OrderRejectedEvent(
         order.getId(),
         order.getMerchantId(),
         cancelReason,
-        order.getOrderItems().stream()
-            .map(OrderItemInfo::fromOrderItem)
-            .toList(),
+        order.getOrderItems().stream().map(OrderItemInfo::fromOrderItem).toList(),
         publisher
     );
   }
