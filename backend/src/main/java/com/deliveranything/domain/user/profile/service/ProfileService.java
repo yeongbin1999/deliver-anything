@@ -171,7 +171,7 @@ public class ProfileService {
     } catch (IllegalStateException e) {
       log.warn("프로필 전환 실패: userId={}, targetProfile={}, error={}",
           userId, targetProfile, e.getMessage());
-      throw new CustomException(ErrorCode.PROFILE_NOT_OWNED);
+      throw new CustomException(ErrorCode.PROFILE_NOT_ALLOWED);
     }
   }
 
@@ -234,7 +234,8 @@ public class ProfileService {
           if (sellerProfileRepository.existsByBusinessCertificateNumber(
               data.businessCertificateNumber())) {
             log.warn("이미 존재하는 사업자등록번호: {}", data.businessCertificateNumber());
-            throw new CustomException(ErrorCode.USER_EMAIL_ALREADY_EXIST); // 적절한 ErrorCode로 변경 필요
+            throw new CustomException(
+                ErrorCode.BUSINESS_CERTIFICATE_DUPLICATE); // 적절한 ErrorCode로 변경 필요
           }
 
           SellerProfile sellerProfile = SellerProfile.builder()

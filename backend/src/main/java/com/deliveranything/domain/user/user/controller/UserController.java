@@ -1,11 +1,14 @@
 package com.deliveranything.domain.user.user.controller;
 
 import com.deliveranything.domain.auth.service.AuthService;
+import com.deliveranything.domain.user.profile.dto.AddProfileRequest;
+import com.deliveranything.domain.user.profile.dto.AddProfileResponse;
 import com.deliveranything.domain.user.profile.dto.AvailableProfilesResponse;
 import com.deliveranything.domain.user.profile.dto.OnboardingRequest;
 import com.deliveranything.domain.user.profile.dto.SwitchProfileRequest;
 import com.deliveranything.domain.user.profile.dto.SwitchProfileResponse;
 import com.deliveranything.domain.user.profile.dto.onboard.OnboardingResponse;
+import com.deliveranything.domain.user.profile.entity.Profile;
 import com.deliveranything.domain.user.profile.enums.ProfileType;
 import com.deliveranything.domain.user.profile.service.ProfileService;
 import com.deliveranything.domain.user.user.dto.ChangePasswordRequest;
@@ -143,10 +146,47 @@ public class UserController {
     );
   }
 
+  @PostMapping("/profiles/add")
+  @Operation(
+      summary = "추가 프로필 생성",
+      description = "온보딩 완료 후 새로운 프로필(CUSTOMER, SELLER, RIDER)을 추가합니다. "
+                    + "이미 해당 타입의 프로필이 있으면 실패합니다."
+  )
+  public ResponseEntity<ApiResponse<AddProfileResponse>> addProfile(
+      @Valid @RequestBody AddProfileRequest request) {
+
+    User currentUser = rq.getActor();
+    log.info("추가 프로필 생성 요청: userId={}, profileType={}",
+        currentUser.getId(), request.profileType());
+
+    // 프로필 생성
+    Profile newProfile = profileService.addProfile(
+        currentUser.getId(),
+        request.profileType(),
+        request.profileData()
+    );
+
+    // 응답 생성
+    AddProfileResponse response = AddProfileResponse.builder()
+        .userId(currentUser.getId())
+        .profileType(request.profileType())
+        .profileId(newProfile.getId())
+        .nickname(getNicknameFromProfileData(request.profileData()))
+        .isActive(newProfile.isActive())
+        .message(String.format("%s 프로필이 생성되었습니다.",
+            request.profileType().getDescription()))
+        .build();
+
+    return ResponseEntity.ok(
+        ApiResponse.success("프로필이 생성되었습니다.", response)
+    );
+  }
+
   @PostMapping("/profile/switch")
   @Operation(
       summary = "프로필 전환",
-      description = "사용자가 보유한 다른 프로필로 전환합니다. 프로필 전환 시 새로운 Access Token이 자동으로 발급되며, 판매자 프로필인 경우 storeId와 프로필 상세 정보도 함께 반환됩니다."
+      description = "사용자가 보유한 다른 프로필로 전환합니다. 프로필 전환 시 새로운 Access Token이 자동으로 발급되며, "
+                    + "판매자 프로필인 경우 storeId와 프로필 상세 정보도 함께 반환됩니다."
   )
   public ResponseEntity<ApiResponse<SwitchProfileResponse>> switchProfile(
       @Valid @RequestBody SwitchProfileRequest request) {
@@ -167,7 +207,7 @@ public class UserController {
     log.info("프로필 전환 완료 및 Access Token 재발급: userId={}, {} -> {}",
         currentUser.getId(), result.previousProfileType(), result.currentProfileType());
 
-    // ✅ storeId + 프로필 상세 정보 포함된 API 응답용으로 변환 (토큰 제거)
+    // storeId + 프로필 상세 정보 포함된 API 응답용으로 변환 (토큰 제거)
     SwitchProfileResponse response = result.toResponse();
 
     return ResponseEntity.ok(
@@ -198,5 +238,21 @@ public class UserController {
     return ResponseEntity.ok(
         ApiResponse.success("프로필 목록 조회 완료", response)
     );
+  }
+
+  // ========== 헬퍼 메서드 ==========
+
+  /**
+   * profileData에서 nickname 추출
+   */
+  private String getNicknameFromProfileData(Object profileData) {
+    if (profileData instanceof com.deliveranything.domain.user.profile.dto.onboard.CustomerOnboardingData data) {
+      return data.nickname();
+    } else if (profileData instanceof com.deliveranything.domain.user.profile.dto.onboard.SellerOnboardingData data) {
+      return data.nickname();
+    } else if (profileData instanceof com.deliveranything.domain.user.profile.dto.onboard.RiderOnboardingData data) {
+      return data.nickname();
+    }
+    return "Unknown";
   }
 }
