@@ -212,20 +212,7 @@ public class Rq {
   public String getAccessTokenFromHeader() {
     String authorization = getHeader("Authorization", "");
     if (authorization.startsWith("Bearer ")) {
-      String[] tokens = authorization.substring(7).split(" ", 2);
-      return tokens.length > 1 ? tokens[1] : null; // accessToken 부분
-    }
-    return null;
-  }
-
-  /**
-   * Authorization 헤더에서 apiKey 추출
-   */
-  public String getApiKeyFromHeader() {
-    String authorization = getHeader("Authorization", "");
-    if (authorization.startsWith("Bearer ")) {
-      String[] tokens = authorization.substring(7).split(" ", 2);
-      return tokens.length > 0 ? tokens[0] : null; // apiKey 부분
+      return authorization.substring(7);
     }
     return null;
   }
@@ -249,13 +236,6 @@ public class Rq {
    */
   public void deleteRefreshToken() {
     deleteCookie("refreshToken");
-  }
-
-  /**
-   * API Key를 쿠키에 설정
-   */
-  public void setApiKey(String apiKey) {
-    setCookie("apiKey", apiKey);
   }
 
   // ========== 프로필 전환 지원 ==========

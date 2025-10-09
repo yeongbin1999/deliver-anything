@@ -17,7 +17,6 @@ import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -47,9 +46,6 @@ public class User extends BaseEntity {
 
   @Column(name = "social_id", columnDefinition = "VARCHAR(100)")
   private String socialId;
-
-  @Column(name = "api_key", unique = true, nullable = false, columnDefinition = "VARCHAR(255)")
-  private String apiKey;
 
   // 현재 활성화된 프로필 (이제 Profile 테이블의 전역 고유 ID)
   @ManyToOne(fetch = FetchType.LAZY)
@@ -84,7 +80,6 @@ public class User extends BaseEntity {
     this.phoneNumber = phoneNumber;
     this.socialProvider = socialProvider != null ? socialProvider : SocialProvider.LOCAL;
     this.socialId = socialId;
-    this.apiKey = generateApiKey();
     this.currentActiveProfile = currentActiveProfile; // 현재 프로필 아이디
     this.isOnboardingCompleted = false;
     this.isEmailVerified = false;
@@ -220,8 +215,5 @@ public class User extends BaseEntity {
   public void updateLastLoginAt() {
     this.lastLoginAt = LocalDateTime.now();
   }
-
-  private String generateApiKey() {
-    return UUID.randomUUID().toString();
-  }
+  
 }

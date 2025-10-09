@@ -30,11 +30,7 @@ public class UserService {
   public Optional<User> findByEmail(String email) {
     return userRepository.findByEmail(email);
   }
-
-  public Optional<User> findByApiKey(String apiKey) {
-    return userRepository.findByApiKey(apiKey);
-  }
-
+  
   public boolean existsByEmail(String email) {
     return userRepository.existsByEmail(email);
   }

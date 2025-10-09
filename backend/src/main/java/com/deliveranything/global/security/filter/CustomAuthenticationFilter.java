@@ -1,12 +1,8 @@
 package com.deliveranything.global.security.filter;
 
-import com.deliveranything.domain.auth.dto.RedisRefreshTokenDto;
-import com.deliveranything.domain.auth.repository.RedisRefreshTokenRepository;
 import com.deliveranything.domain.auth.service.AuthTokenService;
 import com.deliveranything.domain.auth.service.UserAuthorityProvider;
-import com.deliveranything.domain.user.profile.entity.Profile;
 import com.deliveranything.domain.user.profile.enums.ProfileType;
-import com.deliveranything.domain.user.profile.repository.ProfileRepository;
 import com.deliveranything.domain.user.user.entity.User;
 import com.deliveranything.domain.user.user.repository.UserRepository;
 import com.deliveranything.global.common.ApiResponse;
@@ -22,7 +18,6 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.lang.NonNull;
@@ -41,8 +36,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 public class CustomAuthenticationFilter extends OncePerRequestFilter {
 
   private final UserRepository userRepository;
-  private final ProfileRepository profileRepository;
-  private final RedisRefreshTokenRepository redisRefreshTokenRepository;
   private final AuthTokenService authTokenService;
   private final UserAuthorityProvider userAuthorityProvider;
   private final ObjectMapper objectMapper;
@@ -78,16 +71,13 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
       return;
     }
 
-    // 토큰 추출
-    String[] tokens = extractTokens(request);
-    String apiKeyOrRefreshToken = tokens[0];
-    String accessToken = tokens[1];
+    // Access Token 추출
+    String accessToken = extractAccessToken(request);
 
-    log.debug("apiKeyOrRefreshToken: {}", apiKeyOrRefreshToken);
     log.debug("accessToken: {}", accessToken);
 
     // 토큰이 없으면 패스 (익명 사용자)
-    if (!StringUtils.hasText(apiKeyOrRefreshToken) && !StringUtils.hasText(accessToken)) {
+    if (!StringUtils.hasText(accessToken)) {
       filterChain.doFilter(request, response);
       return;
     }
@@ -95,28 +85,55 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
     User user = null;
     boolean isAccessTokenValid = false;
 
-    // 1순위: Access Token 검증
-    if (StringUtils.hasText(accessToken)) {
-      user = authenticateWithAccessToken(accessToken);
-      if (user != null) {
-        isAccessTokenValid = true;
-      }
-    }
-
-    // 2순위: RefreshToken 또는 apiKey로 인증
-    if (user == null && StringUtils.hasText(apiKeyOrRefreshToken)) {
-      user = authenticateWithRefreshTokenOrApiKey(apiKeyOrRefreshToken);
+    // Access Token으로 인증
+    user = authenticateWithAccessToken(accessToken);
+    if (user != null) {
+      isAccessTokenValid = true;
     }
 
     if (user == null) {
       throw new CustomException(ErrorCode.USER_NOT_FOUND);
     }
 
+    // ========== A안: Access Token 자동 재발급 (현재 적용) ==========
     // Access Token이 만료되었으면 새로 발급
     if (StringUtils.hasText(accessToken) && !isAccessTokenValid) {
       String newAccessToken = authTokenService.genAccessToken(user);
       setCookieAndHeader(response, "accessToken", newAccessToken);
+      log.info("Access Token 자동 재발급: userId={}", user.getId());
     }
+
+    /* ========== B안: 명시적 /refresh 호출 방식 (일단 주석 처리) ==========
+     *
+     * 장점:
+     * - 깔끔한 책임 분리 (Filter는 인증만, /refresh는 재발급만)
+     * - 보안 강화 (Refresh Token 없이는 재발급 불가)
+     * - REST API 표준에 부합
+     *
+     * 프론트엔드 구현 필요:
+     * - Axios Interceptor로 401 응답 시 자동으로 /refresh 호출
+     * - 새 Access Token 받아서 원래 요청 재시도
+     *
+     * 예시 코드:
+     * axios.interceptors.response.use(
+     *   (response) => response,
+     *   async (error) => {
+     *     if (error.response?.status === 401) {
+     *       const newToken = await fetch('/api/v1/auth/refresh', {
+     *         method: 'POST',
+     *         body: JSON.stringify({ refreshToken: getCookie('refreshToken') })
+     *       });
+     *       error.config.headers['Authorization'] = `Bearer ${newToken}`;
+     *       return axios.request(error.config);
+     *     }
+     *   }
+     * );
+     *
+     * B안 적용 시:
+     * 1. 위의 A안 코드 블록 제거
+     * 2. 이 주석 블록 제거
+     * 3. /refresh 엔드포인트는 이미 구현되어 있음 (AuthController.java)
+     */
 
     // SecurityContext에 인증 정보 설정
     setAuthentication(user);
@@ -132,6 +149,7 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
         "/api/v1/auth/login",
         "/api/v1/auth/signup",
         "/api/v1/auth/logout",
+        "/api/v1/auth/refresh",
         "/api/v1/auth/verification/send",
         "/api/v1/auth/verification/verify"
     );
@@ -140,26 +158,20 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
   }
 
   /**
-   * 요청에서 토큰 추출 (Authorization 헤더 또는 쿠키)
+   * 요청에서 Access Token 추출 (Authorization 헤더 또는 쿠키)
    */
-  private String[] extractTokens(HttpServletRequest request) {
+  private String extractAccessToken(HttpServletRequest request) {
     String authorization = request.getHeader("Authorization");
 
+    // Authorization 헤더에서 추출
     if (StringUtils.hasText(authorization) && authorization.startsWith("Bearer ")) {
-      // Authorization: Bearer {apiKey} {accessToken} 형태
-      String[] tokens = authorization.substring(7).split(" ", 2);
-      return new String[]{
-          tokens.length > 0 ? tokens[0] : null,
-          tokens.length > 1 ? tokens[1] : null
-      };
+      return authorization.substring(7);
     }
 
-    // 쿠키에서 추출
-    String apiKey = getCookieValue(request, "apiKey");
-    String accessToken = getCookieValue(request, "accessToken");
-
-    return new String[]{apiKey, accessToken};
+    // 쿠키에서 추출 (fallback)
+    return getCookieValue(request, "accessToken");
   }
+
 
   /**
    * Access Token으로 인증 (Profile ID 정보 포함)
@@ -169,7 +181,6 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 
     if (payload != null) {
       Long userId = (Long) payload.get("id");
-      String name = (String) payload.get("name");
 
       // 안전한 타입 변환
       String profileStr = (String) payload.get("currentActiveProfile");
@@ -197,35 +208,12 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
             return null;
           }
         }
-        // Profile 정보를 DB에서 조회해서 User에 설정
-        if (currentActiveProfileId != null && currentActiveProfileId > 0) {
-          Profile activeProfile = profileRepository.findById(currentActiveProfileId).orElse(null);
-          if (activeProfile != null) {
-            // User 엔티티의 currentActiveProfile 필드에 설정
-            // 실제로는 User의 setter가 필요하거나 생성자를 통해 설정해야 함
-          }
-        }
+        // Profile은 User.getCurrentActiveProfile() 호출 시 JPA가 자동으로 로드
         return user;
       }
     }
 
     return null;
-  }
-
-  /**
-   * RefreshToken 또는 apiKey로 인증
-   */
-  private User authenticateWithRefreshTokenOrApiKey(String token) {
-    // 1순위: Redis RefreshToken 확인
-    Optional<RedisRefreshTokenDto> redisToken = redisRefreshTokenRepository
-        .findByTokenValue(token);
-
-    if (redisToken.isPresent() && redisToken.get().isValid()) {
-      return userRepository.findById(redisToken.get().getUserId()).orElse(null);
-    }
-
-    // 2순위: apiKey로 확인 (강사님 방식 호환)
-    return userRepository.findByApiKey(token).orElse(null);
   }
 
   /**
@@ -252,30 +240,6 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 
     SecurityContextHolder.getContext().setAuthentication(authentication);
   }
-
-//  /**
-//   * SecurityContext에 인증 정보 설정 (Profile ID 포함)
-//   */
-//  private void setAuthentication(User user) {
-//    // 권한 생성
-//    List<GrantedAuthority> authorities = buildAuthorities(user);
-//
-//    UserDetails securityUser = new SecurityUser(
-//        user.getId(),
-//        user.getName(),
-//        "",  // 비밀번호는 빈 문자열
-//        user.getCurrentActiveProfile(), // 현재 활성 프로필 타입
-//        authorities
-//    );
-//
-//    Authentication authentication = new UsernamePasswordAuthenticationToken(
-//        securityUser,
-//        null,
-//        securityUser.getAuthorities()
-//    );
-//
-//    SecurityContextHolder.getContext().setAuthentication(authentication);
-//  }
 
   /**
    * 쿠키 값 추출

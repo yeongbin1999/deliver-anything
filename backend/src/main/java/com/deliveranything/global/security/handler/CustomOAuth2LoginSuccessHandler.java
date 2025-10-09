@@ -43,7 +43,6 @@ public class CustomOAuth2LoginSuccessHandler implements AuthenticationSuccessHan
     // 쿠키 설정
     rq.setAccessToken(accessToken);         // 헤더만
     rq.setRefreshToken(refreshToken);       // 쿠키만
-    rq.setApiKey(actor.getApiKey());
 
     log.info("OAuth2 로그인 성공: userId={}", userId);
 

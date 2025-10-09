@@ -104,10 +104,9 @@ public class AuthController {
         .availableProfiles(availableProfiles)
         .build();
 
-    // 토큰 설정 ⭐ 수정
+    // 토큰 설정 (쿠키 + 헤더)
     rq.setAccessToken(result.accessToken());      // 헤더만
     rq.setRefreshToken(result.refreshToken());    // 쿠키만
-    rq.setApiKey(user.getApiKey());               // apiKey는 유지
 
     return ResponseEntity.ok(ApiResponse.success("로그인이 완료되었습니다.", response));
   }
@@ -125,7 +124,6 @@ public class AuthController {
 
     // 쿠키 삭제
     rq.deleteRefreshToken();
-    rq.deleteCookie("apiKey");
 
     return ResponseEntity.ok(ApiResponse.success("로그아웃이 완료되었습니다.", null));
   }
@@ -141,7 +139,6 @@ public class AuthController {
 
     // 쿠키 삭제
     rq.deleteRefreshToken();
-    rq.deleteCookie("apiKey");
 
     return ResponseEntity.ok(ApiResponse.success("전체 로그아웃이 완료되었습니다.", null));
   }
