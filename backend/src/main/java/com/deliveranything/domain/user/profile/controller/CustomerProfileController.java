@@ -34,7 +34,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/users/me/customer")
 @RequiredArgsConstructor
-@PreAuthorize("@rq.isCustomerActive()") // 고객 프로필 활성화 상태에서만 접근 가능
+@PreAuthorize("@profileSecurity.isCustomer(authentication.principal)") // 고객 프로필 활성화 상태에서만 접근 가능
 public class CustomerProfileController {
 
   private final CustomerProfileService customerProfileService;
