@@ -1,13 +1,14 @@
 package com.deliveranything.domain.order.event;
 
 import com.deliveranything.domain.order.entity.Order;
+import java.math.BigDecimal;
 
 public record OrderCompletedEvent(
     Long orderId,
     Long riderProfileId,
     Long sellerProfileId,
-    Long storePrice,
-    Long deliveryPrice
+    BigDecimal storePrice,
+    BigDecimal deliveryPrice
 ) {
 
   public static OrderCompletedEvent fromOrder(Order order, Long riderId, Long sellerId) {
@@ -15,8 +16,8 @@ public record OrderCompletedEvent(
         order.getId(),
         riderId,
         sellerId,
-        order.getStorePrice().longValue(),
-        order.getDeliveryPrice().longValue()
+        order.getStorePrice(),
+        order.getDeliveryPrice()
     );
   }
 }
