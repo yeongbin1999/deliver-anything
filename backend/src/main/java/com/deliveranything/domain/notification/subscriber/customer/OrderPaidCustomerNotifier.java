@@ -3,7 +3,7 @@ package com.deliveranything.domain.notification.subscriber.customer;
 import com.deliveranything.domain.notification.enums.NotificationMessage;
 import com.deliveranything.domain.notification.enums.NotificationType;
 import com.deliveranything.domain.notification.service.NotificationService;
-import com.deliveranything.domain.order.event.sse.OrderPaidForCustomerEvent;
+import com.deliveranything.domain.order.event.sse.customer.OrderPaidForCustomerEvent;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
