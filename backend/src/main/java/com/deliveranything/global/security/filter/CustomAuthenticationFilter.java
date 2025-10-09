@@ -44,14 +44,30 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
   protected void doFilterInternal(HttpServletRequest request, @NonNull HttpServletResponse response,
       @NonNull FilterChain filterChain) throws IOException {
 
-    log.debug("Processing request for {}", request.getRequestURI());
+    String uri = request.getRequestURI();
+    String method = request.getMethod();
+
+    // ✅ 무조건 찍히는 로그 (System.out + log.error 둘 다)
+    System.out.println("🔍🔍🔍 FILTER 진입!!!! URI: " + uri + ", Method: " + method);
 
     try {
       processAuthentication(request, response, filterChain);
+      System.out.println("✅✅✅ FILTER 정상 통과: " + uri);
     } catch (CustomException e) {
+      System.out.println("❌❌❌ CustomException 발생: " + uri + ", " + e.getMessage());
+      System.out.println("스택트레이스:");
+      e.printStackTrace(System.out);  // ✅ System.out으로 스택트레이스 출력
+      log.error("❌ CustomException 발생", e);
       handleAuthenticationError(response, e);
+    } catch (ServletException e) {  // ✅ ServletException 추가
+      System.out.println("❌❌❌ ServletException 발생: " + uri + ", " + e.getMessage());
+      e.printStackTrace(System.out);
+      log.error("❌ ServletException 발생", e);
+      handleAuthenticationError(response, new CustomException(ErrorCode.TOKEN_INVALID));
     } catch (Exception e) {
-      log.error("Unexpected error during authentication processing", e);
+      System.out.println("❌❌❌ Exception 발생: " + uri + ", " + e.getMessage());
+      e.printStackTrace(System.out);  // ✅ System.out으로 스택트레이스 출력
+      log.error("❌ Exception 발생", e);
       handleAuthenticationError(response, new CustomException(ErrorCode.USER_NOT_FOUND));
     }
   }
@@ -59,25 +75,30 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
   private void processAuthentication(HttpServletRequest request, HttpServletResponse response,
       FilterChain filterChain) throws ServletException, IOException {
 
+    String uri = request.getRequestURI();
+    System.out.println("✅ processAuthentication 진입: " + uri);
+
     // API 요청이 아니면 패스
-    if (!request.getRequestURI().startsWith("/api/")) {
+    if (!uri.startsWith("/api/")) {
+      System.out.println("⏭️ API 요청 아님, 패스");
       filterChain.doFilter(request, response);
       return;
     }
 
     // 인증이 불필요한 엔드포인트는 패스
-    if (isPublicEndpoint(request.getRequestURI())) {
+    if (isPublicEndpoint(uri)) {
+      System.out.println("⏭️ Public 엔드포인트, 패스");
       filterChain.doFilter(request, response);
       return;
     }
 
     // Access Token 추출
     String accessToken = extractAccessToken(request);
-
-    log.debug("accessToken: {}", accessToken);
+    System.out.println("🔑 Access Token: " + (accessToken != null ? "존재함" : "없음"));
 
     // 토큰이 없으면 패스 (익명 사용자)
     if (!StringUtils.hasText(accessToken)) {
+      System.out.println("⏭️ 토큰 없음, 패스");
       filterChain.doFilter(request, response);
       return;
     }
@@ -86,32 +107,32 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
     boolean isAccessTokenValid = false;
 
     // Access Token으로 인증
+    System.out.println("🔐 Access Token 검증 시작");
     user = authenticateWithAccessToken(accessToken);
     if (user != null) {
       isAccessTokenValid = true;
+      System.out.println("✅ Access Token 유효, userId: " + user.getId());
+    } else {
+      System.out.println("❌ Access Token 무효");
     }
 
     if (user == null) {
+      System.out.println("❌ 인증 실패, 예외 발생 예정");
       throw new CustomException(ErrorCode.TOKEN_INVALID);
     }
 
-    // ========== Access Token 자동 재발급 ==========
-    if (StringUtils.hasText(accessToken) && !isAccessTokenValid) {
-      String newAccessToken = authTokenService.genAccessToken(user);
-      setCookieAndHeader(response, "accessToken", newAccessToken);
-      log.info("Access Token 자동 재발급: userId={}", user.getId());
-    }
-
     // 온보딩 필수 엔드포인트 체크
-    if (requiresOnboarding(request.getRequestURI()) && !user.isOnboardingCompleted()) {
-      log.warn("온보딩 미완료 사용자의 보호된 엔드포인트 접근 시도: userId={}, uri={}",
-          user.getId(), request.getRequestURI());
+    if (requiresOnboarding(uri) && !user.isOnboardingCompleted()) {
+      System.out.println("❌ 온보딩 미완료");
       throw new CustomException(ErrorCode.ONBOARDING_NOT_COMPLETED);
     }
 
     // SecurityContext에 인증 정보 설정
+    System.out.println("🔐 SecurityContext 설정 시작");
     setAuthentication(user);
+    System.out.println("✅ SecurityContext 설정 완료");
 
+    System.out.println("✅ 필터 통과, 다음 필터로 이동");
     filterChain.doFilter(request, response);
   }
 
@@ -189,23 +210,37 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
    * Access Token으로 인증 (Profile ID 정보 포함)
    */
   private User authenticateWithAccessToken(String accessToken) {
-    // ✅ 토큰 유효성 검증 추가
-    if (!authTokenService.isValidToken(accessToken)) {
+    System.out.println(
+        " 토큰 검증 시작: " + accessToken.substring(0, Math.min(30, accessToken.length())) + "...");
+
+    // ✅ 토큰 유효성 검증
+    boolean isValid = authTokenService.isValidToken(accessToken);
+    System.out.println(" isValidToken() 결과: " + isValid);
+
+    if (!isValid) {
+      System.out.println("❌ 토큰 검증 실패!");
       throw new CustomException(ErrorCode.TOKEN_INVALID);
     }
 
-    if (authTokenService.isTokenExpired(accessToken)) {
+    boolean isExpired = authTokenService.isTokenExpired(accessToken);
+    System.out.println("🔐 isTokenExpired() 결과: " + isExpired);
+
+    if (isExpired) {
+      System.out.println("❌ 토큰 만료!");
       throw new CustomException(ErrorCode.TOKEN_EXPIRED);
     }
 
+    System.out.println("✅ 토큰 검증 통과, payload 파싱 시작");
     Map<String, Object> payload = authTokenService.payload(accessToken);
+    System.out.println(" Payload: " + payload);
 
     if (payload != null) {
       Long userId = (Long) payload.get("id");
 
+      // ✅ String으로 가져오기
       String profileStr = (String) payload.get("currentActiveProfile");
       ProfileType currentActiveProfileType = null;
-      if (profileStr != null) {
+      if (profileStr != null && !profileStr.isEmpty()) {  // ✅ 빈 문자열 체크 추가
         try {
           currentActiveProfileType = ProfileType.valueOf(profileStr);
         } catch (IllegalArgumentException e) {
@@ -215,10 +250,10 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 
       Long currentActiveProfileId = (Long) payload.get("currentActiveProfileId");
 
-      User user = userRepository.findById(userId).orElse(null);
+      User user = userRepository.findByIdWithProfile(userId).orElse(null);
 
-      // JWT - DB간 불일치 체크
-      if (user != null) {
+      // JWT - DB간 불일치 체크 (온보딩 완료된 경우만)
+      if (user != null && user.isOnboardingCompleted()) {  // ✅ 온보딩 완료 체크 추가
         Long dbProfileId = user.getCurrentActiveProfileId();
 
         if (currentActiveProfileId != null && dbProfileId != null) {
@@ -228,8 +263,8 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
             return null;
           }
         }
-        return user;
       }
+      return user;
     }
 
     return null;
@@ -244,8 +279,8 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
     UserDetails securityUser = new SecurityUser(
         user.getId(),
         user.getUsername(),
-        user.getEmail(),
         "",
+        user.getEmail(),
         user.getCurrentActiveProfile(),
         authorities
     );

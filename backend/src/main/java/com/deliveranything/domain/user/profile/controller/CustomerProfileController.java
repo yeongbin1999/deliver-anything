@@ -12,6 +12,7 @@ import com.deliveranything.global.common.ApiResponse;
 import com.deliveranything.global.common.Rq;
 import com.deliveranything.global.exception.CustomException;
 import com.deliveranything.global.exception.ErrorCode;
+import com.deliveranything.global.security.auth.SecurityUser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -20,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -34,7 +36,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/users/me/customer")
 @RequiredArgsConstructor
-@PreAuthorize("@profileSecurity.isCustomer(authentication.principal)") // 고객 프로필 활성화 상태에서만 접근 가능
 public class CustomerProfileController {
 
   private final CustomerProfileService customerProfileService;
@@ -43,12 +44,22 @@ public class CustomerProfileController {
   // ========== 프로필 관리 ==========
 
   @GetMapping
+  @PreAuthorize("@profileSecurity.isCustomer(#securityUser)")
   @Operation(
       summary = "내 고객 프로필 조회",
       description = "현재 활성화된 고객 프로필의 상세 정보를 조회합니다."
   )
-  public ResponseEntity<ApiResponse<CustomerProfileResponse>> getMyProfile() {
-    Long profileId = rq.getCurrentProfileId();
+  public ResponseEntity<ApiResponse<CustomerProfileResponse>> getMyProfile(
+      @AuthenticationPrincipal SecurityUser securityUser) {
+    System.out.println("========== 컨트롤러 진입 =========="); // ✅ System.out으로 변경
+    log.error("========== 컨트롤러 진입 =========="); // ✅ error 레벨로 변경
+    Long profileId = securityUser.getCurrentActiveProfile().getId();
+
+    // ✅ null 체크 추가
+    if (profileId == null) {
+      throw new CustomException(ErrorCode.ONBOARDING_NOT_COMPLETED);
+    }
+
     log.info("고객 프로필 조회 요청: profileId={}", profileId);
 
     CustomerProfile profile = customerProfileService.getProfileByProfileId(profileId);
@@ -61,14 +72,16 @@ public class CustomerProfileController {
   }
 
   @PutMapping
+  @PreAuthorize("@profileSecurity.isCustomer(#securityUser)")
   @Operation(
       summary = "내 고객 프로필 수정",
       description = "고객 프로필의 닉네임, 프로필 이미지를 수정합니다."
   )
   public ResponseEntity<ApiResponse<CustomerProfileResponse>> updateMyProfile(
+      @AuthenticationPrincipal SecurityUser securityUser,
       @Valid @RequestBody CustomerProfileUpdateRequest request) {
 
-    Long profileId = rq.getCurrentProfileId();
+    Long profileId = securityUser.getCurrentActiveProfile().getId();
     log.info("고객 프로필 수정 요청: profileId={}", profileId);
 
     // 최소 하나의 필드는 입력되어야 함
@@ -99,12 +112,15 @@ public class CustomerProfileController {
   // ========== 배송지 관리 ==========
 
   @GetMapping("/addresses")
+  @PreAuthorize("@profileSecurity.isCustomer(#securityUser)")
   @Operation(
       summary = "내 배송지 목록 조회",
       description = "현재 고객 프로필에 등록된 모든 배송지를 조회합니다."
   )
-  public ResponseEntity<ApiResponse<List<AddressResponse>>> getMyAddresses() {
-    Long profileId = rq.getCurrentProfileId();
+  public ResponseEntity<ApiResponse<List<AddressResponse>>> getMyAddresses(
+      @AuthenticationPrincipal SecurityUser securityUser
+  ) {
+    Long profileId = securityUser.getCurrentActiveProfile().getId();
     log.info("배송지 목록 조회 요청: profileId={}", profileId);
 
     List<CustomerAddress> addresses = customerProfileService.getAddressesByProfileId(profileId);
@@ -118,14 +134,16 @@ public class CustomerProfileController {
   }
 
   @GetMapping("/addresses/{addressId}")
+  @PreAuthorize("@profileSecurity.isCustomer(#securityUser)")
   @Operation(
       summary = "특정 배송지 조회",
       description = "배송지 ID로 특정 배송지의 상세 정보를 조회합니다."
   )
   public ResponseEntity<ApiResponse<AddressResponse>> getAddress(
+      @AuthenticationPrincipal SecurityUser securityUser,
       @PathVariable Long addressId) {
 
-    Long profileId = rq.getCurrentProfileId();
+    Long profileId = securityUser.getCurrentActiveProfile().getId();
     log.info("배송지 조회 요청: profileId={}, addressId={}", profileId, addressId);
 
     CustomerAddress address = customerProfileService.getAddressByProfileId(profileId, addressId);
@@ -139,14 +157,16 @@ public class CustomerProfileController {
   }
 
   @PostMapping("/addresses")
+  @PreAuthorize("@profileSecurity.isCustomer(#securityUser)")
   @Operation(
       summary = "배송지 추가",
       description = "새로운 배송지를 추가합니다. 첫 번째 배송지는 자동으로 기본 배송지로 설정됩니다."
   )
   public ResponseEntity<ApiResponse<AddressResponse>> addAddress(
+      @AuthenticationPrincipal SecurityUser securityUser,
       @Valid @RequestBody AddressCreateRequest request) {
 
-    Long profileId = rq.getCurrentProfileId();
+    Long profileId = securityUser.getCurrentActiveProfile().getId();
     log.info("배송지 추가 요청: profileId={}", profileId);
 
     CustomerAddress address = customerProfileService.addAddressByProfileId(
@@ -169,11 +189,13 @@ public class CustomerProfileController {
   }
 
   @PutMapping("/addresses/{addressId}")
+  @PreAuthorize("@profileSecurity.isCustomer(#securityUser)")
   @Operation(
       summary = "배송지 수정",
       description = "기존 배송지의 정보를 수정합니다."
   )
   public ResponseEntity<ApiResponse<AddressResponse>> updateAddress(
+      @AuthenticationPrincipal SecurityUser securityUser,
       @PathVariable Long addressId,
       @Valid @RequestBody AddressUpdateRequest request) {
 
@@ -212,11 +234,13 @@ public class CustomerProfileController {
   }
 
   @DeleteMapping("/addresses/{addressId}")
+  @PreAuthorize("@profileSecurity.isCustomer(#securityUser)")
   @Operation(
       summary = "배송지 삭제",
       description = "배송지를 삭제합니다. 기본 배송지는 삭제할 수 없습니다."
   )
   public ResponseEntity<ApiResponse<Void>> deleteAddress(
+      @AuthenticationPrincipal SecurityUser securityUser,
       @PathVariable Long addressId) {
 
     Long userId = rq.getActor().getId();
@@ -235,11 +259,13 @@ public class CustomerProfileController {
   }
 
   @PutMapping("/addresses/{addressId}/default")
+  @PreAuthorize("@profileSecurity.isCustomer(#securityUser)")
   @Operation(
       summary = "기본 배송지 설정",
       description = "특정 배송지를 기본 배송지로 설정합니다."
   )
   public ResponseEntity<ApiResponse<Void>> setDefaultAddress(
+      @AuthenticationPrincipal SecurityUser securityUser,
       @PathVariable Long addressId) {
 
     Long userId = rq.getActor().getId();
@@ -258,12 +284,15 @@ public class CustomerProfileController {
   }
 
   @GetMapping("/addresses/default")
+  @PreAuthorize("@profileSecurity.isCustomer(#securityUser)")
   @Operation(
       summary = "기본 배송지 조회",
       description = "현재 설정된 기본 배송지를 조회합니다."
   )
-  public ResponseEntity<ApiResponse<AddressResponse>> getDefaultAddress() {
-    Long profileId = rq.getCurrentProfileId();
+  public ResponseEntity<ApiResponse<AddressResponse>> getDefaultAddress(
+      @AuthenticationPrincipal SecurityUser securityUser
+  ) {
+    Long profileId = securityUser.getCurrentActiveProfile().getId();
     log.info("기본 배송지 조회 요청: profileId={}", profileId);
 
     CustomerAddress defaultAddress = customerProfileService.getCurrentAddressByProfileId(profileId);

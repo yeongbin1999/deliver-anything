@@ -1,5 +1,6 @@
 package com.deliveranything.domain.auth.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
@@ -29,6 +30,7 @@ public class RedisRefreshTokenDto implements Serializable {
   /**
    * 토큰 만료 여부
    */
+  @JsonIgnore  // Redis 직렬화에서 제외
   public boolean isExpired() {
     return LocalDateTime.now().isAfter(expiresAt);
   }
@@ -36,6 +38,7 @@ public class RedisRefreshTokenDto implements Serializable {
   /**
    * 토큰 유효성
    */
+  @JsonIgnore  // Redis 직렬화에서 제외
   public boolean isValid() {
     return !isExpired();
   }

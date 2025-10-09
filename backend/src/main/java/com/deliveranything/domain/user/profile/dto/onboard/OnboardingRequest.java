@@ -10,7 +10,7 @@ import jakarta.validation.constraints.NotNull;
 public record OnboardingRequest(
     @NotNull(message = "프로필 타입은 필수입니다.")
     @Schema(description = "선택할 프로필 타입", example = "SELLER", requiredMode = Schema.RequiredMode.REQUIRED)
-    ProfileType selectedProfile,
+    ProfileType profileType,
 
     @NotNull(message = "프로필 데이터는 필수입니다.")
     @Valid
@@ -32,7 +32,7 @@ public record OnboardingRequest(
     @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
         include = JsonTypeInfo.As.EXTERNAL_PROPERTY,
-        property = "selectedProfile"
+        property = "profileType"
     )
     @JsonSubTypes({
         @JsonSubTypes.Type(value = CustomerOnboardingData.class, name = "CUSTOMER"),

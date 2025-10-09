@@ -8,6 +8,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -66,6 +67,8 @@ public class SecurityConfig {
 
                 // Swagger
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                // OPTIONS 메서드 전체 허용 (CORS Preflight)
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
 //            현재 필요없음
 //            // 관리자

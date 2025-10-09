@@ -1,5 +1,10 @@
 server:
   forward-headers-strategy: native # 사용자가 HTTP로 접근해도 HTTPS로 올바르게 처리되도록
+  servlet: # JSON 인코딩에 UTF-8 설정
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
 
 spring:
   application:

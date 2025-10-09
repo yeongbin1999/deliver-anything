@@ -3,7 +3,10 @@ package com.deliveranything.global.common;
 import com.deliveranything.domain.user.profile.entity.Profile;
 import com.deliveranything.domain.user.profile.enums.ProfileType;
 import com.deliveranything.domain.user.user.entity.User;
+import com.deliveranything.domain.user.user.repository.UserRepository;
 import com.deliveranything.domain.user.user.service.UserService;
+import com.deliveranything.global.exception.CustomException;
+import com.deliveranything.global.exception.ErrorCode;
 import com.deliveranything.global.security.auth.SecurityUser;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -26,40 +29,37 @@ public class Rq {
   private final HttpServletRequest req;
   private final HttpServletResponse resp;
   private final UserService userService;
+  private final UserRepository userRepository;
 
   /**
-   * 현재 인증된 사용자 조회 (멀티 프로필 정보 포함)
+   * SecurityUser 직접 반환 (가장 경량)
    */
-  public User getActor() {
+  public SecurityUser getSecurityUser() {
     return Optional.ofNullable(SecurityContextHolder.getContext().getAuthentication())
         .map(Authentication::getPrincipal)
         .filter(principal -> principal instanceof SecurityUser)
         .map(principal -> (SecurityUser) principal)
-        .map(securityUser -> {
-          // SecurityUser에서 User 객체 생성 (프로필 정보 포함)
-          User user = User.builder()
-              .email(securityUser.getEmail())
-              .password(null)
-              .username(securityUser.getUserName())
-              .phoneNumber(null)
-              .socialProvider(null)
-              .socialId(null)
-              .currentActiveProfile(
-                  securityUser.getCurrentActiveProfile()) // Profile 엔티티는 여기서 설정하지 않음
-              .build();
-          return user;
-        })
         .orElse(null);
   }
 
-  public User getActorFromDb() {
-    User actor = getActor();
+  /**
+   * 현재 사용자 ID (빠른 조회)
+   */
+  public Long getActorId() {
+    SecurityUser securityUser = getSecurityUser();
+    return securityUser != null ? securityUser.getId() : null;
+  }
 
-    if (actor == null) {
-      return null;
+  /**
+   * 현재 로그인한 사용자 (없으면 예외)
+   */
+  public User getActor() {
+    Long userId = getActorId();
+    if (userId == null) {
+      throw new CustomException(ErrorCode.TOKEN_NOT_FOUND);
     }
-
-    return userService.findById(actor.getId());
+    return userRepository.findByIdWithProfile(userId)
+        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
   }
 
   /**
@@ -75,22 +75,19 @@ public class Rq {
   }
 
   /**
-   * 현재 활성화된 프로필 ID 조회 (전역 고유 Profile ID)
+   * 현재 활성화된 프로필 ID 조회 (전역 고유 Profile ID) ✅ NULL-SAFE: 온보딩 안 한 유저는 null 반환
    */
   public Long getCurrentProfileId() {
-    return Optional.ofNullable(SecurityContextHolder.getContext().getAuthentication())
-        .map(Authentication::getPrincipal)
-        .filter(principal -> principal instanceof SecurityUser)
-        .map(principal -> (SecurityUser) principal)
-        .map(SecurityUser::getCurrentActiveProfile).get().getId();
+    Profile profile = getCurrentProfile();
+    return profile != null ? profile.getId() : null;  // ✅ null-safe
   }
 
   /**
-   * 특정 프로필이 활성화되어 있는지 확인
+   * 특정 프로필이 활성화되어 있는지 확인 ✅ NULL-SAFE: 온보딩 안 한 유저는 false 반환
    */
   public boolean hasActiveProfile(ProfileType profileType) {
-    ProfileType currentProfile = getCurrentProfile().getType();
-    return currentProfile == profileType;
+    Profile currentProfile = getCurrentProfile();
+    return currentProfile != null && currentProfile.getType() == profileType;  // ✅ null-safe
   }
 
   /**
@@ -286,12 +283,19 @@ public class Rq {
    */
   public String generateGlobalProfileKey() {
     User actor = getActor();
-    ProfileType currentProfile = getCurrentProfile().getType();
-    Long currentProfileId = getCurrentProfile().getId();
-
-    if (actor != null && currentProfile != null && currentProfileId != null) {
-      return String.format("%d_%s_%d", actor.getId(), currentProfile.name(), currentProfileId);
+    if (actor == null) {
+      return null;
     }
-    return null;
+
+    Profile currentProfile = getCurrentProfile();
+    if (currentProfile == null) {
+      // 온보딩 안 한 유저
+      return String.format("%d_NO_PROFILE", actor.getId());
+    }
+
+    return String.format("%d_%s_%d",
+        actor.getId(),
+        currentProfile.getType().name(),
+        currentProfile.getId());
   }
 }

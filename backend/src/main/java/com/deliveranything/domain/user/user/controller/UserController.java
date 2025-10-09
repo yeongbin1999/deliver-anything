@@ -19,6 +19,9 @@ import com.deliveranything.domain.user.user.service.UserService;
 import com.deliveranything.global.common.ApiResponse;
 import com.deliveranything.global.common.Rq;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -52,7 +55,7 @@ public class UserController {
       description = "현재 로그인한 사용자의 상세 정보를 조회합니다."
   )
   public ResponseEntity<ApiResponse<UserInfoResponse>> getMyInfo() {
-    User currentUser = rq.getActorFromDb();
+    User currentUser = rq.getActor();
     log.info("사용자 정보 조회: userId={}", currentUser.getId());
 
     UserInfoResponse response = UserInfoResponse.from(currentUser);
@@ -108,21 +111,84 @@ public class UserController {
 
   // ========== 프로필 관리 ==========
 
-  @PostMapping("/onboarding")
-  @Operation(
-      summary = "온보딩 시작 및 첫 프로필 생성",
-      description = "회원가입 후 첫 프로필을 생성하고 온보딩을 시작합니다. CUSTOMER, SELLER, RIDER 중 하나를 선택할 수 있습니다."
+  @Operation(summary = "온보딩 시작 - 첫 프로필 생성")
+  @io.swagger.v3.oas.annotations.parameters.RequestBody(
+      description = "온보딩 완료 후 새로운 프로필(CUSTOMER, SELLER, RIDER)을 추가합니다.",
+      required = true,
+      content = @Content(
+          mediaType = "application/json",
+          schema = @Schema(implementation = OnboardingRequest.class),
+          examples = {
+              @ExampleObject(
+                  name = "CUSTOMER",
+                  summary = "소비자 프로필",
+                  description = "소비자 프로필 생성 (주소는 나중에 별도 추가)",
+                  value = """
+                      {
+                        "profileType": "CUSTOMER",
+                        "profileData": {
+                          "nickname": "홍길동",
+                          "profileImageUrl": null,
+                          "customerPhoneNumber": "010-1234-5678"
+                        }
+                      }
+                      """
+              ),
+              @ExampleObject(
+                  name = "SELLER",
+                  summary = "판매자 프로필",
+                  description = "판매자 프로필은 사업자 정보가 필요합니다",
+                  value = """
+                      {
+                        "profileType": "SELLER",
+                        "profileData": {
+                          "nickname": "홍사장",
+                          "businessName": "홍길동식당",
+                          "businessCertificateNumber": "123-45-67890",
+                          "businessPhoneNumber": "02-1234-5678",
+                          "bankName": "신한은행",
+                          "accountNumber": "1234567890123",
+                          "accountHolder": "홍길동",
+                          "profileImageUrl": null
+                        }
+                      }
+                      """
+              ),
+              @ExampleObject(
+                  name = "RIDER",
+                  summary = "배달원 프로필",
+                  description = "배달원 프로필은 차량 정보가 필요합니다",
+                  value = """
+                      {
+                        "profileType": "RIDER",
+                        "profileData": {
+                          "nickname": "김배달",
+                          "vehicleType": "MOTORCYCLE",
+                          "vehicleNumber": "12가3456",
+                          "licenseNumber": "12-34-567890-12",
+                          "bankName": "국민은행",
+                          "accountNumber": "9876543210987",
+                          "accountHolder": "김배달",
+                          "profileImageUrl": null
+                        }
+                      }
+                      """
+              )
+          }
+      )
   )
+  @PostMapping("/onboarding")
   public ResponseEntity<ApiResponse<OnboardingResponse>> completeOnboarding(
       @Valid @RequestBody OnboardingRequest request) {
 
+    //  getActor() 대신 getActorFromDb() 사용!
     User currentUser = rq.getActor();
     log.info("온보딩 요청: userId={}, selectedProfile={}",
-        currentUser.getId(), request.selectedProfile());
+        currentUser.getId(), request.profileType());
 
     boolean success = profileService.completeOnboarding(
         currentUser.getId(),
-        request.selectedProfile(),
+        request.profileType(),
         request.profileData()
     );
 
@@ -132,11 +198,11 @@ public class UserController {
     }
 
     // 온보딩 완료 후 사용자 정보 다시 조회
-    User updatedUser = rq.getActorFromDb();
+    User updatedUser = rq.getActor();
 
     OnboardingResponse response = OnboardingResponse.builder()
         .userId(updatedUser.getId())
-        .selectedProfile(request.selectedProfile())
+        .selectedProfile(request.profileType())
         .profileId(updatedUser.getCurrentActiveProfileId())
         .isOnboardingCompleted(true)
         .build();
@@ -146,12 +212,70 @@ public class UserController {
     );
   }
 
-  @PostMapping("/profiles/add")
-  @Operation(
-      summary = "추가 프로필 생성",
-      description = "온보딩 완료 후 새로운 프로필(CUSTOMER, SELLER, RIDER)을 추가합니다. "
-                    + "이미 해당 타입의 프로필이 있으면 실패합니다."
+  @Operation(summary = "추가 프로필 생성")
+  @io.swagger.v3.oas.annotations.parameters.RequestBody(
+      description = "추가 프로필(CUSTOMER, SELLER, RIDER)을 생성합니다.",
+      required = true,
+      content = @Content(
+          mediaType = "application/json",
+          schema = @Schema(implementation = AddProfileRequest.class),
+          examples = {
+              @ExampleObject(
+                  name = "CUSTOMER",
+                  summary = "소비자 프로필",
+                  value = """
+                      {
+                       "profileType": "CUSTOMER",
+                        "profileData": {
+                          "nickname": "홍길동",
+                          "profileImageUrl": null,
+                          "customerPhoneNumber": "010-1234-5678"
+                        }
+                      }
+                      """
+              ),
+              @ExampleObject(
+                  name = "SELLER",
+                  summary = "판매자 프로필",
+                  value = """
+                      {
+                        "profileType": "SELLER",
+                        "profileData": {
+                          "nickname": "홍사장",
+                          "businessName": "홍길동식당",
+                          "businessCertificateNumber": "123-45-67890",
+                          "businessPhoneNumber": "02-1234-5678",
+                          "bankName": "신한은행",
+                          "accountNumber": "1234567890123",
+                          "accountHolder": "홍길동",
+                          "profileImageUrl": null
+                        }
+                      }
+                      """
+              ),
+              @ExampleObject(
+                  name = "RIDER",
+                  summary = "배달원 프로필",
+                  value = """
+                      {
+                        "profileType": "RIDER",
+                        "profileData": {
+                          "nickname": "김배달",
+                          "vehicleType": "MOTORCYCLE",
+                          "vehicleNumber": "12가3456",
+                          "licenseNumber": "12-34-567890-12",
+                          "bankName": "국민은행",
+                          "accountNumber": "9876543210987",
+                          "accountHolder": "김배달",
+                          "profileImageUrl": null
+                        }
+                      }
+                      """
+              )
+          }
+      )
   )
+  @PostMapping("/profiles/add")
   public ResponseEntity<ApiResponse<AddProfileResponse>> addProfile(
       @Valid @RequestBody AddProfileRequest request) {
 

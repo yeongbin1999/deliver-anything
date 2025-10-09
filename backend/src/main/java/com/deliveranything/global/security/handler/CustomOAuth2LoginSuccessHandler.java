@@ -37,7 +37,7 @@ public class CustomOAuth2LoginSuccessHandler implements AuthenticationSuccessHan
     Long userId = securityUser.getId();
 
     // User 조회
-    User actor = rq.getActorFromDb();
+    User actor = rq.getActor();
 
     // 토큰 발급
     String accessToken = tokenService.genAccessToken(actor);

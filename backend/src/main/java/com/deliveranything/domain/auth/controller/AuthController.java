@@ -92,7 +92,7 @@ public class AuthController {
     User user = result.user();
     List<ProfileType> availableProfiles = profileService.getAvailableProfiles(user.getId());
 
-    // ✅ storeId + 프로필 상세 정보 포함 응답 생성
+    // storeId + 프로필 상세 정보 포함 응답 생성
     LoginResponse response = LoginResponse.builder()
         .userId(user.getId())
         .email(user.getEmail())
@@ -101,8 +101,8 @@ public class AuthController {
         .currentActiveProfileId(user.getCurrentActiveProfileId())
         .isOnboardingCompleted(user.isOnboardingCompleted())
         .availableProfiles(availableProfiles)
-        .storeId(result.storeId())  // ✅ 상점 ID
-        .currentProfileDetail(result.currentProfileDetail())  // ✅ 프로필 상세 정보
+        .storeId(result.storeId())  // 상점 ID
+        .currentProfileDetail(result.currentProfileDetail())  // 프로필 상세 정보
         .build();
 
     // 토큰 설정 (쿠키 + 헤더)

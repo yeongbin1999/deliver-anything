@@ -8,25 +8,48 @@ import org.springframework.stereotype.Component;
 @Component
 public class ProfileSecurity {
 
-  public boolean isSeller(SecurityUser securityUser) {
-    if (securityUser == null || !securityUser.isSellerActive()) {
+  public boolean isSeller(Object principal) {
+    if (principal == null) {
+      throw new CustomException(ErrorCode.TOKEN_NOT_FOUND);
+    }
+
+    if (!(principal instanceof SecurityUser securityUser)) {
+      throw new CustomException(ErrorCode.TOKEN_INVALID);
+    }
+
+    if (!securityUser.isSellerActive()) {
       throw new CustomException(ErrorCode.PROFILE_NOT_ALLOWED);
     }
     return true;
   }
 
-  public boolean isCustomer(SecurityUser securityUser) {
-    if (securityUser == null || !securityUser.isCustomerActive()) {
+  public boolean isCustomer(Object principal) {
+    if (principal == null) {
+      throw new CustomException(ErrorCode.TOKEN_NOT_FOUND);
+    }
+
+    if (!(principal instanceof SecurityUser securityUser)) {
+      throw new CustomException(ErrorCode.TOKEN_INVALID);
+    }
+
+    if (!securityUser.isCustomerActive()) {
       throw new CustomException(ErrorCode.PROFILE_NOT_ALLOWED);
     }
     return true;
   }
 
-  public boolean isRider(SecurityUser securityUser) {
-    if (securityUser == null || !securityUser.isRiderActive()) {
+  public boolean isRider(Object principal) {
+    if (principal == null) {
+      throw new CustomException(ErrorCode.TOKEN_NOT_FOUND);
+    }
+
+    if (!(principal instanceof SecurityUser securityUser)) {
+      throw new CustomException(ErrorCode.TOKEN_INVALID);
+    }
+
+    if (!securityUser.isRiderActive()) {
       throw new CustomException(ErrorCode.PROFILE_NOT_ALLOWED);
     }
     return true;
   }
 }
-

@@ -28,7 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/users/me/seller")
 @RequiredArgsConstructor
-@PreAuthorize("@profileSecurity.isSeller(authentication.principal)") // 판매자 프로필 활성화 상태에서만 접근 가능
+@PreAuthorize("@profileSecurity.isSeller(authentication.principal)") //
 public class SellerProfileController {
 
   private final SellerProfileService sellerProfileService;
