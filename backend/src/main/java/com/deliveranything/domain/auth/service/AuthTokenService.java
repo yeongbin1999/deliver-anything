@@ -8,6 +8,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import java.security.Key;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 import javax.crypto.SecretKey;
 import lombok.extern.slf4j.Slf4j;
@@ -29,7 +30,7 @@ public class AuthTokenService {
    */
   public String genAccessToken(User user) {
     long id = user.getId();
-    String name = user.getName();
+    String username = user.getUsername();
 
     // 멀티 프로필 정보 (이제 전역 고유 Profile ID)
     ProfileType currentActiveProfileType = user.getCurrentActiveProfileType();
@@ -39,7 +40,7 @@ public class AuthTokenService {
 
     // 필수 정보 + UI용 name
     claimsBuilder.add("id", id);
-    claimsBuilder.add("name", name);
+    claimsBuilder.add("name", username);
     claimsBuilder.add("currentActiveProfile",
         currentActiveProfileType != null ? currentActiveProfileType.name() : null);
     claimsBuilder.add("currentActiveProfileId", currentActiveProfileId);
@@ -66,32 +67,33 @@ public class AuthTokenService {
     SecretKey secretKey = Keys.hmacShaKeyFor(jwtSecretKey.getBytes());
 
     try {
-      Claims claims = (Claims) Jwts
+      // ✅ parseClaimsJws() 사용 (서명 검증 포함)
+      Claims claims = Jwts
           .parser()
           .verifyWith(secretKey)
           .build()
-          .parse(accessToken)
+          .parseSignedClaims(accessToken)  // ✅ 변경: parse() → parseSignedClaims()
           .getPayload();
 
       // 필수 정보 + UI용 name 추출
       Long id = claims.get("id", Long.class);
-      String name = claims.get("name", String.class);
+      String username = claims.get("name", String.class);
 
-      // 멀티 프로필 정보 추출 (전역 고유 Profile ID)
+      // ✅ 멀티 프로필 정보 추출 - String으로 가져오기
       String currentActiveProfileStr = claims.get("currentActiveProfile", String.class);
-      ProfileType currentActiveProfile = currentActiveProfileStr != null ?
-          ProfileType.valueOf(currentActiveProfileStr) : null;
       Long currentActiveProfileId = claims.get("currentActiveProfileId", Long.class);
 
-      return Map.of(
-          "id", id,
-          "name", name != null ? name : "",
-          "currentActiveProfile", currentActiveProfile,
-          "currentActiveProfileId", currentActiveProfileId != null ? currentActiveProfileId : 0L
-      );
+      // ✅ HashMap 사용 (null 값 허용)
+      Map<String, Object> result = new HashMap<>();
+      result.put("id", id);
+      result.put("name", username != null ? username : "");
+      result.put("currentActiveProfile", currentActiveProfileStr);  // ✅ String 그대로
+      result.put("currentActiveProfileId", currentActiveProfileId);  // ✅ null 가능
+
+      return result;
 
     } catch (Exception e) {
-      log.warn("JWT 토큰 파싱 실패: {}", e.getMessage());
+      log.warn("JWT 토큰 파싱 실패: {}", e.getMessage(), e);  // 스택 트레이스 추가
       return null;
     }
   }
@@ -105,7 +107,7 @@ public class AuthTokenService {
           .parser()
           .verifyWith(secretKey)
           .build()
-          .parse(accessToken);
+          .parseSignedClaims(accessToken);  // 변경: parse() → parseSignedClaims()
       return true;
     } catch (Exception e) {
       log.debug("JWT 토큰 검증 실패: {}", e.getMessage());
@@ -118,11 +120,11 @@ public class AuthTokenService {
     SecretKey secretKey = Keys.hmacShaKeyFor(jwtSecretKey.getBytes());
 
     try {
-      Claims claims = (Claims) Jwts
+      Claims claims = Jwts
           .parser()
           .verifyWith(secretKey)
           .build()
-          .parse(accessToken)
+          .parseSignedClaims(accessToken)  // 변경: parse() → parseSignedClaims()
           .getPayload();
 
       return claims.getExpiration();

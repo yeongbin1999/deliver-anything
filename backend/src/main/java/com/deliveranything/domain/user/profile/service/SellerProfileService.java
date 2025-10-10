@@ -92,6 +92,24 @@ public class SellerProfileService {
   }
 
   /**
+   * Profile ID로 판매자 프로필 수정 (닉네임, 프로필 이미지)
+   */
+  @Transactional
+  public boolean updateProfileByProfileId(Long profileId, String nickname, String profileImageUrl) {
+    SellerProfile profile = getProfileByProfileId(profileId);
+    if (profile == null) {
+      log.warn("판매자 프로필을 찾을 수 없습니다: profileId={}", profileId);
+      return false;
+    }
+
+    profile.updateProfile(nickname, profileImageUrl);
+    sellerProfileRepository.save(profile);
+
+    log.info("판매자 프로필 수정 완료: profileId={}, nickname={}", profileId, nickname);
+    return true;
+  }
+
+  /**
    * 판매자 프로필 존재 여부 확인
    */
   public boolean hasProfile(Long userId) {

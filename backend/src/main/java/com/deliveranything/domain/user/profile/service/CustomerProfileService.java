@@ -26,10 +26,10 @@ public class CustomerProfileService {
   private final CustomerProfileRepository customerProfileRepository;
   private final CustomerAddressRepository customerAddressRepository;
 
-  // ========== 고객 프로필 관리 ==========
+  // ========== 소비자 프로필 관리 ==========
 
   /**
-   * 고객 프로필 생성 (Profile 기반)
+   * 소비자 프로필 생성 (Profile 기반)
    */
   @Transactional
   public CustomerProfile createProfile(Long userId, String nickname) {
@@ -39,7 +39,7 @@ public class CustomerProfileService {
       return null;
     }
 
-    // 이미 고객 프로필이 존재하는지 확인
+    // 이미 소비자 프로필이 존재하는지 확인
     if (hasProfile(userId)) {
       log.warn("이미 고객 프로필이 존재합니다: userId={}", userId);
       return getProfile(userId);
@@ -60,30 +60,48 @@ public class CustomerProfileService {
         .build();
 
     CustomerProfile saved = customerProfileRepository.save(customerProfile);
-    log.info("고객 프로필 생성 완료: userId={}, profileId={}", userId, saved.getId());
+    log.info("소비자 프로필 생성 완료: userId={}, profileId={}", userId, saved.getId());
 
     return saved;
   }
 
   /**
-   * 고객 프로필 조회 (Profile ID 기반)
+   * 소비자 프로필 조회 (Profile ID 기반)
    */
   public CustomerProfile getProfileByProfileId(Long profileId) {
     return customerProfileRepository.findByProfileId(profileId).orElse(null);
   }
 
   /**
-   * 고객 프로필 조회 (사용자 ID 기반)
+   * 소비자 프로필 조회 (사용자 ID 기반)
    */
   public CustomerProfile getProfile(Long userId) {
     return customerProfileRepository.findByUserId(userId).orElse(null);
   }
 
   /**
-   * 고객 프로필 존재 여부 확인
+   * 소비자 프로필 존재 여부 확인
    */
   public boolean hasProfile(Long userId) {
     return getProfile(userId) != null;
+  }
+
+  /**
+   * Profile ID로 소비자 프로필 수정 (닉네임, 프로필 이미지)
+   */
+  @Transactional
+  public boolean updateProfileByProfileId(Long profileId, String nickname, String profileImageUrl) {
+    CustomerProfile profile = getProfileByProfileId(profileId);
+    if (profile == null) {
+      log.warn("고객 프로필을 찾을 수 없습니다: profileId={}", profileId);
+      return false;
+    }
+
+    profile.updateProfile(nickname, profileImageUrl);
+    customerProfileRepository.save(profile);
+
+    log.info("고객 프로필 수정 완료: profileId={}, nickname={}", profileId, nickname);
+    return true;
   }
 
   // ========== 배송지 관리 ==========

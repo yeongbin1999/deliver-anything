@@ -17,7 +17,6 @@ import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -36,7 +35,7 @@ public class User extends BaseEntity {
   private String password;
 
   @Column(name = "name", nullable = false, columnDefinition = "VARCHAR(50)")
-  private String name;
+  private String username;
 
   @Column(name = "phone_number", unique = true, columnDefinition = "VARCHAR(20)")
   private String phoneNumber;
@@ -47,9 +46,6 @@ public class User extends BaseEntity {
 
   @Column(name = "social_id", columnDefinition = "VARCHAR(100)")
   private String socialId;
-
-  @Column(name = "api_key", unique = true, nullable = false, columnDefinition = "VARCHAR(255)")
-  private String apiKey;
 
   // 현재 활성화된 프로필 (이제 Profile 테이블의 전역 고유 ID)
   @ManyToOne(fetch = FetchType.LAZY)
@@ -76,15 +72,14 @@ public class User extends BaseEntity {
   private List<Profile> profiles = new ArrayList<>();
 
   @Builder
-  public User(String email, String password, String name, String phoneNumber,
+  public User(String email, String password, String username, String phoneNumber,
       SocialProvider socialProvider, String socialId, Profile currentActiveProfile) {
     this.email = email;
     this.password = password;
-    this.name = name;
+    this.username = username;
     this.phoneNumber = phoneNumber;
     this.socialProvider = socialProvider != null ? socialProvider : SocialProvider.LOCAL;
     this.socialId = socialId;
-    this.apiKey = generateApiKey();
     this.currentActiveProfile = currentActiveProfile; // 현재 프로필 아이디
     this.isOnboardingCompleted = false;
     this.isEmailVerified = false;
@@ -182,6 +177,47 @@ public class User extends BaseEntity {
         .orElse(null);
   }
 
+  /**
+   * 사용자 정보 업데이트 (일반 사용자용)
+   */
+
+  public void updateUserInfo(String username, String phoneNumber) {
+    if (username != null && !username.isBlank()) {
+      this.username = username;
+    }
+    if (phoneNumber != null && !phoneNumber.isBlank()) {
+      this.phoneNumber = phoneNumber;
+    }
+  }
+
+  /**
+   * 소셜 로그인 정보 업데이트 (OAuth2용)
+   */
+
+  public void updateSocialInfo(String username, String email) {
+    if (username != null && !username.isBlank()) {
+      this.username = username;
+    }
+    // 이메일이 없었는데 새로 제공된 경우 (카카오 동의 추가 등)
+    if (email != null && !email.isBlank() && this.email == null) {
+      this.email = email;
+    }
+  }
+
+  /**
+   * 관리자 권한 부여
+   */
+  public void grantAdminRole() {
+    this.isAdmin = true;
+  }
+
+  /**
+   * 관리자 권한 제거
+   */
+  public void revokeAdminRole() {
+    this.isAdmin = false;
+  }
+
   // ========== 인증/인가 관련 ==========
 
   public void updatePassword(String encodedPassword) {
@@ -196,7 +232,4 @@ public class User extends BaseEntity {
     this.lastLoginAt = LocalDateTime.now();
   }
 
-  private String generateApiKey() {
-    return UUID.randomUUID().toString();
-  }
 }

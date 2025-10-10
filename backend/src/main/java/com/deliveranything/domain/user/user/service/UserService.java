@@ -31,10 +31,6 @@ public class UserService {
     return userRepository.findByEmail(email);
   }
 
-  public Optional<User> findByApiKey(String apiKey) {
-    return userRepository.findByApiKey(apiKey);
-  }
-
   public boolean existsByEmail(String email) {
     return userRepository.existsByEmail(email);
   }
@@ -45,6 +41,30 @@ public class UserService {
 
   public long count() {
     return userRepository.count();
+  }
+
+  // ========== 사용자 정보 수정 ==========
+
+  /**
+   * 사용자 정보 수정 (이름, 전화번호)
+   */
+  @Transactional
+  public User updateUserInfo(Long userId, String username, String phoneNumber) {
+    User user = findById(userId);
+
+    // 전화번호 중복 체크 (자신의 전화번호가 아닌 경우만)
+    if (phoneNumber != null && !phoneNumber.equals(user.getPhoneNumber())) {
+      if (userRepository.existsByPhoneNumber(phoneNumber)) {
+        throw new CustomException(ErrorCode.USER_PHONE_ALREADY_EXIST);
+      }
+    }
+
+    // User 엔티티에 업데이트 메서드 호출
+    user.updateUserInfo(username, phoneNumber);
+    User updatedUser = userRepository.save(user);
+
+    log.info("사용자 정보 수정 완료: userId={}, name={}", userId, username);
+    return updatedUser;
   }
 
   // ========== 계정 관리 ==========
@@ -81,4 +101,27 @@ public class UserService {
 
     log.info("사용자 비밀번호 업데이트 완료: userId={}", userId);
   }
+
+  /**
+   * 관리자 권한 부여 ( 최상위 관리자만 호출 가능) - isAdmin이 있어 우선 추가만 해놓음
+   */
+  @Transactional
+  public void grantAdminRole(Long userId) {
+    User user = findById(userId);
+    user.grantAdminRole();  // 위에서 추가한 메서드
+    userRepository.save(user);
+    log.info("관리자 권한 부여 완료: userId={}", userId);
+  }
+
+  /**
+   * 관리자 권한 제거
+   */
+  @Transactional
+  public void revokeAdminRole(Long userId) {
+    User user = findById(userId);
+    user.revokeAdminRole();
+    userRepository.save(user);
+    log.info("관리자 권한 제거 완료: userId={}", userId);
+  }
+
 }

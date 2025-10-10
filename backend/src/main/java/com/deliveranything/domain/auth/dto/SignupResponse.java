@@ -6,7 +6,7 @@ import lombok.Builder;
 public record SignupResponse(
     Long userId,
     String email,
-    String name,
+    String username,
     boolean isOnboardingCompleted
 ) {
 

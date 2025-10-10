@@ -3,10 +3,12 @@ package com.deliveranything.global.security.config;
 import com.deliveranything.global.security.filter.CustomAuthenticationFilter;
 import com.deliveranything.global.security.handler.CustomAccessDeniedHandler;
 import com.deliveranything.global.security.handler.CustomAuthenticationEntryPoint;
+import com.deliveranything.global.security.resolver.CustomOAuth2AuthorizationRequestResolver;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -15,18 +17,21 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
-@EnableMethodSecurity(prePostEnabled = true)
+@EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
   private final CustomAuthenticationFilter customAuthenticationFilter;
   private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
   private final CustomAccessDeniedHandler customAccessDeniedHandler;
+  private final AuthenticationSuccessHandler customOAuth2LoginSuccessHandler;
+  private final CustomOAuth2AuthorizationRequestResolver customOAuth2AuthorizationRequestResolver;
 
   @Bean
   public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -38,7 +43,19 @@ public class SecurityConfig {
         .httpBasic(AbstractHttpConfigurer::disable)
 
         // 세션 완전 비활성화 (JWT 환경)
-        .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        .sessionManagement(
+            session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+
+        // OAuth2 로그인 설정 (소셜 로그인)
+        .oauth2Login(oauth2Login -> oauth2Login
+            .successHandler(customOAuth2LoginSuccessHandler)
+            .authorizationEndpoint(authorizationEndpoint ->
+                    authorizationEndpoint.authorizationRequestResolver(
+                        customOAuth2AuthorizationRequestResolver)
+                // 커스텀 리졸버(RedirectUrl을 State에 암호화하여 저장) 설정
+            )
+
+        )
 
         // CORS
         .cors(cors -> cors.configurationSource(corsConfigurationSource()))
@@ -51,34 +68,14 @@ public class SecurityConfig {
             // Swagger
             .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
 
-            // 인증 관련 엔드포인트
-            .requestMatchers("/api/v1/auth/**").permitAll()
+            // 인증/인가 관련 (로그인, 회원가입, 소셜 로그인, 토큰 재발급 등)
+            .requestMatchers("/oauth2/**", "/login/oauth2/**", "/api/v1/auth/**").permitAll()
 
-//            현재 필요없음
-//            // 관리자
-//            .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
-//
-//            // 사용자별 권한
-//            .requestMatchers("/api/v1/users/me/customer/**").hasRole("CUSTOMER")
-//            .requestMatchers("/api/v1/users/me/seller/**").hasRole("SELLER")
-//            .requestMatchers("/api/v1/users/me/rider/**").hasRole("RIDER")
-//
-//            // 판매자 관련
-//            .requestMatchers(HttpMethod.POST, "/api/v1/stores/**").hasRole("SELLER")
-//            .requestMatchers(HttpMethod.PUT, "/api/v1/stores/**").hasRole("SELLER")
-//            .requestMatchers(HttpMethod.DELETE, "/api/v1/stores/**").hasRole("SELLER")
-//
-//            // 주문 관련
-//            .requestMatchers(HttpMethod.POST, "/api/v1/orders").hasRole("CUSTOMER")
-//
-//            // 배달 관련
-//            .requestMatchers(HttpMethod.PUT, "/api/v1/deliveries/*/status").hasRole("RIDER")
-//
-//            // 나머지 API는 인증 필요
-//            .requestMatchers("/api/v1/**").authenticated()
+            // OPTIONS 요청은 모두 허용 (CORS Preflight)
+            .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-            // 그 외 요청 허용
-            .anyRequest().permitAll()
+            // 나머지 API는 인증 필요
+            .requestMatchers("/api/v1/**").authenticated()
         )
 
         // H2 콘솔 frame 옵션 허용
@@ -123,9 +120,8 @@ public class SecurityConfig {
     return source;
   }
 
-
   @Bean
-  public PasswordEncoder passwordEncoder() {
+  public static PasswordEncoder passwordEncoder() {  // 순환 참조 해결을 위해 static 추가
     return new BCryptPasswordEncoder();
   }
 }

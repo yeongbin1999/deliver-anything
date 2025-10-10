@@ -8,11 +8,14 @@ import lombok.Builder;
 public record LoginResponse(
     Long userId,
     String email,
-    String name,
+    String username,
     ProfileType currentActiveProfileType,
     Long currentActiveProfileId,
     boolean isOnboardingCompleted,
-    List<ProfileType> availableProfiles
+    List<ProfileType> availableProfiles,
+    Long storeId,  // ✅ 판매자 프로필의 상점 ID (없으면 null)
+    Object currentProfileDetail
+    // ✅ 추가: 현재 활성 프로필 상세 정보 (CustomerProfileDetail | SellerProfileDetail | RiderProfileDetail | null)
 ) {
 
 }
