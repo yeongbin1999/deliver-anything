@@ -9,8 +9,6 @@ import com.deliveranything.domain.settlement.repository.SettlementBatchRepositor
 import com.deliveranything.domain.settlement.service.dto.SettlementSummary;
 import com.deliveranything.global.exception.CustomException;
 import com.deliveranything.global.exception.ErrorCode;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -25,7 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class SettlementBatchService {
 
   private final SettlementDetailService settlementDetailService;
-  
+
   private final SettlementBatchRepository settlementBatchRepository;
 
   @Transactional(readOnly = true)
@@ -84,10 +82,8 @@ public class SettlementBatchService {
             Collectors.collectingAndThen(
                 Collectors.toList(),
                 list -> new SettlementSummary(
-                    list.stream().map(SettlementDetail::getTargetAmount)
-                        .reduce(BigDecimal.ZERO, BigDecimal::add),
-                    list.stream().map(SettlementDetail::getPlatformFee)
-                        .reduce(BigDecimal.ZERO, BigDecimal::add),
+                    list.stream().mapToLong(SettlementDetail::getTargetAmount).sum(),
+                    list.stream().mapToLong(SettlementDetail::getPlatformFee).sum(),
                     list.size()
                 )
             )
@@ -95,14 +91,12 @@ public class SettlementBatchService {
 
     // 그룹 정산 생성 및 각 정산 대상 상태 업데이트
     summaryMap.forEach((targetId, summary) -> {
-      BigDecimal flooredFee = summary.totalPlatformFee().setScale(0, RoundingMode.FLOOR);
-
       SettlementBatch batch = SettlementBatch.builder()
           .settlementDate(LocalDate.now().minusDays(1))
           .targetId(targetId)
           .targetTotalAmount(summary.totalTargetAmount())
-          .totalPlatformFee(flooredFee)
-          .settledAmount(summary.totalTargetAmount().subtract(flooredFee))
+          .totalPlatformFee(summary.totalPlatformFee())
+          .settledAmount(summary.totalTargetAmount() - summary.totalPlatformFee())
           .transactionCount(summary.transactionCount())
           .build();
 
