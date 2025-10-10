@@ -4,21 +4,31 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
-/***
- * 해당 커스텀 예외 코드처럼 패키지별로 작업하시면서 MemberErrorCode 이런 식으로 작성하시면 됩니다.
- * HttpStatus와 String code는 상황에 맞게 사용하시면 됩니다.
- */
 @Getter
 @AllArgsConstructor
 public enum ErrorCode {
 
+  // 인증/인가 관련 오류
+  TOKEN_INVALID(HttpStatus.UNAUTHORIZED, "AUTH-401", "유효하지 않은 토큰입니다."),
+  TOKEN_EXPIRED(HttpStatus.UNAUTHORIZED, "AUTH-401", "만료된 토큰입니다."),
+  TOKEN_NOT_FOUND(HttpStatus.UNAUTHORIZED, "AUTH-401", "토큰이 제공되지 않았습니다."),
+  REFRESH_TOKEN_INVALID(HttpStatus.UNAUTHORIZED, "AUTH-401", "유효하지 않은 리프레시 토큰입니다."),
+  REFRESH_TOKEN_EXPIRED(HttpStatus.UNAUTHORIZED, "AUTH-401", "만료된 리프레시 토큰입니다."),
+  ONBOARDING_NOT_COMPLETED(HttpStatus.FORBIDDEN, "AUTH-403", "온보딩을 완료해주세요."),
+  PROFILE_NOT_ALLOWED(HttpStatus.FORBIDDEN, "AUTH-403", "해당 프로필로 사용할 권한이 없습니다."),
+  PROFILE_SWITCH_FAILED(HttpStatus.BAD_REQUEST, "AUTH-400", "프로필 전환에 실패했습니다."),
+  
   // 유저 관련 오류
   USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER-404", "사용자를 찾을 수 없습니다."),
   USER_EMAIL_ALREADY_EXIST(HttpStatus.CONFLICT, "USER-409", "이미 존재하는 이메일 입니다."),
   USER_PHONE_ALREADY_EXIST(HttpStatus.CONFLICT, "USER-409", "이미 존재하는 핸드폰 번호 입니다."),
 
-  // 인가 관련 오류
-  PROFILE_NOT_ALLOWED(HttpStatus.FORBIDDEN, "AUTH-403", "해당 프로필로 사용할 권한이 없습니다."),
+  // 프로필 관련 오류
+  PROFILE_NOT_FOUND(HttpStatus.NOT_FOUND, "PROFILE-404", "요청한 프로필을 찾을 수 없습니다."),
+  PROFILE_ALREADY_ACTIVE(HttpStatus.CONFLICT, "PROFILE-409", "이미 활성화된 프로필입니다."),
+  PROFILE_INACTIVE(HttpStatus.FORBIDDEN, "PROFILE-403", "비활성화된 프로필로는 전환할 수 없습니다."),
+  PROFILE_ALREADY_EXISTS(HttpStatus.CONFLICT, "PROFILE-409", "이미 해당 타입의 프로필이 존재합니다."),
+  BUSINESS_CERTIFICATE_DUPLICATE(HttpStatus.CONFLICT, "SELLER-409", "이미 등록된 사업자등록번호입니다."),
 
   // 배달/라이더 관련 오류
   RIDER_NOT_FOUND(HttpStatus.NOT_FOUND, "RIDER-404", "라이더를 찾을 수 없습니다."),

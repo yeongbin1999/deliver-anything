@@ -1,11 +1,19 @@
 package com.deliveranything.domain.auth.service;
 
-import com.deliveranything.domain.auth.entity.RefreshToken;
 import com.deliveranything.domain.auth.enums.SocialProvider;
 import com.deliveranything.domain.user.profile.dto.SwitchProfileResponse;
+import com.deliveranything.domain.user.profile.dto.customer.CustomerProfileDetail;
+import com.deliveranything.domain.user.profile.dto.rider.RiderProfileDetail;
+import com.deliveranything.domain.user.profile.dto.seller.SellerProfileDetail;
+import com.deliveranything.domain.user.profile.entity.CustomerProfile;
 import com.deliveranything.domain.user.profile.entity.Profile;
+import com.deliveranything.domain.user.profile.entity.RiderProfile;
+import com.deliveranything.domain.user.profile.entity.SellerProfile;
 import com.deliveranything.domain.user.profile.enums.ProfileType;
+import com.deliveranything.domain.user.profile.repository.CustomerProfileRepository;
 import com.deliveranything.domain.user.profile.repository.ProfileRepository;
+import com.deliveranything.domain.user.profile.repository.RiderProfileRepository;
+import com.deliveranything.domain.user.profile.repository.SellerProfileRepository;
 import com.deliveranything.domain.user.profile.service.ProfileService;
 import com.deliveranything.domain.user.user.entity.User;
 import com.deliveranything.domain.user.user.repository.UserRepository;
@@ -29,41 +37,81 @@ public class AuthService {
   private final ProfileService profileService;
   private final PasswordEncoder passwordEncoder;
 
+  //  프로필 상세 조회용 Repository 추가
+  private final CustomerProfileRepository customerProfileRepository;
+  private final SellerProfileRepository sellerProfileRepository;
+  private final RiderProfileRepository riderProfileRepository;
+
+  // StoreService 추가 (상점 조회용)
+  // private final StoreService storeService;  // TODO: 주석 해제 후 사용
+
   /**
-   * 회원가입 (멀티 프로필 지원)
+   * 일반 회원가입
    */
   @Transactional
-  public User signup(String email, String password, String name, String phoneNumber) {
+  public User signup(String email, String password, String username, String phoneNumber) {
+    return signup(email, password, username, phoneNumber, SocialProvider.LOCAL, null);
+  }
+
+  /**
+   * OAuth2 회원가입 (내부용)
+   */
+  @Transactional
+  public User signupOAuth2(String email, String username, SocialProvider socialProvider,
+      String socialId) {
+    return signup(email, null, username, null, socialProvider, socialId);
+  }
+
+  /**
+   * 통합 회원가입 로직 (멀티 프로필 지원)
+   */
+  private User signup(
+      String email,
+      String password,
+      String username,
+      String phoneNumber,
+      SocialProvider socialProvider,
+      String socialId
+  ) {
     // 중복 체크
-    if (userRepository.existsByEmail(email)) {
+    if (email != null && userRepository.existsByEmail(email)) {
       log.warn("이미 존재하는 이메일: {}", email);
       throw new CustomException(ErrorCode.USER_EMAIL_ALREADY_EXIST);
     }
 
-    if (userRepository.existsByPhoneNumber(phoneNumber)) {
+    if (phoneNumber != null && userRepository.existsByPhoneNumber(phoneNumber)) {
       log.warn("이미 존재하는 전화번호: {}", phoneNumber);
       throw new CustomException(ErrorCode.USER_PHONE_ALREADY_EXIST);
     }
 
     // 비밀번호 암호화
-    String encodedPassword = passwordEncoder.encode(password);
+    String encodedPassword = (password != null && !password.isBlank())
+        ? passwordEncoder.encode(password)
+        : "";
 
     User newUser = User.builder()
         .email(email)
         .password(encodedPassword)
-        .name(name)
+        .username(username)
         .phoneNumber(phoneNumber)
-        .socialProvider(SocialProvider.LOCAL)
+        .socialProvider(socialProvider)
+        .socialId(socialId)
         .build();
 
+    // OAuth2는 이메일 인증 자동 완료
+    if (socialProvider != SocialProvider.LOCAL) {
+      newUser.verifyEmail();
+    }
+
     User savedUser = userRepository.save(newUser);
-    log.info("신규 사용자 가입 완료: userId={}, email={}", savedUser.getId(), email);
+    log.info("신규 사용자 가입 완료: userId={}, email={}, provider={}",
+        savedUser.getId(), email, socialProvider);
 
     return savedUser;
   }
 
   /**
-   * 로그인
+   * 로그인 (storeId + 프로필 상세 정보 포함)
    */
   @Transactional
   public LoginResult login(String email, String password, String deviceInfo) {
@@ -89,17 +137,61 @@ public class AuthService {
 
     // 토큰 발급
     String accessToken = tokenService.genAccessToken(user);
-    RefreshToken refreshToken = tokenService.genRefreshToken(user, deviceInfo);
+    String refreshToken = tokenService.genRefreshToken(user, deviceInfo);
 
-    return new LoginResult(user, accessToken, refreshToken.getTokenValue());
+    //  추가: storeId 조회
+    Long storeId = getStoreIdIfSeller(user);
+
+    //  추가: 프로필 상세 정보 조회
+    Object profileDetail = getCurrentProfileDetail(user);
+
+    return new LoginResult(user, accessToken, refreshToken, storeId, profileDetail);
+  }
+
+
+  /**
+   * OAuth2 로그인 또는 회원가입
+   */
+  @Transactional
+  public User oAuth2SignupOrLogin(
+      String email,
+      String username,
+      SocialProvider socialProvider,
+      String socialId
+  ) {
+    // 1. socialId로 기존 사용자 찾기
+    User user = userRepository.findBySocialProviderAndSocialId(socialProvider, socialId)
+        .orElse(null);
+
+    // 2. 기존 사용자면 로그인 + 소셜 정보 업데이트
+    if (user != null) {
+      log.info("기존 OAuth2 사용자 로그인: userId={}, provider={}", user.getId(), socialProvider);
+      user.updateSocialInfo(username, email);
+      user.updateLastLoginAt();
+      return userRepository.save(user);
+    }
+
+    // 3. 신규 사용자 - signupOAuth2를 통한 회원가입
+    log.info("신규 OAuth2 사용자 가입: email={}, provider={}", email, socialProvider);
+    return signupOAuth2(email, username, socialProvider, socialId);
   }
 
   /**
-   * 로그아웃
+   * 로그아웃 (현재 기기만)
    */
   @Transactional
-  public void logout(Long userId) {
+  public void logout(Long userId, String deviceInfo) {
+    tokenService.invalidateRefreshToken(userId, deviceInfo);
+    log.info("로그아웃 완료: userId={}, deviceInfo={}", userId, deviceInfo);
+  }
+
+  /**
+   * 전체 로그아웃 (모든 기기)
+   */
+  @Transactional
+  public void logoutAll(Long userId) {
     tokenService.invalidateAllRefreshTokens(userId);
+    log.info("전체 로그아웃 완료: userId={}", userId);
   }
 
   /**
@@ -117,7 +209,7 @@ public class AuthService {
   }
 
   /**
-   * 프로필 전환 + 토큰 재발급 (Orchestration)
+   * 프로필 전환 + Access Token 재발급 (Refresh Token 유지)
    */
   @Transactional
   public SwitchProfileResponse switchProfileWithTokenReissue(
@@ -129,7 +221,7 @@ public class AuthService {
 
     if (!user.isOnboardingCompleted()) {
       log.warn("온보딩이 완료되지 않은 사용자입니다: userId={}", userId);
-      throw new CustomException(ErrorCode.USER_NOT_FOUND);
+      throw new CustomException(ErrorCode.ONBOARDING_NOT_COMPLETED);
     }
 
     // 현재 프로필 정보 저장
@@ -142,16 +234,21 @@ public class AuthService {
         .orElseThrow(() -> {
           log.warn("해당 프로필을 찾을 수 없습니다: userId={}, targetProfile={}",
               userId, targetProfileType);
-          return new CustomException(ErrorCode.USER_NOT_FOUND);
+          return new CustomException(ErrorCode.PROFILE_NOT_FOUND);
         });
 
-    // 이미 활성화된 프로필인 경우
+    // 이미 활성화된 프로필인 경우 - Access Token만 재발급
     if (user.getCurrentActiveProfileType() == targetProfileType) {
       log.info("이미 활성화된 프로필입니다: userId={}, targetProfile={}",
           userId, targetProfileType);
 
-      // 그래도 토큰은 재발급
       String newAccessToken = tokenService.genAccessToken(user);
+
+      // storeId 조회
+      Long storeId = getStoreIdIfSeller(user);
+
+      // 프로필 상세 정보 조회
+      Object profileDetail = getCurrentProfileDetail(user);
 
       return SwitchProfileResponse.builder()
           .userId(userId)
@@ -159,38 +256,113 @@ public class AuthService {
           .previousProfileId(previousProfileId)
           .currentProfileType(targetProfileType)
           .currentProfileId(targetProfile.getId())
+          .storeId(storeId)
+          .currentProfileDetail(profileDetail)
           .accessToken(newAccessToken)
           .build();
     }
 
-    // 프로필 전환 (ProfileService 위임)
+    // 프로필 전환 수행
     boolean switched = profileService.switchProfile(userId, targetProfileType);
+
     if (!switched) {
-      log.warn("프로필 전환 실패: userId={}, targetProfile={}", userId, targetProfileType);
-      throw new CustomException(ErrorCode.USER_NOT_FOUND);
+      log.error("프로필 전환 실패: userId={}, targetProfile={}", userId, targetProfileType);
+      throw new CustomException(ErrorCode.PROFILE_NOT_FOUND);
     }
 
-    // 전환된 user로 새 토큰 생성
+    // 전환된 user로 새 Access Token 생성
     User updatedUser = userRepository.findById(userId)
         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+    // Access Token만 재발급 (Refresh Token 유지)
     String newAccessToken = tokenService.genAccessToken(updatedUser);
 
-    // 내부 DTO로 반환 (토큰 포함)
+    // storeId 조회
+    Long storeId = getStoreIdIfSeller(updatedUser);
+
+    // 프로필 상세 정보 조회
+    Object profileDetail = getCurrentProfileDetail(updatedUser);
+
+    log.info("프로필 전환 완료 및 Access Token 재발급: userId={}, {} -> {}",
+        userId, previousProfileType, targetProfileType);
+
     return SwitchProfileResponse.builder()
         .userId(userId)
         .previousProfileType(previousProfileType)
         .previousProfileId(previousProfileId)
         .currentProfileType(targetProfileType)
         .currentProfileId(targetProfile.getId())
+        .storeId(storeId)
+        .currentProfileDetail(profileDetail)
         .accessToken(newAccessToken)
         .build();
   }
 
-  // 내부 DTO
+  /**
+   * 판매자 프로필인 경우 상점 ID 조회 판매자가 아니거나 상점이 없으면 null 반환
+   */
+  private Long getStoreIdIfSeller(User user) {
+    // 판매자 프로필이 아니면 null
+    if (user.getCurrentActiveProfileType() != ProfileType.SELLER) {
+      return null;
+    }
+
+    Long sellerProfileId = user.getCurrentActiveProfileId();
+    if (sellerProfileId == null) {
+      return null;
+    }
+
+    // StoreService를 통해 상점 ID 조회
+    // TODO: StoreService 의존성 주입 후 주석 해제
+    // return storeService.getStoreIdBySellerProfileId(sellerProfileId);
+
+    // ⚠️ 임시: StoreService 없을 때는 null 반환
+    log.debug("StoreService 미구현: sellerProfileId={}", sellerProfileId);
+    return null;
+  }
+
+  /**
+   * 현재 활성 프로필의 상세 정보 조회 온보딩 미완료 또는 프로필 없으면 null 반환
+   */
+  private Object getCurrentProfileDetail(User user) {
+    // 온보딩 미완료면 null
+    if (!user.isOnboardingCompleted() || user.getCurrentActiveProfileType() == null) {
+      return null;
+    }
+
+    Long profileId = user.getCurrentActiveProfileId();
+    if (profileId == null) {
+      return null;
+    }
+
+    ProfileType profileType = user.getCurrentActiveProfileType();
+
+    return switch (profileType) {
+      case CUSTOMER -> {
+        CustomerProfile profile = customerProfileRepository.findById(profileId)
+            .orElse(null);
+        yield CustomerProfileDetail.from(profile);
+      }
+      case SELLER -> {
+        SellerProfile profile = sellerProfileRepository.findById(profileId)
+            .orElse(null);
+        yield SellerProfileDetail.from(profile);
+      }
+      case RIDER -> {
+        RiderProfile profile = riderProfileRepository.findById(profileId)
+            .orElse(null);
+        yield RiderProfileDetail.from(profile);
+      }
+    };
+  }
+
+  // 내부 DTO - storeId, profileDetail 추가
   public record LoginResult(
       User user,
       String accessToken,
-      String refreshToken
+      String refreshToken,
+      Long storeId,  // 상점 ID
+      Object currentProfileDetail  // 프로필 상세 정보
   ) {
 
   }

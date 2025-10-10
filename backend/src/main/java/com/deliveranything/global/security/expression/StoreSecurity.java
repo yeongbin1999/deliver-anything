@@ -8,13 +8,13 @@ import com.deliveranything.global.security.auth.SecurityUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-@Component
-@RequiredArgsConstructor
+@Component @RequiredArgsConstructor
 public class StoreSecurity {
 
   private final StoreService storeService;
 
-  public boolean isOwner(Long storeId, SecurityUser user) {
+  public boolean isOwner(Long storeId, Object principal) {
+    SecurityUser user = getSecurityUser(principal);
     Store store = storeService.getStoreById(storeId);
 
     if (!store.getSellerProfileId().equals(user.getCurrentActiveProfile().getId())) {
@@ -22,5 +22,15 @@ public class StoreSecurity {
     }
 
     return true;
+  }
+
+  private SecurityUser getSecurityUser(Object principal) {
+    if (principal == null) {
+      throw new CustomException(ErrorCode.TOKEN_NOT_FOUND);
+    }
+    if (!(principal instanceof SecurityUser securityUser)) {
+      throw new CustomException(ErrorCode.TOKEN_INVALID);
+    }
+    return securityUser;
   }
 }

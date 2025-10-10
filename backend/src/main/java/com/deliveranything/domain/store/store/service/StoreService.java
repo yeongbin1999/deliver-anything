@@ -44,9 +44,9 @@ public class StoreService {
         .location(PointUtil.createPoint(request.lat(), request.lng()))
         .imageUrl(request.imageUrl())
         .build();
-    storeRepository.save(store);
-
     store.updateStatus(StoreStatus.CLOSED);
+
+    storeRepository.save(store);
 
     eventPublisher.publishEvent(new StoreSavedEvent(store.getId()));
 

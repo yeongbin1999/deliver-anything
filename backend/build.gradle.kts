@@ -43,7 +43,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-webflux")
-    implementation("org.springframework.boot:spring-boot-starter-data-elasticsearch") // 이 스타터가 이제 8.11.1 클라이언트를 사용합니다.
+    implementation("org.springframework.boot:spring-boot-starter-data-elasticsearch")
     developmentOnly("org.springframework.boot:spring-boot-devtools")
 
     // --- Database ---
@@ -81,7 +81,7 @@ dependencies {
     annotationProcessor("io.github.openfeign.querydsl:querydsl-apt:7.0:jakarta")
 
     // --- Spatial (for Geolocation) ---
-    implementation("org.hibernate.orm:hibernate-spatial:6.5.2.Final")
+    implementation("org.hibernate.orm:hibernate-spatial:6.6.26.Final")
     implementation("org.locationtech.jts:jts-core:1.19.0")
 
     // --- WebSocket ---

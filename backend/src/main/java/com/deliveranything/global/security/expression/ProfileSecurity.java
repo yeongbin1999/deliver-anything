@@ -8,25 +8,37 @@ import org.springframework.stereotype.Component;
 @Component
 public class ProfileSecurity {
 
-  public boolean isSeller(SecurityUser securityUser) {
-    if (securityUser == null || !securityUser.isSellerActive()) {
+  private SecurityUser getSecurityUser(Object principal) {
+    if (principal == null) {
+      throw new CustomException(ErrorCode.TOKEN_NOT_FOUND);
+    }
+    if (!(principal instanceof SecurityUser securityUser)) {
+      throw new CustomException(ErrorCode.TOKEN_INVALID);
+    }
+    return securityUser;
+  }
+
+  public boolean isSeller(Object principal) {
+    SecurityUser securityUser = getSecurityUser(principal);
+    if (!securityUser.isSellerActive()) {
       throw new CustomException(ErrorCode.PROFILE_NOT_ALLOWED);
     }
     return true;
   }
 
-  public boolean isCustomer(SecurityUser securityUser) {
-    if (securityUser == null || !securityUser.isCustomerActive()) {
+  public boolean isCustomer(Object principal) {
+    SecurityUser securityUser = getSecurityUser(principal);
+    if (!securityUser.isCustomerActive()) {
       throw new CustomException(ErrorCode.PROFILE_NOT_ALLOWED);
     }
     return true;
   }
 
-  public boolean isRider(SecurityUser securityUser) {
-    if (securityUser == null || !securityUser.isRiderActive()) {
+  public boolean isRider(Object principal) {
+    SecurityUser securityUser = getSecurityUser(principal);
+    if (!securityUser.isRiderActive()) {
       throw new CustomException(ErrorCode.PROFILE_NOT_ALLOWED);
     }
     return true;
   }
 }
-

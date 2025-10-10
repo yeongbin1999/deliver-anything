@@ -54,6 +54,7 @@ public class Store extends BaseEntity {
   private String roadAddr;
 
   @Column(columnDefinition = "POINT SRID 4326", nullable = false)
+//  @Column(columnDefinition = "geometry", nullable = false)
   private Point location;
 
   @Enumerated(EnumType.STRING)

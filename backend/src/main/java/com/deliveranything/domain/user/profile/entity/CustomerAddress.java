@@ -31,6 +31,7 @@ public class CustomerAddress extends BaseEntity {
   private String address;
 
   @Column(columnDefinition = "POINT SRID 4326", nullable = false)
+//  @Column(columnDefinition = "geometry", nullable = false)
   private Point location;
 
   @Builder
