@@ -95,7 +95,6 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
   private boolean isPublicEndpoint(String uri) {
     return uri.equals("/api/v1/auth/login")
         || uri.equals("/api/v1/auth/signup")
-        || uri.equals("/api/v1/auth/logout")
         || uri.equals("/api/v1/auth/refresh")
         || uri.equals("/api/v1/auth/verification/send")
         || uri.equals("/api/v1/auth/verification/verify");
