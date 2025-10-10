@@ -1,8 +1,8 @@
 package com.deliveranything.domain.user.profile.dto;
 
-import com.deliveranything.domain.user.profile.dto.onboard.CustomerOnboardingData;
-import com.deliveranything.domain.user.profile.dto.onboard.RiderOnboardingData;
-import com.deliveranything.domain.user.profile.dto.onboard.SellerOnboardingData;
+import com.deliveranything.domain.user.profile.dto.onboard.CustomerProfileCreateData;
+import com.deliveranything.domain.user.profile.dto.onboard.RiderProfileCreateData;
+import com.deliveranything.domain.user.profile.dto.onboard.SellerProfileCreateData;
 import com.deliveranything.domain.user.profile.enums.ProfileType;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -39,9 +39,9 @@ public record AddProfileRequest(
         property = "profileType"
     )
     @JsonSubTypes({
-        @JsonSubTypes.Type(value = CustomerOnboardingData.class, name = "CUSTOMER"),
-        @JsonSubTypes.Type(value = SellerOnboardingData.class, name = "SELLER"),
-        @JsonSubTypes.Type(value = RiderOnboardingData.class, name = "RIDER")
+        @JsonSubTypes.Type(value = CustomerProfileCreateData.class, name = "CUSTOMER"),
+        @JsonSubTypes.Type(value = SellerProfileCreateData.class, name = "SELLER"),
+        @JsonSubTypes.Type(value = RiderProfileCreateData.class, name = "RIDER")
     })
     Object profileData
 ) {

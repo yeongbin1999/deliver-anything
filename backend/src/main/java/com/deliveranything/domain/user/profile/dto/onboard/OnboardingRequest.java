@@ -35,9 +35,9 @@ public record OnboardingRequest(
         property = "profileType"
     )
     @JsonSubTypes({
-        @JsonSubTypes.Type(value = CustomerOnboardingData.class, name = "CUSTOMER"),
-        @JsonSubTypes.Type(value = SellerOnboardingData.class, name = "SELLER"),
-        @JsonSubTypes.Type(value = RiderOnboardingData.class, name = "RIDER")
+        @JsonSubTypes.Type(value = CustomerProfileCreateData.class, name = "CUSTOMER"),
+        @JsonSubTypes.Type(value = SellerProfileCreateData.class, name = "SELLER"),
+        @JsonSubTypes.Type(value = RiderProfileCreateData.class, name = "RIDER")
     })
     Object profileData
 ) {

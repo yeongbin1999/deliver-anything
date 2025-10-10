@@ -6,8 +6,11 @@ import com.deliveranything.domain.user.profile.dto.AddProfileResponse;
 import com.deliveranything.domain.user.profile.dto.AvailableProfilesResponse;
 import com.deliveranything.domain.user.profile.dto.SwitchProfileRequest;
 import com.deliveranything.domain.user.profile.dto.SwitchProfileResponse;
+import com.deliveranything.domain.user.profile.dto.onboard.CustomerProfileCreateData;
 import com.deliveranything.domain.user.profile.dto.onboard.OnboardingRequest;
 import com.deliveranything.domain.user.profile.dto.onboard.OnboardingResponse;
+import com.deliveranything.domain.user.profile.dto.onboard.RiderProfileCreateData;
+import com.deliveranything.domain.user.profile.dto.onboard.SellerProfileCreateData;
 import com.deliveranything.domain.user.profile.entity.Profile;
 import com.deliveranything.domain.user.profile.enums.ProfileType;
 import com.deliveranything.domain.user.profile.service.ProfileService;
@@ -370,11 +373,11 @@ public class UserController {
    * profileData에서 nickname 추출
    */
   private String getNicknameFromProfileData(Object profileData) {
-    if (profileData instanceof com.deliveranything.domain.user.profile.dto.onboard.CustomerOnboardingData data) {
+    if (profileData instanceof CustomerProfileCreateData data) {
       return data.nickname();
-    } else if (profileData instanceof com.deliveranything.domain.user.profile.dto.onboard.SellerOnboardingData data) {
+    } else if (profileData instanceof SellerProfileCreateData data) {
       return data.nickname();
-    } else if (profileData instanceof com.deliveranything.domain.user.profile.dto.onboard.RiderOnboardingData data) {
+    } else if (profileData instanceof RiderProfileCreateData data) {
       return data.nickname();
     }
     return "Unknown";
