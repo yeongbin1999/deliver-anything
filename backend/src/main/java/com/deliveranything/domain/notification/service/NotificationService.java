@@ -5,9 +5,7 @@ import com.deliveranything.domain.notification.enums.NotificationType;
 import com.deliveranything.domain.notification.repository.EmitterRepository;
 import com.deliveranything.domain.notification.repository.NotificationRepository;
 import jakarta.transaction.Transactional;
-import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -90,26 +88,5 @@ public class NotificationService {
         emitter.complete();
       }
     }
-  }
-
-  /**
-   * 해당 profileId의 모든 emitter로 전송
-   */
-  public void sendToAll(Long profileId, String eventName, Object payload) {
-    Map<String, SseEmitter> map = emitterRepository.getAllEmitters().get(profileId);
-    if (map == null) {
-      return;
-    }
-    map.forEach((deviceId, emitter) -> {
-      try {
-        emitter.send(SseEmitter.event()
-            .name(eventName)
-            .id(String.valueOf(System.currentTimeMillis()))
-            .data(payload));
-      } catch (IOException e) {
-        emitter.completeWithError(e);
-        emitterRepository.remove(profileId, deviceId);
-      }
-    });
   }
 }

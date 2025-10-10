@@ -2,8 +2,8 @@ package com.deliveranything.domain.delivery.handler.redis;
 
 import com.deliveranything.domain.delivery.entity.Delivery;
 import com.deliveranything.domain.delivery.event.dto.DeliveryStatusEvent;
-import com.deliveranything.domain.delivery.event.event.sse.DeliveryStatusSsePublisher;
 import com.deliveranything.domain.delivery.repository.DeliveryRepository;
+import com.deliveranything.domain.notification.subscriber.delivery.DeliveryStatusNotifier;
 import com.deliveranything.global.exception.CustomException;
 import com.deliveranything.global.exception.ErrorCode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -25,7 +25,7 @@ public class DeliveryStatusRedisSubscriber implements MessageListener {
   private static final String CHANNEL = "delivery-status-events";
 
   private final ObjectMapper objectMapper;
-  private final DeliveryStatusSsePublisher deliveryStatusSsePublisher;
+  private final DeliveryStatusNotifier deliveryStatusNotifier;
   private final RedisMessageListenerContainer container;
   private final DeliveryRepository deliveryRepository;
   private final RedisTemplate<String, Object> redisTemplate;
@@ -45,7 +45,7 @@ public class DeliveryStatusRedisSubscriber implements MessageListener {
       // 1️⃣ 상태 변경 처리
       handleStatusChange(event);
       // 2️⃣ SSE 알림 전송
-      deliveryStatusSsePublisher.publish(event);
+      deliveryStatusNotifier.publish(event);
 
     } catch (Exception e) {
       throw new CustomException(ErrorCode.REDIS_MESSAGE_PROCESSING_ERROR);
