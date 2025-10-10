@@ -1,8 +1,10 @@
 package com.deliveranything.domain.user.profile.entity;
 
+import com.deliveranything.global.converter.PointConverter;
 import com.deliveranything.global.entity.BaseEntity;
 import com.deliveranything.global.util.PointUtil;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
@@ -31,6 +33,7 @@ public class CustomerAddress extends BaseEntity {
   private String address;
 
   @Column(columnDefinition = "POINT SRID 4326", nullable = false)
+  @Convert(converter = PointConverter.class)
 //  @Column(columnDefinition = "geometry", nullable = false)
   private Point location;
 
