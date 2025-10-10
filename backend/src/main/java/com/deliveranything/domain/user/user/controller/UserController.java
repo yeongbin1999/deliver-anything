@@ -1,16 +1,14 @@
 package com.deliveranything.domain.user.user.controller;
 
 import com.deliveranything.domain.auth.service.AuthService;
-import com.deliveranything.domain.user.profile.dto.AddProfileRequest;
-import com.deliveranything.domain.user.profile.dto.AddProfileResponse;
 import com.deliveranything.domain.user.profile.dto.AvailableProfilesResponse;
+import com.deliveranything.domain.user.profile.dto.CreateProfileRequest;
+import com.deliveranything.domain.user.profile.dto.ProfileResponse;
 import com.deliveranything.domain.user.profile.dto.SwitchProfileRequest;
 import com.deliveranything.domain.user.profile.dto.SwitchProfileResponse;
-import com.deliveranything.domain.user.profile.dto.onboard.CustomerProfileCreateData;
-import com.deliveranything.domain.user.profile.dto.onboard.OnboardingRequest;
-import com.deliveranything.domain.user.profile.dto.onboard.OnboardingResponse;
-import com.deliveranything.domain.user.profile.dto.onboard.RiderProfileCreateData;
-import com.deliveranything.domain.user.profile.dto.onboard.SellerProfileCreateData;
+import com.deliveranything.domain.user.profile.dto.customer.CustomerProfileCreateData;
+import com.deliveranything.domain.user.profile.dto.rider.RiderProfileCreateData;
+import com.deliveranything.domain.user.profile.dto.seller.SellerProfileCreateData;
 import com.deliveranything.domain.user.profile.entity.Profile;
 import com.deliveranything.domain.user.profile.enums.ProfileType;
 import com.deliveranything.domain.user.profile.service.ProfileService;
@@ -112,15 +110,19 @@ public class UserController {
     );
   }
 
-  // ========== 프로필 관리 ==========
+  // ========== ✅ 프로필 관리 (온보딩 통합) ==========
 
-  @Operation(summary = "온보딩 시작 - 첫 프로필 생성")
+  @PostMapping("/profiles")
+  @Operation(
+      summary = "프로필 생성",
+      description = "새로운 프로필을 생성합니다. 첫 번째 프로필이든 추가 프로필이든 동일하게 처리됩니다."
+  )
   @io.swagger.v3.oas.annotations.parameters.RequestBody(
-      description = "온보딩 완료 후 새로운 프로필(CUSTOMER, SELLER, RIDER)을 추가합니다.",
+      description = "프로필 타입과 상세 정보를 입력합니다.",
       required = true,
       content = @Content(
           mediaType = "application/json",
-          schema = @Schema(implementation = OnboardingRequest.class),
+          schema = @Schema(implementation = CreateProfileRequest.class),
           examples = {
               @ExampleObject(
                   name = "CUSTOMER",
@@ -180,121 +182,22 @@ public class UserController {
           }
       )
   )
-  @PostMapping("/onboarding")
-  public ResponseEntity<ApiResponse<OnboardingResponse>> completeOnboarding(
-      @Valid @RequestBody OnboardingRequest request) {
-
-    //  getActor() 대신 getActorFromDb() 사용!
-    User currentUser = rq.getActor();
-    log.info("온보딩 요청: userId={}, selectedProfile={}",
-        currentUser.getId(), request.profileType());
-
-    boolean success = profileService.completeOnboarding(
-        currentUser.getId(),
-        request.profileType(),
-        request.profileData()
-    );
-
-    if (!success) {
-      return ResponseEntity.badRequest()
-          .body(ApiResponse.fail("ONBOARDING-001", "온보딩을 완료할 수 없습니다."));
-    }
-
-    // 온보딩 완료 후 사용자 정보 다시 조회
-    User updatedUser = rq.getActor();
-
-    OnboardingResponse response = OnboardingResponse.builder()
-        .userId(updatedUser.getId())
-        .selectedProfile(request.profileType())
-        .profileId(updatedUser.getCurrentActiveProfileId())
-        .isOnboardingCompleted(true)
-        .build();
-
-    return ResponseEntity.ok(
-        ApiResponse.success("온보딩이 완료되었습니다.", response)
-    );
-  }
-
-  @Operation(summary = "추가 프로필 생성")
-  @io.swagger.v3.oas.annotations.parameters.RequestBody(
-      description = "추가 프로필(CUSTOMER, SELLER, RIDER)을 생성합니다.",
-      required = true,
-      content = @Content(
-          mediaType = "application/json",
-          schema = @Schema(implementation = AddProfileRequest.class),
-          examples = {
-              @ExampleObject(
-                  name = "CUSTOMER",
-                  summary = "소비자 프로필",
-                  value = """
-                      {
-                       "profileType": "CUSTOMER",
-                        "profileData": {
-                          "nickname": "홍길동",
-                          "profileImageUrl": null,
-                          "customerPhoneNumber": "010-1234-5678"
-                        }
-                      }
-                      """
-              ),
-              @ExampleObject(
-                  name = "SELLER",
-                  summary = "판매자 프로필",
-                  value = """
-                      {
-                        "profileType": "SELLER",
-                        "profileData": {
-                          "nickname": "홍사장",
-                          "businessName": "홍길동식당",
-                          "businessCertificateNumber": "123-45-67890",
-                          "businessPhoneNumber": "02-1234-5678",
-                          "bankName": "신한은행",
-                          "accountNumber": "1234567890123",
-                          "accountHolder": "홍길동",
-                          "profileImageUrl": null
-                        }
-                      }
-                      """
-              ),
-              @ExampleObject(
-                  name = "RIDER",
-                  summary = "배달원 프로필",
-                  value = """
-                      {
-                        "profileType": "RIDER",
-                        "profileData": {
-                          "nickname": "김배달",
-                          "vehicleType": "MOTORCYCLE",
-                          "vehicleNumber": "12가3456",
-                          "licenseNumber": "12-34-567890-12",
-                          "bankName": "국민은행",
-                          "accountNumber": "9876543210987",
-                          "accountHolder": "김배달",
-                          "profileImageUrl": null
-                        }
-                      }
-                      """
-              )
-          }
-      )
-  )
-  @PostMapping("/profiles/add")
-  public ResponseEntity<ApiResponse<AddProfileResponse>> addProfile(
-      @Valid @RequestBody AddProfileRequest request) {
+  public ResponseEntity<ApiResponse<ProfileResponse>> createProfile(
+      @Valid @RequestBody CreateProfileRequest request) {
 
     User currentUser = rq.getActor();
-    log.info("추가 프로필 생성 요청: userId={}, profileType={}",
+    log.info("프로필 생성 요청: userId={}, profileType={}",
         currentUser.getId(), request.profileType());
 
     // 프로필 생성
-    Profile newProfile = profileService.addProfile(
-        currentUser.getId(),
+    Profile newProfile = profileService.createProfile(
+        currentUser,
         request.profileType(),
         request.profileData()
     );
 
     // 응답 생성
-    AddProfileResponse response = AddProfileResponse.builder()
+    ProfileResponse response = ProfileResponse.builder()
         .userId(currentUser.getId())
         .profileType(request.profileType())
         .profileId(newProfile.getId())
@@ -353,7 +256,7 @@ public class UserController {
     log.info("사용 가능한 프로필 조회: userId={}", currentUser.getId());
 
     List<ProfileType> availableProfiles = profileService.getAvailableProfiles(
-        currentUser.getId()
+        currentUser
     );
 
     AvailableProfilesResponse response = AvailableProfilesResponse.builder()

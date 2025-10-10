@@ -1,4 +1,4 @@
-package com.deliveranything.domain.user.profile.dto.onboard;
+package com.deliveranything.domain.user.profile.dto.rider;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;

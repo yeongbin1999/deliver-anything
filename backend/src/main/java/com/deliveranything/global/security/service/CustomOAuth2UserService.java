@@ -78,8 +78,8 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     // 5. 회원가입 또는 로그인 처리 (프로필 생성 없이 User만)
     User user = authService.oAuth2SignupOrLogin(email, name, socialProvider, oauthUserId);
 
-    log.info("OAuth2 인증 완료: userId={}, provider={}, onboardingCompleted={}",
-        user.getId(), socialProvider, user.isOnboardingCompleted());
+    log.info("OAuth2 인증 완료: userId={}, provider={}",
+        user.getId(), socialProvider);
 
     // 6. SecurityUser 생성 (currentActiveProfile이 null일 수 있음)
     return new SecurityUser(

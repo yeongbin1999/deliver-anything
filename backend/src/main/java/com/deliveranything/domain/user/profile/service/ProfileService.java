@@ -1,8 +1,8 @@
 package com.deliveranything.domain.user.profile.service;
 
-import com.deliveranything.domain.user.profile.dto.onboard.CustomerProfileCreateData;
-import com.deliveranything.domain.user.profile.dto.onboard.RiderProfileCreateData;
-import com.deliveranything.domain.user.profile.dto.onboard.SellerProfileCreateData;
+import com.deliveranything.domain.user.profile.dto.customer.CustomerProfileCreateData;
+import com.deliveranything.domain.user.profile.dto.rider.RiderProfileCreateData;
+import com.deliveranything.domain.user.profile.dto.seller.SellerProfileCreateData;
 import com.deliveranything.domain.user.profile.entity.CustomerProfile;
 import com.deliveranything.domain.user.profile.entity.Profile;
 import com.deliveranything.domain.user.profile.entity.RiderProfile;
