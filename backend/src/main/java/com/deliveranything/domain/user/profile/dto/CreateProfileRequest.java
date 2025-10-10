@@ -1,5 +1,8 @@
-package com.deliveranything.domain.user.profile.dto.onboard;
+package com.deliveranything.domain.user.profile.dto;
 
+import com.deliveranything.domain.user.profile.dto.customer.CustomerProfileCreateData;
+import com.deliveranything.domain.user.profile.dto.rider.RiderProfileCreateData;
+import com.deliveranything.domain.user.profile.dto.seller.SellerProfileCreateData;
 import com.deliveranything.domain.user.profile.enums.ProfileType;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -7,7 +10,10 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 
-public record OnboardingRequest(
+/**
+ * 프로필 생성 요청 (온보딩/추가 통합)
+ */
+public record CreateProfileRequest(
     @NotNull(message = "프로필 타입은 필수입니다.")
     @Schema(description = "선택할 프로필 타입", example = "SELLER", requiredMode = Schema.RequiredMode.REQUIRED)
     ProfileType profileType,
@@ -35,9 +41,9 @@ public record OnboardingRequest(
         property = "profileType"
     )
     @JsonSubTypes({
-        @JsonSubTypes.Type(value = CustomerOnboardingData.class, name = "CUSTOMER"),
-        @JsonSubTypes.Type(value = SellerOnboardingData.class, name = "SELLER"),
-        @JsonSubTypes.Type(value = RiderOnboardingData.class, name = "RIDER")
+        @JsonSubTypes.Type(value = CustomerProfileCreateData.class, name = "CUSTOMER"),
+        @JsonSubTypes.Type(value = SellerProfileCreateData.class, name = "SELLER"),
+        @JsonSubTypes.Type(value = RiderProfileCreateData.class, name = "RIDER")
     })
     Object profileData
 ) {

@@ -73,31 +73,27 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
       throw new CustomException(ErrorCode.TOKEN_INVALID);
     }
 
-    if (requiresOnboarding(uri) && !user.isOnboardingCompleted()) {
-      throw new CustomException(ErrorCode.ONBOARDING_NOT_COMPLETED);
-    }
-
     setAuthentication(user);
     filterChain.doFilter(request, response);
   }
 
   private boolean requiresOnboarding(String uri) {
     return uri.startsWith("/api/v1/users/me/profile/switch")
-        || uri.startsWith("/api/v1/stores")
-        || uri.startsWith("/api/v1/products")
-        || uri.startsWith("/api/v1/orders")
-        || uri.startsWith("/api/v1/deliveries")
-        || uri.startsWith("/api/v1/reviews")
-        || uri.startsWith("/api/v1/payments")
-        || uri.startsWith("/api/v1/settlements");
+           || uri.startsWith("/api/v1/stores")
+           || uri.startsWith("/api/v1/products")
+           || uri.startsWith("/api/v1/orders")
+           || uri.startsWith("/api/v1/deliveries")
+           || uri.startsWith("/api/v1/reviews")
+           || uri.startsWith("/api/v1/payments")
+           || uri.startsWith("/api/v1/settlements");
   }
 
   private boolean isPublicEndpoint(String uri) {
     return uri.equals("/api/v1/auth/login")
-        || uri.equals("/api/v1/auth/signup")
-        || uri.equals("/api/v1/auth/refresh")
-        || uri.equals("/api/v1/auth/verification/send")
-        || uri.equals("/api/v1/auth/verification/verify");
+           || uri.equals("/api/v1/auth/signup")
+           || uri.equals("/api/v1/auth/refresh")
+           || uri.equals("/api/v1/auth/verification/send")
+           || uri.equals("/api/v1/auth/verification/verify");
   }
 
   private String extractAccessToken(HttpServletRequest request) {
@@ -109,12 +105,15 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
   }
 
   private User authenticateWithAccessToken(String accessToken) {
-    if (!authTokenService.isValidToken(accessToken) || authTokenService.isTokenExpired(accessToken)) {
+    if (!authTokenService.isValidToken(accessToken) || authTokenService.isTokenExpired(
+        accessToken)) {
       return null;
     }
 
     Map<String, Object> payload = authTokenService.payload(accessToken);
-    if (payload == null) return null;
+    if (payload == null) {
+      return null;
+    }
 
     Long userId = (Long) payload.get("id");
     return userRepository.findByIdWithProfile(userId).orElse(null);

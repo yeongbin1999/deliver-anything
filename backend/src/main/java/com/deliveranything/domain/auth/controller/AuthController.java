@@ -61,7 +61,6 @@ public class AuthController {
         .userId(user.getId())
         .email(user.getEmail())
         .username(user.getUsername())
-        .isOnboardingCompleted(user.isOnboardingCompleted())
         .build();
 
     return ResponseEntity.status(HttpStatus.CREATED)
@@ -89,7 +88,7 @@ public class AuthController {
     );
 
     User user = result.user();
-    List<ProfileType> availableProfiles = profileService.getAvailableProfiles(user.getId());
+    List<ProfileType> availableProfiles = profileService.getAvailableProfiles(user);
 
     // storeId + 프로필 상세 정보 포함 응답 생성
     LoginResponse response = LoginResponse.builder()
@@ -98,7 +97,6 @@ public class AuthController {
         .username(user.getUsername())
         .currentActiveProfileType(user.getCurrentActiveProfileType())
         .currentActiveProfileId(user.getCurrentActiveProfileId())
-        .isOnboardingCompleted(user.isOnboardingCompleted())
         .availableProfiles(availableProfiles)
         .storeId(result.storeId())  // 상점 ID
         .currentProfileDetail(result.currentProfileDetail())  // 프로필 상세 정보

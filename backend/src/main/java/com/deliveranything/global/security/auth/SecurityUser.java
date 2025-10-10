@@ -48,6 +48,11 @@ public class SecurityUser extends User implements OAuth2User {
     return this.name;
   }
 
+  // 현재 활성화된 프로필이 있는지 확인
+  public boolean hasActiveProfile() {
+    return currentActiveProfile != null;
+  }
+
   // 현재 활성화된 프로필이 특정 타입인지 확인
   public boolean hasActiveProfile(ProfileType profileType) {
     // null 체크 추가
