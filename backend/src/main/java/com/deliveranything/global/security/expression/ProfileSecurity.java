@@ -20,6 +20,11 @@ public class ProfileSecurity {
 
   public boolean isSeller(Object principal) {
     SecurityUser securityUser = getSecurityUser(principal);
+
+    if (!securityUser.hasActiveProfile()) {
+      throw new CustomException(ErrorCode.PROFILE_REQUIRED);
+    }
+
     if (!securityUser.isSellerActive()) {
       throw new CustomException(ErrorCode.PROFILE_NOT_ALLOWED);
     }
@@ -28,6 +33,12 @@ public class ProfileSecurity {
 
   public boolean isCustomer(Object principal) {
     SecurityUser securityUser = getSecurityUser(principal);
+
+    if (!securityUser.hasActiveProfile()) {
+
+      throw new CustomException(ErrorCode.PROFILE_REQUIRED);
+    }
+
     if (!securityUser.isCustomerActive()) {
       throw new CustomException(ErrorCode.PROFILE_NOT_ALLOWED);
     }
@@ -36,6 +47,11 @@ public class ProfileSecurity {
 
   public boolean isRider(Object principal) {
     SecurityUser securityUser = getSecurityUser(principal);
+
+    if (!securityUser.hasActiveProfile()) {
+      throw new CustomException(ErrorCode.PROFILE_REQUIRED);
+    }
+
     if (!securityUser.isRiderActive()) {
       throw new CustomException(ErrorCode.PROFILE_NOT_ALLOWED);
     }
