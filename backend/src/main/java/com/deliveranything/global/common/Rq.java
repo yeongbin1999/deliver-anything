@@ -4,7 +4,6 @@ import com.deliveranything.domain.user.profile.entity.Profile;
 import com.deliveranything.domain.user.profile.enums.ProfileType;
 import com.deliveranything.domain.user.user.entity.User;
 import com.deliveranything.domain.user.user.repository.UserRepository;
-import com.deliveranything.domain.user.user.service.UserService;
 import com.deliveranything.global.exception.CustomException;
 import com.deliveranything.global.exception.ErrorCode;
 import com.deliveranything.global.security.auth.SecurityUser;
@@ -15,287 +14,179 @@ import java.util.Arrays;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
-/**
- * Request/Response 처리 헬퍼 클래스 멀티 프로필 시스템에 맞게 확장 Profile 기반 전역 고유 ID 지원
- */
 @Component
 @RequiredArgsConstructor
 public class Rq {
 
   private final HttpServletRequest req;
   private final HttpServletResponse resp;
-  private final UserService userService;
   private final UserRepository userRepository;
 
-  /**
-   * SecurityUser 직접 반환 (가장 경량)
-   */
+  @Value("${custom.cookie.domain}")
+  private String cookieDomain;
+
+  // =====================================================================
+  // 👤 사용자 관련
+  // =====================================================================
+
+  /** 현재 SecurityUser 반환 (인증 객체 기반) */
   public SecurityUser getSecurityUser() {
     return Optional.ofNullable(SecurityContextHolder.getContext().getAuthentication())
         .map(Authentication::getPrincipal)
-        .filter(principal -> principal instanceof SecurityUser)
-        .map(principal -> (SecurityUser) principal)
+        .filter(SecurityUser.class::isInstance)
+        .map(SecurityUser.class::cast)
         .orElse(null);
   }
 
-  /**
-   * 현재 사용자 ID (빠른 조회)
-   */
+  /** 현재 사용자 ID 반환 (없으면 null) */
   public Long getActorId() {
-    SecurityUser securityUser = getSecurityUser();
-    return securityUser != null ? securityUser.getId() : null;
+    return Optional.ofNullable(getSecurityUser())
+        .map(SecurityUser::getId)
+        .orElse(null);
   }
 
-  /**
-   * 현재 로그인한 사용자 (없으면 예외)
-   */
+  /** 현재 로그인한 User 반환 (없으면 예외) */
   public User getActor() {
     Long userId = getActorId();
-    if (userId == null) {
-      throw new CustomException(ErrorCode.TOKEN_NOT_FOUND);
-    }
+    if (userId == null) throw new CustomException(ErrorCode.TOKEN_NOT_FOUND);
     return userRepository.findByIdWithProfile(userId)
         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
   }
 
-  /**
-   * 현재 활성화된 프로필 타입 조회
-   */
+  /** 로그인 여부 확인 */
+  public boolean isAuthenticated() {
+    return getActorId() != null;
+  }
+
+  /** 관리자 여부 확인 */
+  public boolean isAdmin() {
+    return Optional.ofNullable(getActor())
+        .map(User::isAdmin)
+        .orElse(false);
+  }
+
+  // =====================================================================
+  // 🧭 프로필 관련
+  // =====================================================================
+
+  /** 현재 활성화된 프로필 반환 (없으면 null) */
   public Profile getCurrentProfile() {
-    return Optional.ofNullable(SecurityContextHolder.getContext().getAuthentication())
-        .map(Authentication::getPrincipal)
-        .filter(principal -> principal instanceof SecurityUser)
-        .map(principal -> (SecurityUser) principal)
+    return Optional.ofNullable(getSecurityUser())
         .map(SecurityUser::getCurrentActiveProfile)
         .orElse(null);
   }
 
-  /**
-   * 현재 활성화된 프로필 ID 조회 (전역 고유 Profile ID) ✅ NULL-SAFE: 온보딩 안 한 유저는 null 반환
-   */
+  /** 현재 활성 프로필 ID 반환 (null-safe) */
   public Long getCurrentProfileId() {
-    Profile profile = getCurrentProfile();
-    return profile != null ? profile.getId() : null;  // ✅ null-safe
+    return Optional.ofNullable(getCurrentProfile())
+        .map(Profile::getId)
+        .orElse(null);
   }
 
-  /**
-   * 특정 프로필이 활성화되어 있는지 확인 ✅ NULL-SAFE: 온보딩 안 한 유저는 false 반환
-   */
+  /** 현재 활성 프로필 타입이 특정 타입인지 확인 */
   public boolean hasActiveProfile(ProfileType profileType) {
-    Profile currentProfile = getCurrentProfile();
-    return currentProfile != null && currentProfile.getType() == profileType;  // ✅ null-safe
+    return Optional.ofNullable(getCurrentProfile())
+        .map(Profile::getType)
+        .filter(type -> type == profileType)
+        .isPresent();
   }
 
-  /**
-   * 소비자 프로필이 활성화되어 있는지 확인
-   */
-  public boolean isCustomerActive() {
-    return hasActiveProfile(ProfileType.CUSTOMER);
-  }
+  // 각 프로필 타입별 활성화 여부
+  public boolean isCustomerActive() { return hasActiveProfile(ProfileType.CUSTOMER); }
+  public boolean isSellerActive()   { return hasActiveProfile(ProfileType.SELLER); }
+  public boolean isRiderActive()    { return hasActiveProfile(ProfileType.RIDER); }
 
-  /**
-   * 판매자 프로필이 활성화되어 있는지 확인
-   */
-  public boolean isSellerActive() {
-    return hasActiveProfile(ProfileType.SELLER);
-  }
+  // =====================================================================
+  // 📦 HTTP 헤더 & 쿠키
+  // =====================================================================
 
-  /**
-   * 배달원 프로필이 활성화되어 있는지 확인
-   */
-  public boolean isRiderActive() {
-    return hasActiveProfile(ProfileType.RIDER);
-  }
-
-  /**
-   * 사용자가 인증되어 있는지 확인
-   */
-  public boolean isAuthenticated() {
-    return getActor() != null;
-  }
-
-  /**
-   * 관리자인지 확인
-   */
-  public boolean isAdmin() {
-    User actor = getActor();
-    return actor != null && actor.isAdmin();
-  }
-
-  // ========== HTTP 헤더 관리 ==========
-
-  /**
-   * 요청 헤더 값 조회
-   */
+  /** 요청 헤더 조회 (기본값 지원) */
   public String getHeader(String name, String defaultValue) {
     return Optional.ofNullable(req.getHeader(name))
-        .filter(headerValue -> !headerValue.isBlank())
+        .filter(value -> !value.isBlank())
         .orElse(defaultValue);
   }
 
-  /**
-   * 응답 헤더 설정
-   */
+  /** 응답 헤더 설정 (빈 값이면 무시) */
   public void setHeader(String name, String value) {
-    if (value == null) {
-      value = "";
-    }
-
-    if (value.isBlank()) {
-      // 빈 값이면 헤더 제거
-      return;
-    } else {
+    if (value != null && !value.isBlank()) {
       resp.setHeader(name, value);
     }
   }
 
-  // ========== 쿠키 관리 ==========
-
-  /**
-   * 쿠키 값 조회
-   */
+  /** 쿠키 값 조회 (기본값 지원) */
   public String getCookieValue(String name, String defaultValue) {
     return Optional.ofNullable(req.getCookies())
-        .flatMap(cookies ->
-            Arrays.stream(cookies)
-                .filter(cookie -> cookie.getName().equals(name))
-                .map(Cookie::getValue)
-                .filter(value -> !value.isBlank())
-                .findFirst()
-        )
+        .flatMap(cookies -> Arrays.stream(cookies)
+            .filter(c -> c.getName().equals(name))
+            .map(Cookie::getValue)
+            .filter(v -> !v.isBlank())
+            .findFirst())
         .orElse(defaultValue);
   }
 
-  /**
-   * 쿠키 설정
-   */
+  /** 쿠키 설정 (빈 값이면 삭제) */
   public void setCookie(String name, String value) {
-    if (value == null) {
-      value = "";
-    }
-
-    Cookie cookie = new Cookie(name, value);
+    Cookie cookie = new Cookie(name, value != null ? value : "");
     cookie.setPath("/");
     cookie.setHttpOnly(true);
-    cookie.setDomain("localhost");
-    cookie.setSecure(true);
-    cookie.setAttribute("SameSite", "Strict");
 
-    if (value.isBlank()) {
-      cookie.setMaxAge(0); // 쿠키 삭제
+    if (!cookieDomain.equals("localhost")) {
+      cookie.setSecure(true);
+      cookie.setDomain(cookieDomain);
+      cookie.setAttribute("SameSite", "None");
     } else {
-      cookie.setMaxAge(60 * 60 * 24 * 365); // 1년
+      cookie.setDomain("localhost");
+      cookie.setSecure(false);
+      cookie.setAttribute("SameSite", "Lax");
     }
 
+    cookie.setMaxAge((value == null || value.isBlank()) ? 0 : 60 * 60 * 24 * 30); // 30일
     resp.addCookie(cookie);
   }
 
-  /**
-   * 쿠키 삭제
-   */
+  /** 쿠키 삭제 */
   public void deleteCookie(String name) {
     setCookie(name, "");
   }
 
-  // ========== JWT 토큰 관리 ==========
+  // =====================================================================
+  // 🔐 JWT 토큰 관련
+  // =====================================================================
 
-  /**
-   * Authorization 헤더에서 토큰 추출
-   */
+  /** Authorization 헤더에서 AccessToken 추출 */
   public String getAccessTokenFromHeader() {
     String authorization = getHeader("Authorization", "");
-    if (authorization.startsWith("Bearer ")) {
-      return authorization.substring(7);
-    }
-    return null;
+    return authorization.startsWith("Bearer ") ? authorization.substring(7) : null;
   }
 
-  /**
-   * Access Token을 Authorization 헤더에만 설정
-   */
+  /** Authorization 헤더 설정 */
   public void setAccessToken(String accessToken) {
     setHeader("Authorization", "Bearer " + accessToken);
   }
 
-  /**
-   * Refresh Token을 쿠키에만 설정
-   */
+  /** RefreshToken 쿠키 설정 */
   public void setRefreshToken(String refreshToken) {
     setCookie("refreshToken", refreshToken);
   }
 
-  /**
-   * Refresh Token 쿠키 삭제
-   */
+  /** RefreshToken 쿠키 삭제 */
   public void deleteRefreshToken() {
     deleteCookie("refreshToken");
   }
 
-  // ========== 프로필 전환 지원 ==========
+  // =====================================================================
+  // 🚀 기타
+  // =====================================================================
 
-  /**
-   * 프로필 전환 요청 시 사용할 헤더 정보
-   */
-  public ProfileType getRequestedProfileFromHeader() {
-    String profileHeader = getHeader("X-Active-Profile", null);
-    if (profileHeader != null) {
-      try {
-        return ProfileType.valueOf(profileHeader.toUpperCase());
-      } catch (IllegalArgumentException e) {
-        return null;
-      }
-    }
-    return null;
-  }
-
-  /**
-   * 현재 프로필 정보를 응답 헤더에 설정
-   */
-  public void setCurrentProfileHeader(ProfileType profileType) {
-    if (profileType != null) {
-      setHeader("X-Current-Profile", profileType.name());
-    }
-  }
-
-  /**
-   * 현재 프로필 ID를 응답 헤더에 설정 (전역 고유 Profile ID)
-   */
-  public void setCurrentProfileIdHeader(Long profileId) {
-    if (profileId != null) {
-      setHeader("X-Current-Profile-Id", profileId.toString());
-    }
-  }
-
-  /**
-   * 지정된 URL로 리다이렉트
-   */
+  /** 지정된 URL로 리다이렉트 */
   @SneakyThrows
   public void sendRedirect(String url) {
     resp.sendRedirect(url);
-  }
-
-  /**
-   * SSE 연결용 전역 고유 키 생성
-   */
-  public String generateGlobalProfileKey() {
-    User actor = getActor();
-    if (actor == null) {
-      return null;
-    }
-
-    Profile currentProfile = getCurrentProfile();
-    if (currentProfile == null) {
-      // 온보딩 안 한 유저
-      return String.format("%d_NO_PROFILE", actor.getId());
-    }
-
-    return String.format("%d_%s_%d",
-        actor.getId(),
-        currentProfile.getType().name(),
-        currentProfile.getId());
   }
 }

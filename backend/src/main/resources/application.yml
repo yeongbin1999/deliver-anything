@@ -132,6 +132,8 @@ custom:
 
   frontend:
     url: ${FRONTEND_URL}
+  cookie:
+    domain: ${COOKIE_DOMAIN:localhost}
 
 gemini:
   api:
