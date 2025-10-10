@@ -3,7 +3,6 @@ package com.deliveranything.domain.order.dto;
 import com.deliveranything.domain.order.entity.Order;
 import com.deliveranything.domain.order.entity.OrderItem;
 import com.deliveranything.domain.order.enums.OrderStatus;
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -16,9 +15,9 @@ public record OrderResponse(
     String address,
     String riderNote,
     String storeNote,
-    BigDecimal totalPrice,
-    BigDecimal storePrice,
-    BigDecimal deliveryPrice,
+    Long totalPrice,
+    Long storePrice,
+    Long deliveryPrice,
     LocalDateTime createdAt
 ) {
 

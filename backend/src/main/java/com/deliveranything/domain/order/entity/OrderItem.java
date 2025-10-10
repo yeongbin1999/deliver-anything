@@ -10,7 +10,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import java.math.BigDecimal;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -33,14 +32,14 @@ public class OrderItem {
   @JoinColumn(name = "product_id", nullable = false)
   private Product product;
 
-  @Column(nullable = false, precision = 19, scale = 2)
-  private BigDecimal price;
+  @Column(nullable = false)
+  private Long price;
 
   @Column(nullable = false)
-  private int quantity;
+  private Long quantity;
 
   @Builder
-  public OrderItem(Product product, BigDecimal price, int quantity) {
+  public OrderItem(Product product, Long price, Long quantity) {
     this.product = product;
     this.price = price;
     this.quantity = quantity;
