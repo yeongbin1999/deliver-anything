@@ -2,10 +2,10 @@ package com.deliveranything.domain.delivery.handler.redis;
 
 import com.deliveranything.domain.delivery.entity.Delivery;
 import com.deliveranything.domain.delivery.event.dto.OrderStatusUpdateEvent;
-import com.deliveranything.domain.delivery.event.event.sse.OrderDeliveryStatusSsePublisher;
 import com.deliveranything.domain.delivery.repository.DeliveryRepository;
 import com.deliveranything.domain.delivery.service.DeliveryService;
 import com.deliveranything.domain.notification.service.NotificationService;
+import com.deliveranything.domain.notification.subscriber.delivery.OrderDeliveryStatusNotifier;
 import com.deliveranything.domain.order.entity.Order;
 import com.deliveranything.domain.order.enums.OrderStatus;
 import com.deliveranything.domain.order.service.DeliveryOrderService;
@@ -30,7 +30,7 @@ public class OrderDeliveryStatusRedisSubscriber implements MessageListener {
   private final DeliveryOrderService deliveryOrderService;
   private final DeliveryRepository deliveryRepository;
   private final DeliveryService deliveryService;
-  private final OrderDeliveryStatusSsePublisher orderDeliveryStatusSsePublisher;
+  private final OrderDeliveryStatusNotifier orderDeliveryStatusNotifier;
 
   @PostConstruct
   public void subscribe() {
@@ -73,18 +73,18 @@ public class OrderDeliveryStatusRedisSubscriber implements MessageListener {
   // 알림 전송
   private void sendNotifications(OrderStatusUpdateEvent event) {
     // 1) 라이더 본인에게 전송
-    orderDeliveryStatusSsePublisher.publish(event.riderId(), event);
+    orderDeliveryStatusNotifier.publish(event.riderId(), event);
 
     // 2) 관련 주문자에게 전송
     Long customerId = getCustomerIdByOrderId(event.orderId());
     if (customerId != null) {
-      orderDeliveryStatusSsePublisher.publish(customerId, event);
+      orderDeliveryStatusNotifier.publish(customerId, event);
     }
 
     // 3) 관련 상점에게 전송
     Long sellerId = getStoreIdByOrderId(event.orderId());
     if (sellerId != null) {
-      orderDeliveryStatusSsePublisher.publish(sellerId, event);
+      orderDeliveryStatusNotifier.publish(sellerId, event);
     }
   }
 

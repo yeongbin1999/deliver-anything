@@ -1,7 +1,7 @@
 package com.deliveranything.domain.delivery.handler.redis;
 
-import com.deliveranything.domain.delivery.event.event.sse.OrderAcceptedSsePublisher;
 import com.deliveranything.domain.delivery.service.OrderNotificationService;
+import com.deliveranything.domain.notification.subscriber.delivery.OrderAcceptedNotifier;
 import com.deliveranything.domain.order.event.OrderAcceptedEvent;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -22,7 +22,7 @@ public class OrderAcceptedRedisSubscriber {
   private static final String CHANNEL = "order-accepted-event";
   private final ObjectMapper objectMapper;
   private final ReactiveStringRedisTemplate redisTemplate;
-  private final OrderAcceptedSsePublisher orderAssignmentSsePublisher;
+  private final OrderAcceptedNotifier orderAcceptedNotifier;
   private final OrderNotificationService orderNotificationService;
 
   @PostConstruct // 애플리케이션 구동 시 자동 실행
@@ -38,7 +38,7 @@ public class OrderAcceptedRedisSubscriber {
         }) // 수신된 메시지 내용 추출
         .filter(Objects::nonNull) // null 제거
         .flatMap(orderNotificationService::processOrderEvent) // 비즈니스 처리
-        .doOnNext(orderAssignmentSsePublisher::publish) // SSE로 전송
+        .doOnNext(orderAcceptedNotifier::publish) // SSE로 전송
         .onErrorResume(e -> {
           log.error("RedisSubscriber error: {}", e.getMessage());
           return Mono.empty(); // 끊김 방지
