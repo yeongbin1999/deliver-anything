@@ -4,7 +4,6 @@ import com.deliveranything.global.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import lombok.Builder;
 import lombok.Getter;
@@ -19,24 +18,24 @@ public class SettlementBatch extends BaseEntity {
   @Column(nullable = false)
   private Long targetId;
 
-  @Column(nullable = false, precision = 19, scale = 2)
-  private BigDecimal targetTotalAmount;
+  @Column(nullable = false)
+  private Long targetTotalAmount;
 
   @Column(nullable = false)
-  private Long transactionCount;
+  private Integer transactionCount;
 
-  @Column(nullable = false, precision = 19, scale = 2)
-  private BigDecimal totalPlatformFee;
+  @Column(nullable = false)
+  private Long totalPlatformFee;
 
-  @Column(nullable = false, precision = 19, scale = 2)
-  private BigDecimal settledAmount;
+  @Column(nullable = false)
+  private Long settledAmount;
 
   @Column(nullable = false)
   private LocalDate settlementDate;
 
   @Builder
-  public SettlementBatch(Long targetId, BigDecimal targetTotalAmount, Long transactionCount,
-      BigDecimal totalPlatformFee, BigDecimal settledAmount, LocalDate settlementDate) {
+  public SettlementBatch(Long targetId, Long targetTotalAmount, Integer transactionCount,
+      Long totalPlatformFee, Long settledAmount, LocalDate settlementDate) {
     this.targetId = targetId;
     this.targetTotalAmount = targetTotalAmount;
     this.transactionCount = transactionCount;

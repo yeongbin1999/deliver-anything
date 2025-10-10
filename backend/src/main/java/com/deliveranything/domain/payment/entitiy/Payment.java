@@ -9,7 +9,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
-import java.math.BigDecimal;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -26,19 +25,19 @@ public class Payment extends BaseEntity {
   private String paymentKey;
 
   @Column(nullable = false, precision = 19, scale = 2)
-  private BigDecimal amount;
+  private Long amount;
 
   @Enumerated(EnumType.STRING)
   @Column(nullable = false)
   private PaymentStatus status;
 
-  public Payment(String merchantUid, BigDecimal amount) {
+  public Payment(String merchantUid, Long amount) {
     this.merchantUid = merchantUid;
     this.amount = amount;
     this.status = PaymentStatus.READY;
   }
 
-  public Payment(String merchantUid, String paymentKey, BigDecimal amount, PaymentStatus status) {
+  public Payment(String merchantUid, String paymentKey, Long amount, PaymentStatus status) {
     this.merchantUid = merchantUid;
     this.paymentKey = paymentKey;
     this.amount = amount;

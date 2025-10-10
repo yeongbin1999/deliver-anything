@@ -7,7 +7,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
-import java.math.BigDecimal;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -24,11 +23,11 @@ public class SettlementDetail extends BaseEntity {
   @Column(nullable = false)
   private Long targetId;
 
-  @Column(nullable = false, precision = 19, scale = 2)
-  private BigDecimal targetAmount;
+  @Column(nullable = false)
+  private Long targetAmount;
 
-  @Column(nullable = false, precision = 19, scale = 2)
-  private BigDecimal platformFee;
+  @Column(nullable = false)
+  private Long platformFee;
 
   @Enumerated(EnumType.STRING)
   @Column(nullable = false)
@@ -37,8 +36,7 @@ public class SettlementDetail extends BaseEntity {
   private Long batchId;
 
   @Builder
-  public SettlementDetail(Long orderId, Long targetId, BigDecimal targetAmount,
-      BigDecimal platformFee) {
+  public SettlementDetail(Long orderId, Long targetId, Long targetAmount, Long platformFee) {
     this.orderId = orderId;
     this.targetId = targetId;
     this.targetAmount = targetAmount;

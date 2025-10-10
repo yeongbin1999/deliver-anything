@@ -2,13 +2,12 @@ package com.deliveranything.domain.order.event;
 
 import com.deliveranything.domain.order.entity.Order;
 import com.deliveranything.domain.order.event.dto.OrderItemInfo;
-import java.math.BigDecimal;
 import java.util.List;
 
 public record OrderCreatedEvent(
     Long orderId,
     String merchantUid,
-    BigDecimal totalPrice,
+    Long totalPrice,
     List<OrderItemInfo> orderItems
 ) {
 
