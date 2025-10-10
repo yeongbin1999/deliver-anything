@@ -14,10 +14,13 @@ import java.util.Arrays;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
+
+@Slf4j
 
 @Component
 @RequiredArgsConstructor
@@ -136,6 +139,8 @@ public class Rq {
     cookie.setPath("/");
     cookie.setHttpOnly(true);
 
+    log.info("Setting cookie: name={}, value={}, cookieDomain={}", name, value, cookieDomain);
+
     if (!cookieDomain.equals("localhost")) {
       cookie.setSecure(true);
       cookie.setDomain(cookieDomain);
@@ -147,7 +152,13 @@ public class Rq {
     }
 
     cookie.setMaxAge((value == null || value.isBlank()) ? 0 : 60 * 60 * 24 * 30); // 30일
-    resp.addCookie(cookie);
+    try {
+      resp.addCookie(cookie);
+      log.info("Cookie added successfully: name={}, domain={}", name, cookie.getDomain());
+    } catch (Exception e) {
+      log.error("Failed to add cookie: name={}, domain={}, error={}", name, cookie.getDomain(), e.getMessage(), e);
+      throw new RuntimeException("Failed to add cookie", e);
+    }
   }
 
   /** 쿠키 삭제 */
