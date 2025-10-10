@@ -4,10 +4,6 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
-/***
- * 해당 커스텀 예외 코드처럼 패키지별로 작업하시면서 MemberErrorCode 이런 식으로 작성하시면 됩니다.
- * HttpStatus와 String code는 상황에 맞게 사용하시면 됩니다.
- */
 @Getter
 @AllArgsConstructor
 public enum ErrorCode {

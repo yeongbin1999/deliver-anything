@@ -23,7 +23,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
-@EnableMethodSecurity(prePostEnabled = true)
+@EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
@@ -62,39 +62,20 @@ public class SecurityConfig {
 
         // 권한 설정
         .authorizeHttpRequests(auth -> auth
-                // 정적 리소스 및 H2 콘솔
-                .requestMatchers("/favicon.ico", "/error", "/h2-console/**").permitAll()
+            // 정적 리소스 및 H2 콘솔
+            .requestMatchers("/favicon.ico", "/error", "/h2-console/**").permitAll()
 
-                // Swagger
-                .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                // OPTIONS 메서드 전체 허용 (CORS Preflight)
-                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+            // Swagger
+            .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
 
-//            현재 필요없음
-//            // 관리자
-//            .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
-//
-//            // 사용자별 권한
-//            .requestMatchers("/api/v1/users/me/customer/**").hasRole("CUSTOMER")
-//            .requestMatchers("/api/v1/users/me/seller/**").hasRole("SELLER")
-//            .requestMatchers("/api/v1/users/me/rider/**").hasRole("RIDER")
-//
-//            // 판매자 관련
-//            .requestMatchers(HttpMethod.POST, "/api/v1/stores/**").hasRole("SELLER")
-//            .requestMatchers(HttpMethod.PUT, "/api/v1/stores/**").hasRole("SELLER")
-//            .requestMatchers(HttpMethod.DELETE, "/api/v1/stores/**").hasRole("SELLER")
-//
-//            // 주문 관련
-//            .requestMatchers(HttpMethod.POST, "/api/v1/orders").hasRole("CUSTOMER")
-//
-//            // 배달 관련
-//            .requestMatchers(HttpMethod.PUT, "/api/v1/deliveries/*/status").hasRole("RIDER")
-//
-//            // 나머지 API는 인증 필요
-//            .requestMatchers("/api/v1/**").authenticated()
+            // 인증/인가 관련 (로그인, 회원가입, 소셜 로그인, 토큰 재발급 등)
+            .requestMatchers("/oauth2/**", "/login/oauth2/**", "/api/v1/auth/**").permitAll()
 
-                // 그 외 요청 허용
-                .anyRequest().permitAll()
+            // OPTIONS 요청은 모두 허용 (CORS Preflight)
+            .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
+            // 나머지 API는 인증 필요
+            .requestMatchers("/api/v1/**").authenticated()
         )
 
         // H2 콘솔 frame 옵션 허용
@@ -143,5 +124,4 @@ public class SecurityConfig {
   public static PasswordEncoder passwordEncoder() {  // 순환 참조 해결을 위해 static 추가
     return new BCryptPasswordEncoder();
   }
-
 }

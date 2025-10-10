@@ -3,7 +3,6 @@ package com.deliveranything.domain.auth.controller;
 import com.deliveranything.domain.auth.dto.LoginRequest;
 import com.deliveranything.domain.auth.dto.LoginResponse;
 import com.deliveranything.domain.auth.dto.RefreshTokenRequest;
-import com.deliveranything.domain.auth.dto.RefreshTokenResponse;
 import com.deliveranything.domain.auth.dto.SignupRequest;
 import com.deliveranything.domain.auth.dto.SignupResponse;
 import com.deliveranything.domain.auth.service.AuthService;
@@ -113,7 +112,7 @@ public class AuthController {
   }
 
   /**
-   * 로그아웃 (현재 기기)
+   * 단일 로그아웃 (현재 기기)
    */
   @PostMapping("/logout")
   public ResponseEntity<ApiResponse<Void>> logout(
@@ -141,7 +140,7 @@ public class AuthController {
     // 쿠키 삭제
     rq.deleteRefreshToken();
 
-    return ResponseEntity.ok(ApiResponse.success("전체 로그아웃이 완료되었습니다.", null));
+    return ResponseEntity.ok(ApiResponse.success());
   }
 
   @PostMapping("/refresh")
@@ -149,7 +148,7 @@ public class AuthController {
       summary = "토큰 재발급",
       description = "Refresh Token을 사용하여 새로운 Access Token을 발급받습니다."
   )
-  public ResponseEntity<ApiResponse<RefreshTokenResponse>> refreshToken(
+  public ResponseEntity<ApiResponse<Void>> refreshToken(
       @Valid @RequestBody RefreshTokenRequest request) {
 
     log.info("Access Token 재발급 요청");
@@ -157,15 +156,9 @@ public class AuthController {
     // TokenService를 통해 새 Access Token 발급
     String newAccessToken = tokenService.refreshAccessToken(request.refreshToken());
 
-    RefreshTokenResponse response = RefreshTokenResponse.builder()
-        .accessToken(newAccessToken)
-        .build();
-
     // 쿠키 + 응답 헤더에도 설정
     rq.setAccessToken(newAccessToken);
 
-    return ResponseEntity.ok(
-        ApiResponse.success("토큰이 재발급되었습니다.", response)
-    );
+    return ResponseEntity.ok(ApiResponse.success());
   }
 }
