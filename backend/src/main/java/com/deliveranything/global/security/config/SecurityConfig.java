@@ -71,6 +71,9 @@ public class SecurityConfig {
             // 인증/인가 관련 (로그인, 회원가입, 소셜 로그인, 토큰 재발급 등)
             .requestMatchers("/oauth2/**", "/login/oauth2/**", "/api/v1/auth/**").permitAll()
 
+            // Actuator
+            .requestMatchers("/actuator/**").permitAll()
+
             // OPTIONS 요청은 모두 허용 (CORS Preflight)
             .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
