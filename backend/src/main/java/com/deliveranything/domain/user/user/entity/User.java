@@ -52,9 +52,6 @@ public class User extends BaseEntity {
   @JoinColumn(name = "current_active_profile_id")
   private Profile currentActiveProfile;
 
-  @Column(name = "is_onboarding_completed", nullable = false)
-  private boolean isOnboardingCompleted;
-
   @Column(name = "is_email_verified", nullable = false)
   private boolean isEmailVerified;
 
@@ -80,8 +77,7 @@ public class User extends BaseEntity {
     this.phoneNumber = phoneNumber;
     this.socialProvider = socialProvider != null ? socialProvider : SocialProvider.LOCAL;
     this.socialId = socialId;
-    this.currentActiveProfile = currentActiveProfile; // 현재 프로필 아이디
-    this.isOnboardingCompleted = false;
+    this.currentActiveProfile = currentActiveProfile;
     this.isEmailVerified = false;
     this.isEnabled = true;
     this.isAdmin = false;
@@ -90,11 +86,17 @@ public class User extends BaseEntity {
   // ========== 비즈니스 메서드 ==========
 
   /**
-   * 온보딩 완료 처리
+   * 활성 프로필 존재 여부
    */
-  public void completeOnboarding(Profile selectedProfile) {
-    this.currentActiveProfile = selectedProfile;
-    this.isOnboardingCompleted = true;
+  public boolean hasActiveProfile() {
+    return currentActiveProfile != null;
+  }
+
+  /**
+   * 현재 활성 프로필 설정
+   */
+  public void setCurrentActiveProfile(Profile profile) {
+    this.currentActiveProfile = profile;
   }
 
   /**
@@ -180,7 +182,6 @@ public class User extends BaseEntity {
   /**
    * 사용자 정보 업데이트 (일반 사용자용)
    */
-
   public void updateUserInfo(String username, String phoneNumber) {
     if (username != null && !username.isBlank()) {
       this.username = username;
@@ -193,7 +194,6 @@ public class User extends BaseEntity {
   /**
    * 소셜 로그인 정보 업데이트 (OAuth2용)
    */
-
   public void updateSocialInfo(String username, String email) {
     if (username != null && !username.isBlank()) {
       this.username = username;
@@ -231,5 +231,4 @@ public class User extends BaseEntity {
   public void updateLastLoginAt() {
     this.lastLoginAt = LocalDateTime.now();
   }
-
 }
