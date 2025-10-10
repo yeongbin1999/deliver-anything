@@ -5,6 +5,7 @@ import com.deliveranything.domain.settlement.service.SettlementBatchService;
 import com.deliveranything.global.common.ApiResponse;
 import com.deliveranything.global.security.auth.SecurityUser;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.LocalDate;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/store/settlements")
 @RestController
+@Tag(name = "상점 정산 API", description = "상점의 정산 조회 관련 API입니다.")
 public class StoreSettlementController {
 
   private final SettlementBatchService settlementBatchService;
