@@ -1,6 +1,7 @@
 package com.deliveranything.domain.auth.repository;
 
 import com.deliveranything.domain.auth.dto.RedisRefreshTokenDto;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Repository;
 public class RedisRefreshTokenRepository {
 
   private final RedisTemplate<String, Object> redisTemplate;
+  private final ObjectMapper objectMapper;
 
   private static final String KEY_PREFIX = "refresh_token:";
   private static final String TOKEN_INDEX_PREFIX = "token_index:";
@@ -49,7 +51,11 @@ public class RedisRefreshTokenRepository {
     }
 
     // 2. 실제 토큰 데이터 조회
-    RedisRefreshTokenDto token = (RedisRefreshTokenDto) redisTemplate.opsForValue().get(key);
+    Object data = redisTemplate.opsForValue().get(key);
+    if (data == null) {
+      return Optional.empty();
+    }
+    RedisRefreshTokenDto token = objectMapper.convertValue(data, RedisRefreshTokenDto.class);
     return Optional.ofNullable(token);
   }
 
@@ -58,7 +64,11 @@ public class RedisRefreshTokenRepository {
    */
   public Optional<RedisRefreshTokenDto> findByUserAndDevice(Long userId, String deviceInfo) {
     String key = RedisRefreshTokenDto.generateKey(userId, deviceInfo);
-    RedisRefreshTokenDto token = (RedisRefreshTokenDto) redisTemplate.opsForValue().get(key);
+    Object data = redisTemplate.opsForValue().get(key);
+    if (data == null) {
+      return Optional.empty();
+    }
+    RedisRefreshTokenDto token = objectMapper.convertValue(data, RedisRefreshTokenDto.class);
     return Optional.ofNullable(token);
   }
 
@@ -66,17 +76,15 @@ public class RedisRefreshTokenRepository {
    * 특정 디바이스 토큰 삭제
    */
   public void deleteByUserAndDevice(Long userId, String deviceInfo) {
-    Optional<RedisRefreshTokenDto> token = findByUserAndDevice(userId, deviceInfo);
-
-    if (token.isPresent()) {
+    findByUserAndDevice(userId, deviceInfo).ifPresent(token -> {
       String key = RedisRefreshTokenDto.generateKey(userId, deviceInfo);
-      String indexKey = TOKEN_INDEX_PREFIX + token.get().getTokenValue();
+      String indexKey = TOKEN_INDEX_PREFIX + token.getTokenValue();
 
       redisTemplate.delete(key);
       redisTemplate.delete(indexKey);
 
       log.info("Redis에서 RefreshToken 삭제: userId={}, deviceInfo={}", userId, deviceInfo);
-    }
+    });
   }
 
   /**
@@ -89,8 +97,9 @@ public class RedisRefreshTokenRepository {
     if (keys != null && !keys.isEmpty()) {
       // 각 토큰의 인덱스도 삭제
       keys.forEach(key -> {
-        RedisRefreshTokenDto token = (RedisRefreshTokenDto) redisTemplate.opsForValue().get(key);
-        if (token != null) {
+        Object data = redisTemplate.opsForValue().get(key);
+        if (data != null) {
+          RedisRefreshTokenDto token = objectMapper.convertValue(data, RedisRefreshTokenDto.class);
           String indexKey = TOKEN_INDEX_PREFIX + token.getTokenValue();
           redisTemplate.delete(indexKey);
         }
