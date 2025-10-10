@@ -14,7 +14,6 @@ import com.deliveranything.domain.payment.repository.PaymentRepository;
 import com.deliveranything.global.exception.CustomException;
 import com.deliveranything.global.exception.ErrorCode;
 import jakarta.annotation.PostConstruct;
-import java.math.BigDecimal;
 import java.util.Base64;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -50,15 +49,15 @@ public class PaymentService {
   }
 
   @Transactional
-  public void createPayment(String merchantUid, BigDecimal amount) {
+  public void createPayment(String merchantUid, Long amount) {
     paymentRepository.save(new Payment(merchantUid, amount));
   }
 
   @Transactional
-  public void confirmPayment(String paymentKey, String merchantUid, long orderAmount) {
+  public void confirmPayment(String paymentKey, String merchantUid, Long orderAmount) {
     Payment payment = getPayment(merchantUid, PaymentStatus.READY);
 
-    if (orderAmount != payment.getAmount().longValue()) {
+    if (orderAmount.equals(payment.getAmount())) {
       payment.updateStatus(PaymentStatus.FAILED);
       throw new CustomException(ErrorCode.PAYMENT_AMOUNT_INVALID);
     }
@@ -78,7 +77,7 @@ public class PaymentService {
 
     // zero trust 검증
     if (!(paymentKey.equals(pgResponse.paymentKey()) && merchantUid.equals(pgResponse.orderId())
-        && orderAmount == pgResponse.totalAmount())) {
+        && orderAmount.equals(pgResponse.totalAmount()))) {
       payment.updateStatus(PaymentStatus.FAILED);
       throw new CustomException(ErrorCode.PG_PAYMENT_CONFIRM_FAILED);
     }

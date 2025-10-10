@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 public record PaymentConfirmResponse(
     String paymentKey,
     String orderId,
-    long totalAmount
+    Long totalAmount
 ) {
 
 }
