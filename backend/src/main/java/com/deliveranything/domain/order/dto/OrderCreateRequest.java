@@ -6,7 +6,6 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
-import java.math.BigDecimal;
 import java.util.List;
 
 public record OrderCreateRequest(
@@ -17,9 +16,9 @@ public record OrderCreateRequest(
     @NotNull Double lng,
     @Size(max = 30) String riderNote,
     @Size(max = 30) String storeNote,
-    @NotNull @Positive BigDecimal totalPrice,
-    @NotNull @Positive BigDecimal storePrice,
-    @NotNull @Positive BigDecimal deliveryPrice
+    @NotNull @Positive Long totalPrice,
+    @NotNull @Positive Long storePrice,
+    @NotNull @Positive Long deliveryPrice
 ) {
 
 }

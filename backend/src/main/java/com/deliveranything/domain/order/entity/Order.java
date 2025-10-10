@@ -18,15 +18,16 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Point;
 
+@Slf4j
 @Getter
 @NoArgsConstructor
 @Entity
@@ -67,19 +68,18 @@ public class Order extends BaseEntity {
   @Column(length = 30)
   private String storeNote;
 
-  @Column(nullable = false, precision = 19, scale = 2)
-  private BigDecimal totalPrice;
+  @Column(nullable = false)
+  private Long totalPrice;
 
-  @Column(nullable = false, precision = 19, scale = 2)
-  private BigDecimal storePrice;
+  @Column(nullable = false)
+  private Long storePrice;
 
-  @Column(nullable = false, precision = 19, scale = 2)
-  private BigDecimal deliveryPrice;
+  @Column(nullable = false)
+  private Long deliveryPrice;
 
   @Builder
   public Order(CustomerProfile customer, Store store, String address, Point destination,
-      String riderNote, String storeNote, BigDecimal totalPrice, BigDecimal storePrice,
-      BigDecimal deliveryPrice) {
+      String riderNote, String storeNote, Long totalPrice, Long storePrice, Long deliveryPrice) {
     this.customer = customer;
     this.store = store;
     this.address = address;
@@ -100,7 +100,7 @@ public class Order extends BaseEntity {
 
   public void updateStatus(OrderStatus status) {
     if (!this.status.canTransitTo(status)) {
-      // TODO: 백엔드 내부에서 주문 상태에 접근하므로 log 만 후에 기록한다. 프론트는 해석만 할 뿐 주문 상태들을 건드릴 필요 없음.
+      log.warn("order status can't be transited at {} to {} ", this.status, status);
     }
 
     this.status = status;

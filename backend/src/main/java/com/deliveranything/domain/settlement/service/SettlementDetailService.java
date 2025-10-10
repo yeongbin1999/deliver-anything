@@ -7,8 +7,6 @@ import com.deliveranything.domain.settlement.enums.SettlementStatus;
 import com.deliveranything.domain.settlement.repository.SettlementDetailRepository;
 import com.deliveranything.global.exception.CustomException;
 import com.deliveranything.global.exception.ErrorCode;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -19,19 +17,17 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class SettlementDetailService {
 
-  private final BigDecimal PLATFORM_FEE_RATE = new BigDecimal("0.08");
   private final SettlementDetailRepository settlementDetailRepository;
 
   @Transactional
-  public void createSellerSettlement(Long orderId, Long sellerProfileId, BigDecimal storePrice) {
-    BigDecimal platformFee = storePrice
-        .multiply(PLATFORM_FEE_RATE)
-        .setScale(2, RoundingMode.HALF_UP);
+  public void createSellerSettlement(Long orderId, Long sellerProfileId, Long storePrice) {
+    double PLATFORM_FEE_RATE = 0.08;
+    long platformFee = (long) (storePrice * PLATFORM_FEE_RATE);
 
     SettlementDetail settlementDetail = SettlementDetail.builder()
         .orderId(orderId)
         .targetId(sellerProfileId)
-        .targetAmount(storePrice.subtract(platformFee))
+        .targetAmount(storePrice - platformFee)
         .platformFee(platformFee)
         .build();
 
@@ -39,12 +35,12 @@ public class SettlementDetailService {
   }
 
   @Transactional
-  public void createRiderSettlement(Long orderId, Long riderProfileId, BigDecimal deliveryPrice) {
+  public void createRiderSettlement(Long orderId, Long riderProfileId, Long deliveryPrice) {
     SettlementDetail settlementDetail = SettlementDetail.builder()
         .orderId(orderId)
         .targetId(riderProfileId)
         .targetAmount(deliveryPrice)
-        .platformFee(BigDecimal.valueOf(0))
+        .platformFee(0L)
         .build();
 
     settlementDetailRepository.save(settlementDetail);

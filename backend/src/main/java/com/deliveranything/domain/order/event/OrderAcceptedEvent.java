@@ -8,18 +8,16 @@ public record OrderAcceptedEvent(
     String orderId,
     List<OrderItemInfo> orderItems,
     String storeName,
-    double storeLon,
-    double storeLat,
-    double customerLon,
-    double customerLat
+    Double storeLon,
+    Double storeLat,
+    Double customerLon,
+    Double customerLat
 ) {
 
   public static OrderAcceptedEvent from(Order order) {
     return new OrderAcceptedEvent(
         order.getId().toString(),
-        order.getOrderItems().stream()
-            .map(OrderItemInfo::fromOrderItem)
-            .toList(),
+        order.getOrderItems().stream().map(OrderItemInfo::fromOrderItem).toList(),
         order.getStore().getName(),
         order.getStore().getLocation().getX(),
         order.getStore().getLocation().getY(),

@@ -12,7 +12,7 @@ public record PaymentCancelResponse(
 
   @JsonIgnoreProperties(ignoreUnknown = true)
   public record CancelInfo(
-      long cancelAmount
+      Long cancelAmount
   ) {
 
   }

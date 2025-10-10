@@ -4,7 +4,7 @@ public record OrderPaymentRequestedEvent(
     Long orderId,
     String paymentKey,
     String merchantUid,
-    long amount
+    Long amount
 ) {
 
 }

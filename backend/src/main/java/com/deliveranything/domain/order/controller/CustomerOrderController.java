@@ -12,6 +12,7 @@ import com.deliveranything.global.common.ApiResponse;
 import com.deliveranything.global.common.CursorPageResponse;
 import com.deliveranything.global.security.auth.SecurityUser;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -28,6 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/customer/orders")
 @RestController
+@Tag(name = "고객 주문 API", description = "소비자의 주문처리 관련 API입니다.")
 public class CustomerOrderController {
 
   private final CustomerOrderService customerOrderService;
