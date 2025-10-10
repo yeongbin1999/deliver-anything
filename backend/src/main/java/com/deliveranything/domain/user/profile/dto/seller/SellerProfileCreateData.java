@@ -1,4 +1,4 @@
-package com.deliveranything.domain.user.profile.dto.onboard;
+package com.deliveranything.domain.user.profile.dto.seller;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -7,7 +7,7 @@ import jakarta.validation.constraints.Size;
 /**
  * 판매자 프로필 온보딩 데이터
  */
-public record SellerOnboardingData(
+public record SellerProfileCreateData(
     @NotBlank(message = "닉네임은 필수 입력 사항입니다.")
     @Size(min = 2, max = 50, message = "닉네임은 2자 이상 50자 이하로 입력해주세요.")
     String nickname,

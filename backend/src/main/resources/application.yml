@@ -51,7 +51,7 @@ spring:
       client:
         registration:
           kakao:
-            client-id: ${KAKAO_CLIENT_ID}
+            client-id: ${KAKAO_API_ID}
             scope:
               - account_email
               - profile_nickname

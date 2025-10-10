@@ -37,7 +37,7 @@ public class AuthService {
   private final ProfileService profileService;
   private final PasswordEncoder passwordEncoder;
 
-  //  프로필 상세 조회용 Repository 추가
+  // 프로필 상세 조회용 Repository 추가
   private final CustomerProfileRepository customerProfileRepository;
   private final SellerProfileRepository sellerProfileRepository;
   private final RiderProfileRepository riderProfileRepository;
@@ -139,15 +139,14 @@ public class AuthService {
     String accessToken = tokenService.genAccessToken(user);
     String refreshToken = tokenService.genRefreshToken(user, deviceInfo);
 
-    //  추가: storeId 조회
+    // 추가: storeId 조회
     Long storeId = getStoreIdIfSeller(user);
 
-    //  추가: 프로필 상세 정보 조회
+    // 추가: 프로필 상세 정보 조회
     Object profileDetail = getCurrentProfileDetail(user);
 
     return new LoginResult(user, accessToken, refreshToken, storeId, profileDetail);
   }
-
 
   /**
    * OAuth2 로그인 또는 회원가입
@@ -219,9 +218,10 @@ public class AuthService {
     User user = userRepository.findById(userId)
         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-    if (!user.isOnboardingCompleted()) {
-      log.warn("온보딩이 완료되지 않은 사용자입니다: userId={}", userId);
-      throw new CustomException(ErrorCode.ONBOARDING_NOT_COMPLETED);
+    // 온보딩 체크 제거 → 프로필 존재 여부로 변경
+    if (!user.hasActiveProfile()) {
+      log.warn("프로필이 없는 사용자입니다: userId={}", userId);
+      throw new CustomException(ErrorCode.PROFILE_REQUIRED);
     }
 
     // 현재 프로필 정보 저장
@@ -262,8 +262,8 @@ public class AuthService {
           .build();
     }
 
-    // 프로필 전환 수행
-    boolean switched = profileService.switchProfile(userId, targetProfileType);
+    // 프로필 전환 수행 (User 객체로 전달)
+    boolean switched = profileService.switchProfile(user, targetProfileType);
 
     if (!switched) {
       log.error("프로필 전환 실패: userId={}, targetProfile={}", userId, targetProfileType);
@@ -322,20 +322,20 @@ public class AuthService {
   }
 
   /**
-   * 현재 활성 프로필의 상세 정보 조회 온보딩 미완료 또는 프로필 없으면 null 반환
+   * 현재 활성 프로필의 상세 정보 조회 프로필 없으면 null 반환
    */
   private Object getCurrentProfileDetail(User user) {
-    // 온보딩 미완료면 null
-    if (!user.isOnboardingCompleted() || user.getCurrentActiveProfileType() == null) {
+    // 온보딩 체크 제거 → 프로필 존재 여부로 변경
+    if (!user.hasActiveProfile()) {
       return null;
     }
 
     Long profileId = user.getCurrentActiveProfileId();
-    if (profileId == null) {
+    ProfileType profileType = user.getCurrentActiveProfileType();
+
+    if (profileId == null || profileType == null) {
       return null;
     }
-
-    ProfileType profileType = user.getCurrentActiveProfileType();
 
     return switch (profileType) {
       case CUSTOMER -> {

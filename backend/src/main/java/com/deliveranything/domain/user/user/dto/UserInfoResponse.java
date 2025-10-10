@@ -34,7 +34,6 @@ public record UserInfoResponse(
         .socialProvider(user.getSocialProvider())
         .currentActiveProfileType(user.getCurrentActiveProfileType())
         .currentActiveProfileId(user.getCurrentActiveProfileId())
-        .isOnboardingCompleted(user.isOnboardingCompleted())
         .isEmailVerified(user.isEmailVerified())
         .isAdmin(user.isAdmin())
         .createdAt(user.getCreatedAt())

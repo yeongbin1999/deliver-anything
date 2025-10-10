@@ -29,6 +29,6 @@ public interface ProfileRepository extends JpaRepository<Profile, Long> {
   // 활성 상태인 특정 타입의 모든 프로필 조회
   List<Profile> findByTypeAndIsActiveTrue(ProfileType type);
 
-  // 사용자가 특정 타입의 프로필을 가지고 있는지 확인
-  boolean existsByUserAndTypeAndIsActiveTrue(User user, ProfileType type);
+  // 사용자ID와 프로필 타입으로 존재 여부 확인
+  boolean existsByUserIdAndType(Long userId, ProfileType profileType);
 }
