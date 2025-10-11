@@ -10,12 +10,15 @@ public enum NotificationMessage {
 
   ORDER_PAID_CUSTOMER("주문 결제가 성공적으로 완료되었습니다."),
   ORDER_PAID_SELLER("새로운 주문 요청이 있습니다."),
+  ORDER_PREPARING_CUSTOMER("주문이 준비중입니다."),
+  ORDER_PREPARING_SELLER("주문 수락이 완료되어 주문을 준비할 수 있습니다."),
   ORDER_PAYMENT_FAILED_CUSTOMER("결제에 실패했습니다. 다시 시도해주세요."),
   ORDER_CANCELED_CUSTOMER("주문이 성공적으로 취소되었습니다."),
   ORDER_CANCELED_SELLER("주문이 정상적으로 거절되었습니다."),
   RIDER_STATUS_CHANGED("배달원 상태가 변경되었습니다."),
   RIDER_ACCEPTED_ORDER("수락된 주문이 표시됩니다."),
   RIDER_DECISION("배달원이 주문 상태를 변경했습니다."),
+
   ;
 
   private final String message;

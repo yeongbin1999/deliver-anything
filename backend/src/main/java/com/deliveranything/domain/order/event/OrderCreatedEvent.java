@@ -16,9 +16,7 @@ public record OrderCreatedEvent(
         order.getId(),
         order.getMerchantId(),
         order.getTotalPrice(),
-        order.getOrderItems().stream()
-            .map(OrderItemInfo::fromOrderItem)
-            .toList()
+        order.getOrderItems().stream().map(OrderItemInfo::fromOrderItem).toList()
     );
   }
 }

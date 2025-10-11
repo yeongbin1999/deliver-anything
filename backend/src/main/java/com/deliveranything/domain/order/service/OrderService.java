@@ -7,9 +7,11 @@ import com.deliveranything.domain.order.event.OrderCompletedEvent;
 import com.deliveranything.domain.order.event.sse.customer.OrderCanceledForCustomerEvent;
 import com.deliveranything.domain.order.event.sse.customer.OrderPaidForCustomerEvent;
 import com.deliveranything.domain.order.event.sse.customer.OrderPaymentFailedForCustomerEvent;
+import com.deliveranything.domain.order.event.sse.customer.OrderPreparingForCustomerEvent;
 import com.deliveranything.domain.order.event.sse.customer.OrderStatusChangedForCustomerEvent;
 import com.deliveranything.domain.order.event.sse.seller.OrderCanceledForSellerEvent;
 import com.deliveranything.domain.order.event.sse.seller.OrderPaidForSellerEvent;
+import com.deliveranything.domain.order.event.sse.seller.OrderPreparingForSellerEvent;
 import com.deliveranything.domain.order.event.sse.seller.OrderStatusChangedForSellerEvent;
 import com.deliveranything.domain.order.repository.OrderRepository;
 import com.deliveranything.global.exception.CustomException;
@@ -33,6 +35,15 @@ public class OrderService {
 
     eventPublisher.publishEvent(OrderPaidForCustomerEvent.fromOrder(order));
     eventPublisher.publishEvent(OrderPaidForSellerEvent.fromOrder(order));
+  }
+
+  @Transactional
+  public void processOrderTransmitted(Long orderId) {
+    Order order = getOrderById(orderId);
+    order.updateStatus(OrderStatus.PREPARING);
+
+    eventPublisher.publishEvent(OrderPreparingForCustomerEvent.fromOrder(order));
+    eventPublisher.publishEvent(OrderPreparingForSellerEvent.fromOrder(order));
   }
 
   @Transactional

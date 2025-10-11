@@ -10,9 +10,11 @@ import com.deliveranything.domain.order.event.OrderRejectedEvent;
 import com.deliveranything.domain.order.event.sse.customer.OrderCanceledForCustomerEvent;
 import com.deliveranything.domain.order.event.sse.customer.OrderPaidForCustomerEvent;
 import com.deliveranything.domain.order.event.sse.customer.OrderPaymentFailedForCustomerEvent;
+import com.deliveranything.domain.order.event.sse.customer.OrderPreparingForCustomerEvent;
 import com.deliveranything.domain.order.event.sse.customer.OrderStatusChangedForCustomerEvent;
 import com.deliveranything.domain.order.event.sse.seller.OrderCanceledForSellerEvent;
 import com.deliveranything.domain.order.event.sse.seller.OrderPaidForSellerEvent;
+import com.deliveranything.domain.order.event.sse.seller.OrderPreparingForSellerEvent;
 import com.deliveranything.domain.order.event.sse.seller.OrderStatusChangedForSellerEvent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -94,5 +96,15 @@ public class OrderEventPublisher {
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
   public void handleOrderStatusChangedForSellerEvent(OrderStatusChangedForSellerEvent event) {
     redisTemplate.convertAndSend("order-status-changed-for-seller-event", event);
+  }
+
+  @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+  public void handleOrderPreparedForCustomerEvent(OrderPreparingForCustomerEvent event) {
+    redisTemplate.convertAndSend("order-preparing-for-customer-event", event);
+  }
+
+  @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+  public void handleOrderPreparedForSellerEvent(OrderPreparingForSellerEvent event) {
+    redisTemplate.convertAndSend("order-preparing-for-seller-event", event);
   }
 }
