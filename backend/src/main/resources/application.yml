@@ -128,7 +128,7 @@ custom:
   jwt:
     secretKey: ${JWT_SECRET_KEY:your_jwt_secret_key_here}
   accessToken:
-    expirationSeconds: "#{60*20}"
+    expirationSeconds: "#{60*5}"
 
   frontend:
     url: ${FRONTEND_URL:http://localhost:3000}
