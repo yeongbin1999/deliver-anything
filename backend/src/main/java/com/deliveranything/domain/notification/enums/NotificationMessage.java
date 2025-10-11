@@ -15,6 +15,10 @@ public enum NotificationMessage {
   ORDER_PAYMENT_FAILED_CUSTOMER("결제에 실패했습니다. 다시 시도해주세요."),
   ORDER_CANCELED_CUSTOMER("주문이 성공적으로 취소되었습니다."),
   ORDER_CANCELED_SELLER("주문이 정상적으로 거절되었습니다."),
+  ORDER_CANCEL_FAILED_CUSTOMER("주문 취소되었고 3일 내에 계좌에 환불됩니다."),
+  // 상점의 거절 or 고객의 거절처리 중 어떤 결과(성공, 실패)든 무조건 취소됨
+  ORDER_CANCEL_FAILED_SELLER("주문이 정상적으로 취소되었습니다."),
+
   RIDER_STATUS_CHANGED("배달원 상태가 변경되었습니다."),
   RIDER_ACCEPTED_ORDER("수락된 주문이 표시됩니다."),
   RIDER_DECISION("배달원이 주문 상태를 변경했습니다."),

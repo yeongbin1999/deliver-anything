@@ -5,10 +5,12 @@ import com.deliveranything.domain.order.enums.OrderStatus;
 import com.deliveranything.domain.order.enums.Publisher;
 import com.deliveranything.domain.order.event.OrderCancelSucceededEvent;
 import com.deliveranything.domain.order.event.OrderCompletedEvent;
+import com.deliveranything.domain.order.event.sse.customer.OrderCancelFailedForCustomerEvent;
 import com.deliveranything.domain.order.event.sse.customer.OrderPaidForCustomerEvent;
 import com.deliveranything.domain.order.event.sse.customer.OrderPaymentFailedForCustomerEvent;
 import com.deliveranything.domain.order.event.sse.customer.OrderPreparingForCustomerEvent;
 import com.deliveranything.domain.order.event.sse.customer.OrderStatusChangedForCustomerEvent;
+import com.deliveranything.domain.order.event.sse.seller.OrderCancelFailedForSellerEvent;
 import com.deliveranything.domain.order.event.sse.seller.OrderPaidForSellerEvent;
 import com.deliveranything.domain.order.event.sse.seller.OrderPreparingForSellerEvent;
 import com.deliveranything.domain.order.event.sse.seller.OrderStatusChangedForSellerEvent;
@@ -67,6 +69,15 @@ public class OrderService {
     // TODO: 후에 StockReplensishedEvent 듣고 그때 주문 상태 수정한 후에 아래 부분들 새 메서드에서 보내야함.
 //    eventPublisher.publishEvent(OrderCanceledForCustomerEvent.fromOrder(order));
 //    eventPublisher.publishEvent(OrderCanceledForSellerEvent.fromOrder(order));
+  }
+
+  @Transactional
+  public void processPaymentCancelFailed(String merchantUid) {
+    Order order = getOrderByMerchantId(merchantUid);
+    order.updateStatus(OrderStatus.CANCEL_FAILED);
+
+    eventPublisher.publishEvent(OrderCancelFailedForCustomerEvent.fromOrder(order));
+    eventPublisher.publishEvent(OrderCancelFailedForSellerEvent.fromOrder(order));
   }
 
   @Transactional
