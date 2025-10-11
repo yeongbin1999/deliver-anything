@@ -10,6 +10,7 @@ import com.deliveranything.domain.payment.entitiy.Payment;
 import com.deliveranything.domain.payment.enums.PaymentStatus;
 import com.deliveranything.domain.payment.event.PaymentCancelFailedEvent;
 import com.deliveranything.domain.payment.event.PaymentCancelSuccessEvent;
+import com.deliveranything.domain.payment.event.PaymentFailedEvent;
 import com.deliveranything.domain.payment.event.PaymentSuccessEvent;
 import com.deliveranything.domain.payment.repository.PaymentRepository;
 import com.deliveranything.global.exception.CustomException;
@@ -60,6 +61,7 @@ public class PaymentService {
 
     if (orderAmount.equals(payment.getAmount())) {
       payment.updateStatus(PaymentStatus.FAILED);
+      eventPublisher.publishEvent(new PaymentFailedEvent(merchantUid));
       throw new CustomException(ErrorCode.PAYMENT_AMOUNT_INVALID);
     }
 
@@ -73,6 +75,7 @@ public class PaymentService {
 
     if (pgResponse == null) {
       payment.updateStatus(PaymentStatus.FAILED);
+      eventPublisher.publishEvent(new PaymentFailedEvent(merchantUid));
       throw new CustomException(ErrorCode.PG_PAYMENT_NOT_FOUND);
     }
 
@@ -80,6 +83,7 @@ public class PaymentService {
     if (!(paymentKey.equals(pgResponse.paymentKey()) && merchantUid.equals(pgResponse.orderId())
         && orderAmount.equals(pgResponse.totalAmount()))) {
       payment.updateStatus(PaymentStatus.FAILED);
+      eventPublisher.publishEvent(new PaymentFailedEvent(merchantUid));
       throw new CustomException(ErrorCode.PG_PAYMENT_CONFIRM_FAILED);
     }
 

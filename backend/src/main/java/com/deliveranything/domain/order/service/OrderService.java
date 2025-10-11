@@ -5,13 +5,12 @@ import com.deliveranything.domain.order.enums.OrderStatus;
 import com.deliveranything.domain.order.enums.Publisher;
 import com.deliveranything.domain.order.event.OrderCancelSucceededEvent;
 import com.deliveranything.domain.order.event.OrderCompletedEvent;
+import com.deliveranything.domain.order.event.OrderPaymentFailedEvent;
+import com.deliveranything.domain.order.event.OrderPaymentSucceededEvent;
 import com.deliveranything.domain.order.event.sse.customer.OrderCancelFailedForCustomerEvent;
-import com.deliveranything.domain.order.event.sse.customer.OrderPaidForCustomerEvent;
-import com.deliveranything.domain.order.event.sse.customer.OrderPaymentFailedForCustomerEvent;
 import com.deliveranything.domain.order.event.sse.customer.OrderPreparingForCustomerEvent;
 import com.deliveranything.domain.order.event.sse.customer.OrderStatusChangedForCustomerEvent;
 import com.deliveranything.domain.order.event.sse.seller.OrderCancelFailedForSellerEvent;
-import com.deliveranything.domain.order.event.sse.seller.OrderPaidForSellerEvent;
 import com.deliveranything.domain.order.event.sse.seller.OrderPreparingForSellerEvent;
 import com.deliveranything.domain.order.event.sse.seller.OrderStatusChangedForSellerEvent;
 import com.deliveranything.domain.order.repository.OrderRepository;
@@ -32,10 +31,12 @@ public class OrderService {
   @Transactional
   public void processPaymentCompletion(String merchantUid) {
     Order order = getOrderWithStoreByMerchantId(merchantUid);
-    order.updateStatus(OrderStatus.PENDING);
+    eventPublisher.publishEvent(OrderPaymentSucceededEvent.fromOrder(order));
 
-    eventPublisher.publishEvent(OrderPaidForCustomerEvent.fromOrder(order));
-    eventPublisher.publishEvent(OrderPaidForSellerEvent.fromOrder(order));
+    // TODO: 후에 StockCommittedEvent 듣고 그때 주문 상태 수정한 후에 아래 부분들 새 메서드에서 보내야함.
+//    order.updateStatus(OrderStatus.PENDING);
+//    eventPublisher.publishEvent(OrderPaidForCustomerEvent.fromOrder(order));
+//    eventPublisher.publishEvent(OrderPaidForSellerEvent.fromOrder(order));
   }
 
   @Transactional
@@ -50,9 +51,11 @@ public class OrderService {
   @Transactional
   public void processPaymentFailure(String merchantUid) {
     Order order = getOrderByMerchantId(merchantUid);
-    order.updateStatus(OrderStatus.PAYMENT_FAILED);
+    eventPublisher.publishEvent(OrderPaymentFailedEvent.fromOrder(order));
 
-    eventPublisher.publishEvent(OrderPaymentFailedForCustomerEvent.fromOrder(order));
+    // TODO: 후에 StockReleasedEvent 듣고 그때 주문 상태 수정한 후에 아래 부분들 새 메서드에서 보내야함.
+//    order.updateStatus(OrderStatus.PAYMENT_FAILED);
+//    eventPublisher.publishEvent(OrderPaymentFailedForCustomerEvent.fromOrder(order));
   }
 
   @Transactional
