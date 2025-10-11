@@ -30,8 +30,7 @@ public class CustomerAddress extends BaseEntity {
   @Column(name = "address", nullable = false, columnDefinition = "VARCHAR(300)")
   private String address;
 
-  @Column(columnDefinition = "POINT SRID 4326", nullable = false)
-//  @Column(columnDefinition = "geometry", nullable = false)
+  @Column(columnDefinition = "geometry", nullable = false)
   private Point location;
 
   @Builder
