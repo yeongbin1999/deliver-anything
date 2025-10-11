@@ -44,7 +44,7 @@ spring:
 
   elasticsearch:
     uris:
-      - http://localhost:9200
+      - localhost:9200
 
   security:
     oauth2:

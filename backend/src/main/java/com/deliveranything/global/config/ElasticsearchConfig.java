@@ -1,5 +1,6 @@
 package com.deliveranything.global.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.elasticsearch.client.ClientConfiguration;
 import org.springframework.data.elasticsearch.client.elc.ElasticsearchConfiguration;
@@ -10,10 +11,12 @@ import org.springframework.lang.NonNull;
 @EnableElasticsearchRepositories
 public class ElasticsearchConfig extends ElasticsearchConfiguration {
 
+  @Value("${spring.elasticsearch.uris[0]}")
+  private String host;
+
   @Override
   @NonNull
   public ClientConfiguration clientConfiguration() {
-    String host = "localhost:9200";
     return ClientConfiguration.builder()
         .connectedTo(host)
         .build();
