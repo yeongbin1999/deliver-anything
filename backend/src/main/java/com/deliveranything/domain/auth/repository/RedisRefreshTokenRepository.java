@@ -7,6 +7,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -18,6 +19,9 @@ public class RedisRefreshTokenRepository {
   private final RedisTemplate<String, Object> redisTemplate;
   private final ObjectMapper objectMapper;
 
+  @Value("${custom.refreshToken.expirationDays}")
+  private int refreshTokenExpirationDays;
+
   private static final String KEY_PREFIX = "refresh_token:";
   private static final String TOKEN_INDEX_PREFIX = "token_index:";
 
@@ -28,14 +32,14 @@ public class RedisRefreshTokenRepository {
     String key = RedisRefreshTokenDto.generateKey(token.getUserId(), token.getDeviceInfo());
 
     // 1. 토큰 데이터 저장
-    redisTemplate.opsForValue().set(key, token, 14, TimeUnit.DAYS);
+    redisTemplate.opsForValue().set(key, token, refreshTokenExpirationDays, TimeUnit.DAYS);
 
     // 2. 토큰 값으로 키를 찾을 수 있도록 인덱스 저장 (역참조용)
     String indexKey = TOKEN_INDEX_PREFIX + token.getTokenValue();
-    redisTemplate.opsForValue().set(indexKey, key, 14, TimeUnit.DAYS);
+    redisTemplate.opsForValue().set(indexKey, key, refreshTokenExpirationDays, TimeUnit.DAYS);
 
-    log.info("Redis에 RefreshToken 저장: userId={}, deviceInfo={}",
-        token.getUserId(), token.getDeviceInfo());
+    log.info("Redis에 RefreshToken 저장: userId={}, deviceInfo={}, ttl={}일",
+        token.getUserId(), token.getDeviceInfo(), refreshTokenExpirationDays);
   }
 
   /**
