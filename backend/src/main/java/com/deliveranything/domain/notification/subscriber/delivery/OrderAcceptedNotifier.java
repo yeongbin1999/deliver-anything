@@ -1,6 +1,6 @@
 package com.deliveranything.domain.notification.subscriber.delivery;
 
-import com.deliveranything.domain.delivery.event.dto.OrderAssignedDto;
+import com.deliveranything.domain.delivery.event.dto.OrderAssignedEvent;
 import com.deliveranything.domain.delivery.event.dto.RiderNotificationDto;
 import com.deliveranything.domain.notification.enums.NotificationMessage;
 import com.deliveranything.domain.notification.enums.NotificationType;
@@ -40,7 +40,7 @@ public class OrderAcceptedNotifier {
     );
 
     // 주문이 모든 라이더에게 배정 되었음을 알림
-    eventPublisher.publishEvent(new OrderAssignedDto(
+    eventPublisher.publishEvent(new OrderAssignedEvent(
         Long.parseLong(events.getFirst().orderDetailsDto().orderId())
     ));
   }

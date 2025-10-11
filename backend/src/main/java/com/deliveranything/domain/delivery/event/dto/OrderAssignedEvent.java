@@ -1,6 +1,6 @@
 package com.deliveranything.domain.delivery.event.dto;
 
-public record OrderAssignedDto(
+public record OrderAssignedEvent(
     Long orderId
 ) {
 
