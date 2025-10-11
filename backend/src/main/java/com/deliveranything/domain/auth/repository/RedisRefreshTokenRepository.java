@@ -22,17 +22,17 @@ public class RedisRefreshTokenRepository {
   private static final String TOKEN_INDEX_PREFIX = "token_index:";
 
   /**
-   * Refresh Token 저장 (30일 TTL)
+   * Refresh Token 저장 (14일 TTL)
    */
   public void save(RedisRefreshTokenDto token) {
     String key = RedisRefreshTokenDto.generateKey(token.getUserId(), token.getDeviceInfo());
 
     // 1. 토큰 데이터 저장
-    redisTemplate.opsForValue().set(key, token, 30, TimeUnit.DAYS);
+    redisTemplate.opsForValue().set(key, token, 14, TimeUnit.DAYS);
 
     // 2. 토큰 값으로 키를 찾을 수 있도록 인덱스 저장 (역참조용)
     String indexKey = TOKEN_INDEX_PREFIX + token.getTokenValue();
-    redisTemplate.opsForValue().set(indexKey, key, 30, TimeUnit.DAYS);
+    redisTemplate.opsForValue().set(indexKey, key, 14, TimeUnit.DAYS);
 
     log.info("Redis에 RefreshToken 저장: userId={}, deviceInfo={}",
         token.getUserId(), token.getDeviceInfo());
