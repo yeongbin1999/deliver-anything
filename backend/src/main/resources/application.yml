@@ -26,7 +26,7 @@ spring:
         generate_statistics: true           # Hibernate 통계 출력 (캐시 히트율, 쿼리 횟수 등)
 
   datasource:
-    url: jdbc:h2:./dev;MODE=MySQL        # H2 데이터베이스 (MySQL 호환 모드)
+    url: jdbc:h2:./dev;MODE=MySQL;INIT=CREATE SCHEMA IF NOT EXISTS GIS;
     driver-class-name: org.h2.Driver     # H2 드라이버
     username: sa                         # 기본 사용자
     password:                            # 비밀번호 없음
