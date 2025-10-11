@@ -101,28 +101,36 @@ public class SecurityConfig {
   public UrlBasedCorsConfigurationSource corsConfigurationSource() {
     CorsConfiguration configuration = new CorsConfiguration();
 
-    // 허용할 오리진
+    // 허용할 오리진 목록
     configuration.setAllowedOriginPatterns(List.of(
         "http://localhost:*",
         "https://www.deliver-anything.shop",
-        "https://api.deliver-anything.shop",
-        "https://cdpn.io"
+        "https://api.deliver-anything.shop"
     ));
 
+    // 허용할 HTTP 메서드
     configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+
+    // 허용할 헤더
     configuration.setAllowedHeaders(List.of("*"));
+
+    // 쿠키/인증 정보 전송 허용
     configuration.setAllowCredentials(true);
 
-    // Authorization 헤더 노출 (JWT)
+    // 클라이언트 JS에서 Authorization 헤더 접근 가능
     configuration.setExposedHeaders(List.of("Authorization"));
+
+    // Preflight 캐시 시간
+    configuration.setMaxAge(3600L);
 
     UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
 
-    // 전체 경로에 적용 → Swagger + API 모두 CORS 허용
+    // 모든 경로에 적용
     source.registerCorsConfiguration("/**", configuration);
 
     return source;
   }
+
 
   @Bean
   public static PasswordEncoder passwordEncoder() {  // 순환 참조 해결을 위해 static 추가
