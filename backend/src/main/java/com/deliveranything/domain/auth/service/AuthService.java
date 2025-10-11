@@ -235,7 +235,8 @@ public class AuthService {
   @Transactional
   public SwitchProfileResponse switchProfileWithTokenReissue(
       Long userId,
-      ProfileType targetProfileType) {
+      ProfileType targetProfileType,
+      String oldAccessToken) {
 
     User user = userRepository.findById(userId)
         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
@@ -265,6 +266,12 @@ public class AuthService {
           userId, targetProfileType);
 
       String newAccessToken = tokenService.genAccessToken(user);
+
+      // 기존 AccessToken 블랙리스트 등록
+      if (oldAccessToken != null && !oldAccessToken.isEmpty()) {
+        tokenBlacklistService.addToBlacklist(oldAccessToken);
+        log.info("프로필 전환 - 기존 accessToken 블랙리스트 등록: userId={}", userId);
+      }
 
       // storeId 조회
       Long storeId = getStoreIdIfSeller(user);
@@ -298,6 +305,12 @@ public class AuthService {
 
     // Access Token만 재발급 (Refresh Token 유지)
     String newAccessToken = tokenService.genAccessToken(updatedUser);
+
+    // 기존 AccessToken 블랙리스트 등록
+    if (oldAccessToken != null && !oldAccessToken.isEmpty()) {
+      tokenBlacklistService.addToBlacklist(oldAccessToken);
+      log.info("프로필 전환 완료 및 기존 accessToken 블랙리스트 등록: userId={}", userId);
+    }
 
     // storeId 조회
     Long storeId = getStoreIdIfSeller(updatedUser);
