@@ -11,7 +11,6 @@ public record LoginResponse(
     String username,
     ProfileType currentActiveProfileType,
     Long currentActiveProfileId,
-    boolean isOnboardingCompleted,
     List<ProfileType> availableProfiles,
     Long storeId,  // ✅ 판매자 프로필의 상점 ID (없으면 null)
     Object currentProfileDetail

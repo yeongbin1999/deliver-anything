@@ -57,7 +57,7 @@ public class CustomerProfileController {
 
     // ✅ null 체크 추가
     if (profileId == null) {
-      throw new CustomException(ErrorCode.ONBOARDING_NOT_COMPLETED);
+      throw new CustomException(ErrorCode.PROFILE_REQUIRED);
     }
 
     log.info("고객 프로필 조회 요청: profileId={}", profileId);
