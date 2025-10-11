@@ -1,6 +1,7 @@
 package com.deliveranything.domain.auth.service;
 
 import com.deliveranything.domain.auth.enums.SocialProvider;
+import com.deliveranything.domain.store.store.service.StoreService;
 import com.deliveranything.domain.user.profile.dto.SwitchProfileResponse;
 import com.deliveranything.domain.user.profile.dto.customer.CustomerProfileDetail;
 import com.deliveranything.domain.user.profile.dto.rider.RiderProfileDetail;
@@ -37,6 +38,7 @@ public class AuthService {
   private final TokenService tokenService;
   private final ProfileService profileService;
   private final TokenBlacklistService tokenBlacklistService;
+  private final StoreService storeService;
 
   private final PasswordEncoder passwordEncoder;
 
@@ -44,9 +46,6 @@ public class AuthService {
   private final CustomerProfileRepository customerProfileRepository;
   private final SellerProfileRepository sellerProfileRepository;
   private final RiderProfileRepository riderProfileRepository;
-
-  // StoreService 추가 (상점 조회용)
-  // private final StoreService storeService;  // TODO: 주석 해제 후 사용
 
 
   /**
@@ -335,13 +334,7 @@ public class AuthService {
       return null;
     }
 
-    // StoreService를 통해 상점 ID 조회
-    // TODO: StoreService 의존성 주입 후 주석 해제
-    // return storeService.getStoreIdBySellerProfileId(sellerProfileId);
-
-    // ⚠️ 임시: StoreService 없을 때는 null 반환
-    log.debug("StoreService 미구현: sellerProfileId={}", sellerProfileId);
-    return null;
+    return storeService.getStoreIdBySellerProfileId(sellerProfileId);
   }
 
   /**
