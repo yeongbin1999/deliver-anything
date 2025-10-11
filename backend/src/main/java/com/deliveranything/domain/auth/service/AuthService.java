@@ -33,8 +33,11 @@ public class AuthService {
 
   private final UserRepository userRepository;
   private final ProfileRepository profileRepository;
+
   private final TokenService tokenService;
   private final ProfileService profileService;
+  private final TokenBlacklistService tokenBlacklistService;
+
   private final PasswordEncoder passwordEncoder;
 
   // 프로필 상세 조회용 Repository 추가
@@ -44,6 +47,7 @@ public class AuthService {
 
   // StoreService 추가 (상점 조회용)
   // private final StoreService storeService;  // TODO: 주석 해제 후 사용
+
 
   /**
    * 일반 회원가입
@@ -179,18 +183,37 @@ public class AuthService {
    * 로그아웃 (현재 기기만)
    */
   @Transactional
-  public void logout(Long userId, String deviceInfo) {
+  public void logout(Long userId, String deviceInfo, String accessToken) {
+    // 특정 기기의 Refresh Token 무효화
     tokenService.invalidateRefreshToken(userId, deviceInfo);
     log.info("로그아웃 완료: userId={}, deviceInfo={}", userId, deviceInfo);
+
+    // Access Token 블랙리스트 등록
+    if (accessToken != null && !accessToken.isEmpty()) {
+      tokenBlacklistService.addToBlacklist(accessToken);
+      log.info("로그아웃 완료 및 accessToken 블랙리스트 등록: userId={}", userId);
+    } else {
+      log.info("로그아웃 완료: userId={}, deviceInfo={}", userId, deviceInfo);
+    }
+
   }
 
   /**
    * 전체 로그아웃 (모든 기기)
    */
   @Transactional
-  public void logoutAll(Long userId) {
+  public void logoutAll(Long userId, String accessToken) {
+    // 모든 기기 리프레시 토큰 무효화
     tokenService.invalidateAllRefreshTokens(userId);
     log.info("전체 로그아웃 완료: userId={}", userId);
+
+    // 현재 Access Token 블랙리스트 등록 -> 다른 기기들의 Access Token은 자연 만료(직접 추적해서 모두 수동만료 시키려면 JWT의 stateless 장점 사라진다고 생각해서 이렇게 구현 )
+    if (accessToken != null && !accessToken.isEmpty()) {
+      tokenBlacklistService.addToBlacklist(accessToken);
+      log.info("전체 로그아웃 완료 및 accessToken 블랙리스트 등록: userId={}", userId);
+    } else {
+      log.info("전체 로그아웃 완료: userId={}", userId);
+    }
   }
 
   /**
