@@ -77,16 +77,6 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
     filterChain.doFilter(request, response);
   }
 
-  private boolean requiresOnboarding(String uri) {
-    return uri.startsWith("/api/v1/users/me/profile/switch")
-           || uri.startsWith("/api/v1/stores")
-           || uri.startsWith("/api/v1/products")
-           || uri.startsWith("/api/v1/orders")
-           || uri.startsWith("/api/v1/deliveries")
-           || uri.startsWith("/api/v1/reviews")
-           || uri.startsWith("/api/v1/payments")
-           || uri.startsWith("/api/v1/settlements");
-  }
 
   private boolean isPublicEndpoint(String uri) {
     return uri.equals("/api/v1/auth/login")

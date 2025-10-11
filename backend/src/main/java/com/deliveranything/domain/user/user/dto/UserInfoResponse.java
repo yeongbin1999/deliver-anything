@@ -15,7 +15,7 @@ public record UserInfoResponse(
     SocialProvider socialProvider,
     ProfileType currentActiveProfileType,
     Long currentActiveProfileId,
-    boolean isOnboardingCompleted,
+
     boolean isEmailVerified,
     boolean isAdmin,
     LocalDateTime createdAt,
