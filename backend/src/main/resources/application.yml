@@ -128,7 +128,7 @@ custom:
   jwt:
     secretKey: ${JWT_SECRET_KEY:your_jwt_secret_key_here}
   accessToken:
-    expirationSeconds: "#{60*5}"
+    expirationSeconds: "#{60*20}"
   refreshToken:
     expirationDays: 14
 
