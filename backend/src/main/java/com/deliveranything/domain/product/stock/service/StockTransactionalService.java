@@ -18,8 +18,8 @@ public class StockTransactionalService {
   public StockResponse changeStockTransactional(Long productId, int change) {
     Stock stock = stockRepository.getByProductId(productId);
 
-    if (change > 0) stock.increaseQuantity(change);
-    else stock.decreaseQuantity(-change);
+    if (change > 0) stock.replenish(change);
+    else stock.setTotalQuantity(stock.getTotalQuantity() + change);
 
     return StockResponse.from(stock);
   }
@@ -30,8 +30,15 @@ public class StockTransactionalService {
     Stock stock = stockRepository.getByProductId(productId);
     stock.getProduct().validateStore(storeId);
 
-    stock.setQuantity(newQuantity);
+    stock.setTotalQuantity(newQuantity);
 
+    return StockResponse.from(stock);
+  }
+
+  @Transactional(readOnly = true)
+  public StockResponse getProductStock(Long storeId, Long productId) {
+    Stock stock = stockRepository.getByProductId(productId);
+    stock.getProduct().validateStore(storeId);
     return StockResponse.from(stock);
   }
 }
