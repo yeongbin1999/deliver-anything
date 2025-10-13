@@ -1,6 +1,7 @@
 package com.deliveranything.domain.order.handler;
 
 import com.deliveranything.domain.order.service.OrderService;
+import com.deliveranything.domain.product.stock.event.StockCommittedEvent;
 import com.deliveranything.domain.product.stock.event.StockReserveFailedEvent;
 import com.deliveranything.domain.product.stock.event.StockReservedEvent;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -27,6 +28,10 @@ public class StockEventHandler {
           StockReserveFailedEvent event = objectMapper.readValue(json,
               StockReserveFailedEvent.class);
           orderService.processStockReserveFailed(event.orderId(), event.reason());
+        }
+        case "stock-committed-event" -> {
+          StockCommittedEvent event = objectMapper.readValue(json, StockCommittedEvent.class);
+          orderService.processStockCommitted(event.orderId());
         }
         default -> log.warn("Unknown topic: {}", topic);
       }

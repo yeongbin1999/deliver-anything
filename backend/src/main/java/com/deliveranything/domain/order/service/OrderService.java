@@ -10,9 +10,11 @@ import com.deliveranything.domain.order.event.OrderPaymentSucceededEvent;
 import com.deliveranything.domain.order.event.sse.customer.OrderCancelFailedForCustomerEvent;
 import com.deliveranything.domain.order.event.sse.customer.OrderCreateFailedForCustomerEvent;
 import com.deliveranything.domain.order.event.sse.customer.OrderCreatedForCustomerEvent;
+import com.deliveranything.domain.order.event.sse.customer.OrderPaidForCustomerEvent;
 import com.deliveranything.domain.order.event.sse.customer.OrderPreparingForCustomerEvent;
 import com.deliveranything.domain.order.event.sse.customer.OrderStatusChangedForCustomerEvent;
 import com.deliveranything.domain.order.event.sse.seller.OrderCancelFailedForSellerEvent;
+import com.deliveranything.domain.order.event.sse.seller.OrderPaidForSellerEvent;
 import com.deliveranything.domain.order.event.sse.seller.OrderPreparingForSellerEvent;
 import com.deliveranything.domain.order.event.sse.seller.OrderStatusChangedForSellerEvent;
 import com.deliveranything.domain.order.repository.OrderRepository;
@@ -36,11 +38,15 @@ public class OrderService {
   public void processPaymentCompletion(String merchantUid) {
     Order order = getOrderWithStoreByMerchantId(merchantUid);
     eventPublisher.publishEvent(OrderPaymentSucceededEvent.fromOrder(order));
+  }
 
-    // TODO: 후에 StockCommittedEvent 듣고 그때 주문 상태 수정한 후에 아래 부분들 새 메서드에서 보내야함.
-//    order.updateStatus(OrderStatus.PENDING);
-//    eventPublisher.publishEvent(OrderPaidForCustomerEvent.fromOrder(order));
-//    eventPublisher.publishEvent(OrderPaidForSellerEvent.fromOrder(order));
+  @Transactional
+  public void processStockCommitted(Long orderId) {
+    Order order = getOrderById(orderId);
+    order.updateStatus(OrderStatus.PENDING);
+
+    eventPublisher.publishEvent(OrderPaidForCustomerEvent.fromOrder(order));
+    eventPublisher.publishEvent(OrderPaidForSellerEvent.fromOrder(order));
   }
 
   @Transactional
