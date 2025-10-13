@@ -86,13 +86,9 @@ public class StoreOrderService {
   }
 
   @Transactional
-  public OrderResponse acceptOrder(Long orderId) {
+  public void acceptOrder(Long orderId) {
     Order order = getOrderWithStore(orderId);
-    order.updateStatus(OrderStatus.PREPARING);
-    //TODO: SSE가 이거 구독해서 주문 수락화면에 현 리스트에서 주문 제거하라고 전달해야함.
     eventPublisher.publishEvent(OrderAcceptedEvent.from(order));
-
-    return OrderResponse.from(order);
   }
 
   @Transactional
