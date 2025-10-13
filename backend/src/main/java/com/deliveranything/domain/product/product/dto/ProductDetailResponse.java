@@ -20,7 +20,7 @@ public record ProductDetailResponse(
         product.getDescription(),
         product.getPrice(),
         product.getImageUrl(),
-        product.getStock().getAvailableQuantity()
+        product.getStock().getTotalQuantity()
     );
   }
 }

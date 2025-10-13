@@ -1,10 +1,12 @@
 package com.deliveranything.domain.product.stock.event;
 
+import com.deliveranything.domain.order.event.dto.OrderItemInfo;
 import java.util.List;
 
 public record StockReservedEvent(
     Long orderId,
-    List<StockItemInfo> stockItems
+    Long storeId,
+    List<OrderItemInfo> items
 ) {
 
 }
