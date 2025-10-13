@@ -96,17 +96,23 @@ public class StoreOrderService {
   }
 
   @Transactional
-  public OrderResponse rejectOrder(Long orderId) {
-    Order order = getOrderWithStore(orderId);
-    order.updateStatus(OrderStatus.CANCELLATION_REQUESTED);
+  public void rejectOrder(Long orderId) {
+    String STORE_CANCEL_REASON = "상점이 주문을 거절했습니다.";
 
-    eventPublisher.publishEvent(OrderRejectedEvent.from(order, "상점이 주문을 거절했습니다.", Publisher.STORE));
+    Order order = getOrder(orderId);
+    order.cancellationRequest(STORE_CANCEL_REASON);
 
-    return OrderResponse.from(order);
+    eventPublisher.publishEvent(
+        OrderRejectedEvent.from(order, STORE_CANCEL_REASON, Publisher.STORE));
   }
 
   private Order getOrderWithStore(Long orderId) {
     return orderRepository.findOrderWithStoreById(orderId)
+        .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND));
+  }
+
+  private Order getOrder(Long orderId) {
+    return orderRepository.findById(orderId)
         .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND));
   }
 }
