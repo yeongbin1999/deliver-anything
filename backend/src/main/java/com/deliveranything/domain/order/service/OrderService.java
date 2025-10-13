@@ -8,6 +8,7 @@ import com.deliveranything.domain.order.event.OrderCompletedEvent;
 import com.deliveranything.domain.order.event.OrderPaymentFailedEvent;
 import com.deliveranything.domain.order.event.OrderPaymentSucceededEvent;
 import com.deliveranything.domain.order.event.sse.customer.OrderCancelFailedForCustomerEvent;
+import com.deliveranything.domain.order.event.sse.customer.OrderCreateFailedForCustomerEvent;
 import com.deliveranything.domain.order.event.sse.customer.OrderCreatedForCustomerEvent;
 import com.deliveranything.domain.order.event.sse.customer.OrderPreparingForCustomerEvent;
 import com.deliveranything.domain.order.event.sse.customer.OrderStatusChangedForCustomerEvent;
@@ -18,10 +19,12 @@ import com.deliveranything.domain.order.repository.OrderRepository;
 import com.deliveranything.global.exception.CustomException;
 import com.deliveranything.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class OrderService {
@@ -112,10 +115,21 @@ public class OrderService {
     eventPublisher.publishEvent(OrderStatusChangedForSellerEvent.fromOrder(order));
   }
 
-  @Transactional
+  @Transactional(readOnly = true)
   public void processStockReserved(Long orderId) {
     Order order = getOrderById(orderId);
     eventPublisher.publishEvent(OrderCreatedForCustomerEvent.fromOrder(order));
+  }
+
+  @Transactional
+  public void processStockReserveFailed(Long orderId, String reason) {
+    log.info("주문 [{}] 취소 처리 시작. 사유: 재고 예약 실패 ({})", orderId, reason);
+
+    Order order = getOrderById(orderId);
+    order.cancel(reason);
+    eventPublisher.publishEvent(OrderCreateFailedForCustomerEvent.fromOrder(order));
+
+    log.info("주문 [{}] 취소 처리 완료.", orderId);
   }
 
   private Order getOrderWithStoreByMerchantId(String merchantUid) {

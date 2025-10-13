@@ -9,6 +9,7 @@ import lombok.Getter;
 public enum NotificationMessage {
 
   ORDER_CREATED_CUSTOMER("주문번호가 생성되었습니다. 결제를 진행해주세요."),
+  ORDER_CREATED_FAILED_CUSTOMER("재고가 다 떨어졌습니다. 다시 주문해주세요."),
   ORDER_PAID_CUSTOMER("주문 결제가 성공적으로 완료되었습니다."),
   ORDER_PAID_SELLER("새로운 주문 요청이 있습니다."),
   ORDER_PREPARING_CUSTOMER("주문이 준비중입니다."),

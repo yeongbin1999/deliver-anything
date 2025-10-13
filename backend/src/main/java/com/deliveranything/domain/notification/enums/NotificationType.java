@@ -4,6 +4,7 @@ package com.deliveranything.domain.notification.enums;
 public enum NotificationType {
   NEW_REVIEW,         // 판매자 or 배달원에게 새 리뷰 알림
   ORDER_CREATED_CUSTOMER,
+  ORDER_CREATED_FAILED_CUSTOMER,
   ORDER_PAID_CUSTOMER,
   ORDER_PAID_SELLER,
   ORDER_PREPARING_CUSTOMER,

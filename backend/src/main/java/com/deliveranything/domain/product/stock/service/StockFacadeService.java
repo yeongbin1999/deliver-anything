@@ -56,8 +56,7 @@ public class StockFacadeService {
       eventPublisher.publishEvent(new StockReservedEvent(orderId));
     } catch (Exception e) {
       log.error("Failed to reserve stock for order, orderId={}, storeId={}", orderId, storeId, e);
-      eventPublisher.publishEvent(
-          new StockReserveFailedEvent(orderId, storeId, items, e.getMessage()));
+      eventPublisher.publishEvent(new StockReserveFailedEvent(orderId, e.getMessage()));
       throw e;
     }
   }
