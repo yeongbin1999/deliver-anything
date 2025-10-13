@@ -39,12 +39,12 @@ public class CustomerOrderController {
   @PostMapping
   @Operation(summary = "주문 생성", description = "소비자가 상점에 주문을 요청한 경우")
   @PreAuthorize("@profileSecurity.isCustomer(#securityUser)")
-  public ResponseEntity<ApiResponse<OrderResponse>> create(
+  public ResponseEntity<ApiResponse<String>> create(
       @AuthenticationPrincipal SecurityUser securityUser,
       @Valid @RequestBody OrderCreateRequest orderCreateRequest
   ) {
-    return ResponseEntity.status(CREATED).body(ApiResponse.success(customerOrderService.createOrder(
-        securityUser.getCurrentActiveProfile().getId(), orderCreateRequest)));
+    customerOrderService.createOrder(securityUser.getCurrentActiveProfile().getId(), orderCreateRequest);
+    return ResponseEntity.ok().body(ApiResponse.success("주문이 접수되어 처리중입니다."));
   }
 
   @GetMapping
