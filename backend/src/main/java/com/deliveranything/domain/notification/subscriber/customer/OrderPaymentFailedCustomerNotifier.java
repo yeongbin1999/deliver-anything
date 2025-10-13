@@ -37,7 +37,7 @@ public class OrderPaymentFailedCustomerNotifier implements MessageListener {
       notificationService.sendNotification(
           event.customerId(),
           NotificationType.ORDER_PAYMENT_FAILED_CUSTOMER,
-          NotificationMessage.ORDER_PAID_CUSTOMER.getMessage(),
+          NotificationMessage.ORDER_PAYMENT_FAILED_CUSTOMER.getMessage(),
           objectMapper.writeValueAsString(event)
       );
     } catch (Exception e) {

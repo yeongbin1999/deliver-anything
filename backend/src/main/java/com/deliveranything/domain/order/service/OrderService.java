@@ -11,6 +11,7 @@ import com.deliveranything.domain.order.event.sse.customer.OrderCancelFailedForC
 import com.deliveranything.domain.order.event.sse.customer.OrderCreateFailedForCustomerEvent;
 import com.deliveranything.domain.order.event.sse.customer.OrderCreatedForCustomerEvent;
 import com.deliveranything.domain.order.event.sse.customer.OrderPaidForCustomerEvent;
+import com.deliveranything.domain.order.event.sse.customer.OrderPaymentFailedForCustomerEvent;
 import com.deliveranything.domain.order.event.sse.customer.OrderPreparingForCustomerEvent;
 import com.deliveranything.domain.order.event.sse.customer.OrderStatusChangedForCustomerEvent;
 import com.deliveranything.domain.order.event.sse.seller.OrderCancelFailedForSellerEvent;
@@ -62,10 +63,14 @@ public class OrderService {
   public void processPaymentFailure(String merchantUid) {
     Order order = getOrderByMerchantId(merchantUid);
     eventPublisher.publishEvent(OrderPaymentFailedEvent.fromOrder(order));
+  }
 
-    // TODO: 후에 StockReleasedEvent 듣고 그때 주문 상태 수정한 후에 아래 부분들 새 메서드에서 보내야함.
-//    order.updateStatus(OrderStatus.PAYMENT_FAILED);
-//    eventPublisher.publishEvent(OrderPaymentFailedForCustomerEvent.fromOrder(order));
+  @Transactional
+  public void processStockReleased(Long orderId) {
+    Order order = getOrderById(orderId);
+    order.updateStatus(OrderStatus.PAYMENT_FAILED);
+
+    eventPublisher.publishEvent(OrderPaymentFailedForCustomerEvent.fromOrder(order));
   }
 
   @Transactional
