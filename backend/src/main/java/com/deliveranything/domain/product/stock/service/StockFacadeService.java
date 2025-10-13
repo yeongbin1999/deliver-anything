@@ -43,6 +43,7 @@ public class StockFacadeService {
       executeWithRetry(() -> {
         for (var item : items) {
           Stock stock = stockCommandService.getStockForUpdate(storeId, item.productId());
+          stockCommandService.checkStoreOpen(storeId);
           stockCommandService.holdStock(stock, item.quantity().intValue());
         }
         return null;
@@ -72,6 +73,7 @@ public class StockFacadeService {
     executeWithRetry(() -> {
       for (var item : items) {
         Stock stock = stockCommandService.getStockForUpdate(storeId, item.productId());
+        stockCommandService.checkStoreOpen(storeId);
         stockCommandService.commitStock(stock, item.quantity().intValue());
       }
       return null;
