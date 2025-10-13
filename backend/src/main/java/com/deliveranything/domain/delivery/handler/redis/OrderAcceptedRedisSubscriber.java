@@ -42,14 +42,9 @@ public class OrderAcceptedRedisSubscriber implements MessageListener {
   public void onMessage(Message message, byte[] pattern) {
     try {
       String payload = new String(message.getBody());
-
-      // 1. JSON → Event 객체 변환
       OrderAcceptedEvent event = objectMapper.readValue(payload, OrderAcceptedEvent.class);
 
-      // 2. 비즈니스 로직 처리 (블로킹, but Virtual Thread)
       List<RiderNotificationDto> notifications = orderNotificationService.processOrderEvent(event);
-
-      // 3. SSE 전송 (블로킹, but Virtual Thread)
       if (!notifications.isEmpty()) {
         orderAcceptedNotifier.publish(notifications);
       } else {
