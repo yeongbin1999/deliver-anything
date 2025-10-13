@@ -22,14 +22,12 @@ public class PaymentOrderService {
   private final OrderRepository orderRepository;
 
   @Transactional
-  public OrderResponse payOrder(String merchantUid, String paymentKey) {
+  public void payOrder(String merchantUid, String paymentKey) {
     Order order = getOrderByMerchantId(merchantUid);
     order.isPayable();
 
-    eventPublisher.publishEvent(new OrderPaymentRequestedEvent(order.getId(), paymentKey,
-        merchantUid, order.getTotalPrice()));
-
-    return OrderResponse.from(order);
+    eventPublisher.publishEvent(
+        OrderPaymentRequestedEvent.fromOrderAndPaymentKey(order, paymentKey));
   }
 
   @Transactional

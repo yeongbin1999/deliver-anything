@@ -1,7 +1,5 @@
 package com.deliveranything.domain.order.controller;
 
-import static org.springframework.http.HttpStatus.CREATED;
-
 import com.deliveranything.domain.order.dto.OrderCancelRequest;
 import com.deliveranything.domain.order.dto.OrderCreateRequest;
 import com.deliveranything.domain.order.dto.OrderPayRequest;
@@ -43,7 +41,8 @@ public class CustomerOrderController {
       @AuthenticationPrincipal SecurityUser securityUser,
       @Valid @RequestBody OrderCreateRequest orderCreateRequest
   ) {
-    customerOrderService.createOrder(securityUser.getCurrentActiveProfile().getId(), orderCreateRequest);
+    customerOrderService.createOrder(securityUser.getCurrentActiveProfile().getId(),
+        orderCreateRequest);
     return ResponseEntity.ok().body(ApiResponse.success("주문이 접수되어 처리중입니다."));
   }
 
@@ -96,14 +95,13 @@ public class CustomerOrderController {
   @PostMapping("/{merchantUid}/pay")
   @Operation(summary = "주문 결제", description = "소비자가 생성한 주문의 결제 시도")
   @PreAuthorize("@profileSecurity.isCustomer(#securityUser)")
-  public ResponseEntity<ApiResponse<OrderResponse>> pay(
+  public ResponseEntity<ApiResponse<String>> pay(
       @AuthenticationPrincipal SecurityUser securityUser,
       @PathVariable String merchantUid,
       @Valid @RequestBody OrderPayRequest orderPayRequest
   ) {
-
-    return ResponseEntity.ok().body(ApiResponse.success("소비자 결제 승인 성공",
-        paymentOrderService.payOrder(merchantUid, orderPayRequest.paymentKey())));
+    paymentOrderService.payOrder(merchantUid, orderPayRequest.paymentKey());
+    return ResponseEntity.ok().body(ApiResponse.success("결제 요청이 접수되어 처리중입니다."));
   }
 
   @PostMapping("/{orderId}/cancel")
