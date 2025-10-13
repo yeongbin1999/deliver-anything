@@ -124,4 +124,10 @@ public class Order extends BaseEntity {
     updateStatus(OrderStatus.CANCELED);
     this.cancellationReason = reason;
   }
+
+  public void cancellationRequest(String reason) {
+    isCancelable();
+    updateStatus(OrderStatus.CANCELLATION_REQUESTED);
+    this.cancellationReason = reason;
+  }
 }

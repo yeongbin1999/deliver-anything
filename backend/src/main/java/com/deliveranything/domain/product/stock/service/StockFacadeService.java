@@ -70,7 +70,7 @@ public class StockFacadeService {
       }
       return null;
     });
-    eventPublisher.publishEvent(new StockReplenishedEvent(orderId, storeId, items));
+    eventPublisher.publishEvent(new StockReplenishedEvent(orderId));
   }
 
   @Transactional
@@ -95,6 +95,6 @@ public class StockFacadeService {
       }
       return null;
     });
-    eventPublisher.publishEvent(new StockReleasedEvent(orderId, storeId, items));
+    eventPublisher.publishEvent(new StockReleasedEvent(orderId));
   }
 }

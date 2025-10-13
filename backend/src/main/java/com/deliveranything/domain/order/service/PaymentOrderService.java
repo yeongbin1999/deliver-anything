@@ -1,7 +1,6 @@
 package com.deliveranything.domain.order.service;
 
 import com.deliveranything.domain.order.entity.Order;
-import com.deliveranything.domain.order.enums.OrderStatus;
 import com.deliveranything.domain.order.enums.Publisher;
 import com.deliveranything.domain.order.event.OrderCancelEvent;
 import com.deliveranything.domain.order.event.OrderPaymentRequestedEvent;
@@ -32,8 +31,7 @@ public class PaymentOrderService {
   @Transactional
   public void cancelOrder(Long orderId, String cancelReason) {
     Order order = getOrderById(orderId);
-    order.isCancelable();
-    order.updateStatus(OrderStatus.CANCELLATION_REQUESTED);
+    order.cancellationRequest(cancelReason);
 
     eventPublisher.publishEvent(OrderCancelEvent.from(order, cancelReason, Publisher.CUSTOMER));
   }
