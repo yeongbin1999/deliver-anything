@@ -4,6 +4,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,8 +41,6 @@ public class EtaService {
       List<Point> riderPoints,
       List<String> riderIds
   ) {
-    log.debug("Calculating ETA for {} riders", riderIds.size());
-
     // 각 라이더의 ETA를 병렬로 계산 (Virtual Thread)
     List<CompletableFuture<Map.Entry<String, Double>>> futures = new java.util.ArrayList<>();
 
@@ -98,7 +99,6 @@ public class EtaService {
     } catch (Exception e) {
       log.warn("Failed to calculate ETA for rider {}: {}", riderId, e.getMessage());
     }
-
     return CompletableFuture.completedFuture(null);
   }
 
@@ -109,37 +109,40 @@ public class EtaService {
       double storeLat, double storeLon,
       double userLat, double userLon
   ) {
-    log.debug("Calculating distance from store ({}, {}) to customer ({}, {})",
-        storeLat, storeLon, userLat, userLon);
-
     WebClient webClient = webClientBuilder.baseUrl(KAKAO_BASE_URL).build();
 
-    Map<String, Object> response = webClient.get()
-        .uri(uriBuilder -> uriBuilder
-            .path("/directions")
-            .queryParam("origin", storeLon + "," + storeLat)
-            .queryParam("destination", userLon + "," + userLat)
-            .build())
-        .header("Authorization", "KakaoAK " + kakaoApiKey)
-        .retrieve()
-        .bodyToMono(Map.class)
-        .block(); // Virtual Thread에서는 block() 안전!
+    // 가상 스레드 풀 사용
+    try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+      Future<Map<String, Double>> future = executor.submit(() -> {
+        Map<String, Object> response = webClient.get()
+            .uri(uriBuilder -> uriBuilder
+                .path("/directions")
+                .queryParam("origin", storeLon + "," + storeLat)
+                .queryParam("destination", userLon + "," + userLat)
+                .build())
+            .header("Authorization", "KakaoAK " + kakaoApiKey)
+            .retrieve()
+            .bodyToMono(Map.class)
+            .block();
 
-    if (response != null) {
-      Map<String, Object> routes = (Map<String, Object>) ((List<?>) response.get("routes")).get(0);
-      Map<String, Object> summary = (Map<String, Object>) routes.get("summary");
-      Double distanceM = ((Number) summary.get("distance")).doubleValue(); // m 단위
-      double distanceKm = Math.round((distanceM / 1000.0) * 100.0) / 100.0; // km 단위, 소수 둘째 자리 반올림
+        if (response == null || !response.containsKey("routes")) {
+          throw new IllegalStateException("Invalid API response");
+        }
 
-      Map<String, Double> result = new HashMap<>();
-      result.put("distance", distanceKm);
+        Map<String, Object> routes = (Map<String, Object>) ((List<?>) response.get("routes")).get(
+            0);
+        Map<String, Object> summary = (Map<String, Object>) routes.get("summary");
+        Double distanceM = ((Number) summary.get("distance")).doubleValue(); // m 단위
+        double distanceKm = Math.round((distanceM / 1000.0) * 100.0) / 100.0;
 
-      log.debug("Distance calculated: {}km", distanceKm);
+        Map<String, Double> result = new HashMap<>();
+        result.put("distance", distanceKm);
+        return result;
+      });
+      return future.get();
 
-      return result;
+    } catch (ExecutionException | InterruptedException e) {
+      throw new RuntimeException("Distance calculation failed", e);
     }
-
-    log.warn("Failed to get distance from Kakao API");
-    return Map.of("distance", 0.0);
   }
 }
