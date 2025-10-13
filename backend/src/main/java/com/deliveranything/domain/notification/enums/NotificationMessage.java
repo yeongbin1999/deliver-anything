@@ -8,6 +8,7 @@ import lombok.Getter;
 @Getter
 public enum NotificationMessage {
 
+  ORDER_CREATED_CUSTOMER("주문번호가 생성되었습니다. 결제를 진행해주세요."),
   ORDER_PAID_CUSTOMER("주문 결제가 성공적으로 완료되었습니다."),
   ORDER_PAID_SELLER("새로운 주문 요청이 있습니다."),
   ORDER_PREPARING_CUSTOMER("주문이 준비중입니다."),
@@ -22,7 +23,6 @@ public enum NotificationMessage {
   RIDER_STATUS_CHANGED("배달원 상태가 변경되었습니다."),
   RIDER_ACCEPTED_ORDER("수락된 주문이 표시됩니다."),
   RIDER_DECISION("배달원이 주문 상태를 변경했습니다."),
-
   ;
 
   private final String message;

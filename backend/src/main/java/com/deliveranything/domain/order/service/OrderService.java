@@ -8,6 +8,7 @@ import com.deliveranything.domain.order.event.OrderCompletedEvent;
 import com.deliveranything.domain.order.event.OrderPaymentFailedEvent;
 import com.deliveranything.domain.order.event.OrderPaymentSucceededEvent;
 import com.deliveranything.domain.order.event.sse.customer.OrderCancelFailedForCustomerEvent;
+import com.deliveranything.domain.order.event.sse.customer.OrderCreatedForCustomerEvent;
 import com.deliveranything.domain.order.event.sse.customer.OrderPreparingForCustomerEvent;
 import com.deliveranything.domain.order.event.sse.customer.OrderStatusChangedForCustomerEvent;
 import com.deliveranything.domain.order.event.sse.seller.OrderCancelFailedForSellerEvent;
@@ -109,6 +110,12 @@ public class OrderService {
     eventPublisher.publishEvent(OrderCompletedEvent.fromOrder(order, riderId, sellerId));
     eventPublisher.publishEvent(OrderStatusChangedForCustomerEvent.fromOrder(order));
     eventPublisher.publishEvent(OrderStatusChangedForSellerEvent.fromOrder(order));
+  }
+
+  @Transactional
+  public void processStockReserved(Long orderId) {
+    Order order = getOrderById(orderId);
+    eventPublisher.publishEvent(OrderCreatedForCustomerEvent.fromOrder(order));
   }
 
   private Order getOrderWithStoreByMerchantId(String merchantUid) {
