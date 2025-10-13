@@ -38,273 +38,271 @@ import org.springframework.context.ApplicationEventPublisher;
 @DisplayName("StoreService 테스트")
 class StoreServiceTest {
 
-    @Mock
-    private StoreRepository storeRepository;
+  @Mock
+  private StoreRepository storeRepository;
 
-    @Mock
-    private StoreCategoryService storeCategoryService;
+  @Mock
+  private StoreCategoryService storeCategoryService;
 
-    @Mock
-    private ApplicationEventPublisher eventPublisher;
+  @Mock
+  private ApplicationEventPublisher eventPublisher;
 
-    @InjectMocks
-    private StoreService storeService;
+  @InjectMocks
+  private StoreService storeService;
 
-    // Helper method to create a StoreCategory object with ID for testing
-    private StoreCategory createTestStoreCategory(Long id, String name) {
-        StoreCategory storeCategory = new StoreCategory(name);
+  private StoreCategory createTestStoreCategory(Long id, String name) {
+    StoreCategory storeCategory = new StoreCategory(name);
+    try {
+      Field idField = storeCategory.getClass().getSuperclass().getDeclaredField("id");
+      idField.setAccessible(true);
+      idField.set(storeCategory, id);
+    } catch (NoSuchFieldException | IllegalAccessException e) {
+      throw new RuntimeException("Failed to set ID for StoreCategory", e);
+    }
+    return storeCategory;
+  }
+
+  // Helper method to create a Store object for testing
+  private Store createTestStore(Long id, Long sellerProfileId, String name, StoreStatus status, StoreCategory storeCategory) {
+    Store store = Store.builder()
+        .sellerProfileId(sellerProfileId)
+        .name(name)
+        .storeCategory(storeCategory)
+        .roadAddr("Test Road")
+        .imageUrl("test.jpg")
+        .location(null)
+        .build();
+    store.updateStatus(status);
+    try {
+      Field idField = store.getClass().getSuperclass().getDeclaredField("id");
+      idField.setAccessible(true);
+      idField.set(store, id);
+    } catch (NoSuchFieldException | IllegalAccessException e) {
+      throw new RuntimeException("Failed to set ID for Store", e);
+    }
+    return store;
+  }
+
+  @Test
+  @DisplayName("상점 생성 성공")
+  void createStore_success() {
+    // given
+    Long storeCategoryId = 1L;
+    StoreCreateRequest request = new StoreCreateRequest(storeCategoryId, "Test Store", "Description", "Road Addr", 37.0, 127.0, "image.jpg");
+    Long sellerProfileId = 1L;
+    StoreCategory storeCategory = createTestStoreCategory(storeCategoryId, "Category");
+
+    when(storeRepository.existsBySellerProfileId(sellerProfileId)).thenReturn(false);
+    when(storeCategoryService.getById(storeCategoryId)).thenReturn(storeCategory);
+
+    doAnswer(new Answer<Store>() {
+      @Override
+      public Store answer(InvocationOnMock invocation) throws Throwable {
+        Store storeToSave = invocation.getArgument(0);
         try {
-            Field idField = storeCategory.getClass().getSuperclass().getDeclaredField("id");
-            idField.setAccessible(true);
-            idField.set(storeCategory, id);
+          Field idField = storeToSave.getClass().getSuperclass().getDeclaredField("id");
+          idField.setAccessible(true);
+          idField.set(storeToSave, 1L);
         } catch (NoSuchFieldException | IllegalAccessException e) {
-            throw new RuntimeException("Failed to set ID for StoreCategory", e);
+          throw new RuntimeException("Failed to set ID for Store", e);
         }
-        return storeCategory;
-    }
+        return storeToSave;
+      }
+    }).when(storeRepository).save(any(Store.class));
 
-    // Helper method to create a Store object for testing
-    private Store createTestStore(Long id, Long sellerProfileId, String name, StoreStatus status, StoreCategory storeCategory) {
-        Store store = Store.builder()
-                .sellerProfileId(sellerProfileId)
-                .name(name)
-                .storeCategory(storeCategory)
-                .roadAddr("Test Road")
-                .imageUrl("test.jpg")
-                .location(null) // PointUtil.createPoint(37.0, 127.0) would require PointUtil mock or actual Point object
-                .build();
-        store.updateStatus(status); // Set status after building
-        try {
-            Field idField = store.getClass().getSuperclass().getDeclaredField("id");
-            idField.setAccessible(true);
-            idField.set(store, id);
-        } catch (NoSuchFieldException | IllegalAccessException e) {
-            throw new RuntimeException("Failed to set ID for Store", e);
-        }
-        return store;
-    }
+    // when
+    Long createdStoreId = storeService.createStore(request, sellerProfileId);
 
-    @Test
-    @DisplayName("상점 생성 성공")
-    void createStore_success() {
-        // given
-        Long storeCategoryId = 1L;
-        StoreCreateRequest request = new StoreCreateRequest(storeCategoryId, "Test Store", "Description", "Road Addr", 37.0, 127.0, "image.jpg");
-        Long sellerProfileId = 1L;
-        StoreCategory storeCategory = createTestStoreCategory(storeCategoryId, "Category");
+    // then
+    assertThat(createdStoreId).isEqualTo(1L);
+    verify(storeRepository).existsBySellerProfileId(sellerProfileId);
+    verify(storeCategoryService).getById(storeCategoryId);
+    verify(storeRepository).save(any(Store.class));
+    verify(eventPublisher).publishEvent(any(StoreSavedEvent.class));
+  }
 
-        when(storeRepository.existsBySellerProfileId(sellerProfileId)).thenReturn(false);
-        when(storeCategoryService.getById(storeCategoryId)).thenReturn(storeCategory);
+  @Test
+  @DisplayName("상점 생성 실패 - 이미 상점이 존재함")
+  void createStore_fail_alreadyExists() {
+    // given
+    Long storeCategoryId = 1L;
+    StoreCreateRequest request = new StoreCreateRequest(storeCategoryId, "Test Store", "Description", "Road Addr", 37.0, 127.0, "image.jpg");
+    Long sellerProfileId = 1L;
 
-        // Use doAnswer to set the ID on the Store object passed to save
-        doAnswer(new Answer<Store>() {
-            @Override
-            public Store answer(InvocationOnMock invocation) throws Throwable {
-                Store storeToSave = invocation.getArgument(0);
-                try {
-                    Field idField = storeToSave.getClass().getSuperclass().getDeclaredField("id");
-                    idField.setAccessible(true);
-                    idField.set(storeToSave, 1L); // Set the ID to 1L
-                } catch (NoSuchFieldException | IllegalAccessException e) {
-                    throw new RuntimeException("Failed to set ID for Store", e);
-                }
-                return storeToSave; // Return the modified store object
-            }
-        }).when(storeRepository).save(any(Store.class));
+    when(storeRepository.existsBySellerProfileId(sellerProfileId)).thenReturn(true);
 
-        // when
-        Long createdStoreId = storeService.createStore(request, sellerProfileId);
+    // when & then
+    CustomException exception = assertThrows(CustomException.class, () ->
+        storeService.createStore(request, sellerProfileId));
+    assertThat(exception.getCode()).isEqualTo(ErrorCode.STORE_ALREADY_EXISTS.getCode());
+    verify(storeRepository).existsBySellerProfileId(sellerProfileId);
+    verify(storeCategoryService, never()).getById(anyLong());
+    verify(storeRepository, never()).save(any(Store.class));
+    verify(eventPublisher, never()).publishEvent(any(StoreSavedEvent.class));
+  }
 
-        // then
-        assertThat(createdStoreId).isEqualTo(1L);
-        verify(storeRepository).existsBySellerProfileId(sellerProfileId);
-        verify(storeCategoryService).getById(storeCategoryId);
-        verify(storeRepository).save(any(Store.class));
-        verify(eventPublisher).publishEvent(any(StoreSavedEvent.class));
-    }
+  @Test
+  @DisplayName("상점 업데이트 성공")
+  void updateStore_success() {
+    // given
+    Long storeId = 1L;
+    Long originalStoreCategoryId = 1L;
+    Long updatedStoreCategoryId = 2L;
+    StoreUpdateRequest request = new StoreUpdateRequest(
+        updatedStoreCategoryId,
+        "Updated Store",
+        "Updated Desc",
+        "Updated Addr",
+        38.0,
+        128.0,
+        "updated.jpg"
+    );
+    StoreCategory originalCategory = createTestStoreCategory(originalStoreCategoryId, "Original Category");
+    Store existingStore = createTestStore(storeId, 1L, "Original Store", StoreStatus.CLOSED, originalCategory);
+    StoreCategory updatedCategory = createTestStoreCategory(updatedStoreCategoryId, "Updated Category");
 
-    @Test
-    @DisplayName("상점 생성 실패 - 이미 상점이 존재함")
-    void createStore_fail_alreadyExists() {
-        // given
-        Long storeCategoryId = 1L;
-        StoreCreateRequest request = new StoreCreateRequest(storeCategoryId, "Test Store", "Description", "Road Addr", 37.0, 127.0, "image.jpg");
-        Long sellerProfileId = 1L;
+    when(storeRepository.getById(storeId)).thenReturn(existingStore);
+    when(storeCategoryService.getById(updatedStoreCategoryId)).thenReturn(updatedCategory);
 
-        when(storeRepository.existsBySellerProfileId(sellerProfileId)).thenReturn(true);
+    // when
+    StoreResponse response = storeService.updateStore(storeId, request);
 
-        // when & then
-        CustomException exception = assertThrows(CustomException.class, () ->
-                storeService.createStore(request, sellerProfileId));
-        assertThat(exception.getCode()).isEqualTo(ErrorCode.STORE_ALREADY_EXISTS.getCode());
-        verify(storeRepository).existsBySellerProfileId(sellerProfileId);
-        verify(storeCategoryService, never()).getById(anyLong());
-        verify(storeRepository, never()).save(any(Store.class));
-        verify(eventPublisher, never()).publishEvent(any(StoreSavedEvent.class));
-    }
+    // then
+    assertThat(response.name()).isEqualTo("Updated Store");
+    assertThat(response.description()).isEqualTo("Updated Desc");
+    assertThat(response.imageUrl()).isEqualTo("updated.jpg");
+    assertThat(existingStore.getStoreCategory().getId()).isEqualTo(updatedStoreCategoryId);
+    verify(storeRepository).getById(storeId);
+    verify(storeCategoryService).getById(updatedStoreCategoryId);
+    verify(eventPublisher).publishEvent(any(StoreSavedEvent.class));
+  }
 
-    @Test
-    @DisplayName("상점 업데이트 성공")
-    void updateStore_success() {
-        // given
-        Long storeId = 1L;
-        Long originalStoreCategoryId = 1L;
-        Long updatedStoreCategoryId = 2L;
-        StoreUpdateRequest request = new StoreUpdateRequest(
-            updatedStoreCategoryId,
-            "Updated Store",
-            "Updated Desc",
-            "Updated Addr",
-            38.0,
-            128.0,
-            "updated.jpg"
-        );
-        StoreCategory originalCategory = createTestStoreCategory(originalStoreCategoryId, "Original Category");
-        Store existingStore = createTestStore(storeId, 1L, "Original Store", StoreStatus.CLOSED, originalCategory);
-        StoreCategory updatedCategory = createTestStoreCategory(updatedStoreCategoryId, "Updated Category");
+  @Test
+  @DisplayName("상점 삭제 성공")
+  void deleteStore_success() {
+    // given
+    Long storeId = 1L;
+    StoreCategory storeCategory = createTestStoreCategory(1L, "Category");
+    Store existingStore = createTestStore(storeId, 1L, "Test Store", StoreStatus.CLOSED, storeCategory);
 
-        when(storeRepository.getById(storeId)).thenReturn(existingStore);
-        when(storeCategoryService.getById(updatedStoreCategoryId)).thenReturn(updatedCategory);
+    when(storeRepository.getById(storeId)).thenReturn(existingStore);
+    doNothing().when(storeRepository).delete(any(Store.class));
 
-        // when
-        StoreResponse response = storeService.updateStore(storeId, request);
+    // when
+    storeService.deleteStore(storeId);
 
-        // then
-        assertThat(response.name()).isEqualTo("Updated Store");
-        assertThat(response.description()).isEqualTo("Updated Desc");
-        assertThat(response.imageUrl()).isEqualTo("updated.jpg");
-        assertThat(existingStore.getStoreCategory().getId()).isEqualTo(updatedStoreCategoryId);
-        verify(storeRepository).getById(storeId);
-        verify(storeCategoryService).getById(updatedStoreCategoryId);
-        verify(eventPublisher).publishEvent(any(StoreSavedEvent.class));
-    }
+    // then
+    verify(storeRepository).getById(storeId);
+    verify(storeRepository).delete(existingStore);
+    verify(eventPublisher).publishEvent(any(StoreDeletedEvent.class));
+  }
 
-    @Test
-    @DisplayName("상점 삭제 성공")
-    void deleteStore_success() {
-        // given
-        Long storeId = 1L;
-        StoreCategory storeCategory = createTestStoreCategory(1L, "Category");
-        Store existingStore = createTestStore(storeId, 1L, "Test Store", StoreStatus.CLOSED, storeCategory);
+  @Test
+  @DisplayName("상점 조회 성공")
+  void getStore_success() {
+    // given
+    Long storeId = 1L;
+    StoreCategory storeCategory = createTestStoreCategory(1L, "Category");
+    Store existingStore = createTestStore(storeId, 1L, "Test Store", StoreStatus.OPEN, storeCategory);
 
-        when(storeRepository.getById(storeId)).thenReturn(existingStore);
-        doNothing().when(storeRepository).delete(any(Store.class));
+    when(storeRepository.getById(storeId)).thenReturn(existingStore);
 
-        // when
-        storeService.deleteStore(storeId);
+    // when
+    StoreResponse response = storeService.getStore(storeId);
 
-        // then
-        verify(storeRepository).getById(storeId);
-        verify(storeRepository).delete(existingStore);
-        verify(eventPublisher).publishEvent(any(StoreDeletedEvent.class));
-    }
+    // then
+    assertThat(response.id()).isEqualTo(storeId);
+    assertThat(response.name()).isEqualTo("Test Store");
+    verify(storeRepository).getById(storeId);
+  }
 
-    @Test
-    @DisplayName("상점 조회 성공")
-    void getStore_success() {
-        // given
-        Long storeId = 1L;
-        StoreCategory storeCategory = createTestStoreCategory(1L, "Category");
-        Store existingStore = createTestStore(storeId, 1L, "Test Store", StoreStatus.OPEN, storeCategory);
+  @Test
+  @DisplayName("상점 상태 토글 성공 - CLOSED -> OPEN")
+  void toggleStoreStatus_closedToOpen_success() {
+    // given
+    Long storeId = 1L;
+    StoreCategory storeCategory = createTestStoreCategory(1L, "Category");
+    Store existingStore = createTestStore(storeId, 1L, "Test Store", StoreStatus.CLOSED, storeCategory);
 
-        when(storeRepository.getById(storeId)).thenReturn(existingStore);
+    when(storeRepository.getById(storeId)).thenReturn(existingStore);
 
-        // when
-        StoreResponse response = storeService.getStore(storeId);
+    // when
+    StoreResponse response = storeService.toggleStoreStatus(storeId);
 
-        // then
-        assertThat(response.id()).isEqualTo(storeId);
-        assertThat(response.name()).isEqualTo("Test Store");
-        verify(storeRepository).getById(storeId);
-    }
+    // then
+    assertThat(response.status()).isEqualTo(StoreStatus.OPEN);
+    verify(storeRepository).getById(storeId);
+    verify(eventPublisher).publishEvent(any(StoreSavedEvent.class));
+  }
 
-    @Test
-    @DisplayName("상점 상태 토글 성공 - CLOSED -> OPEN")
-    void toggleStoreStatus_closedToOpen_success() {
-        // given
-        Long storeId = 1L;
-        StoreCategory storeCategory = createTestStoreCategory(1L, "Category");
-        Store existingStore = createTestStore(storeId, 1L, "Test Store", StoreStatus.CLOSED, storeCategory);
+  @Test
+  @DisplayName("상점 상태 토글 성공 - OPEN -> CLOSED")
+  void toggleStoreStatus_openToClosed_success() {
+    // given
+    Long storeId = 1L;
+    StoreCategory storeCategory = createTestStoreCategory(1L, "Category");
+    Store existingStore = createTestStore(storeId, 1L, "Test Store", StoreStatus.OPEN, storeCategory);
 
-        when(storeRepository.getById(storeId)).thenReturn(existingStore);
+    when(storeRepository.getById(storeId)).thenReturn(existingStore);
 
-        // when
-        StoreResponse response = storeService.toggleStoreStatus(storeId);
+    // when
+    StoreResponse response = storeService.toggleStoreStatus(storeId);
 
-        // then
-        assertThat(response.status()).isEqualTo(StoreStatus.OPEN);
-        verify(storeRepository).getById(storeId);
-        verify(eventPublisher).publishEvent(any(StoreSavedEvent.class));
-    }
+    // then
+    assertThat(response.status()).isEqualTo(StoreStatus.CLOSED);
+    verify(storeRepository).getById(storeId);
+    verify(eventPublisher).publishEvent(any(StoreSavedEvent.class));
+  }
 
-    @Test
-    @DisplayName("상점 상태 토글 성공 - OPEN -> CLOSED")
-    void toggleStoreStatus_openToClosed_success() {
-        // given
-        Long storeId = 1L;
-        StoreCategory storeCategory = createTestStoreCategory(1L, "Category");
-        Store existingStore = createTestStore(storeId, 1L, "Test Store", StoreStatus.OPEN, storeCategory);
+  @Test
+  @DisplayName("상점 상태 토글 실패 - DRAFT 상태")
+  void toggleStoreStatus_fail_draftStatus() {
+    // given
+    Long storeId = 1L;
+    StoreCategory storeCategory = createTestStoreCategory(1L, "Category");
+    Store existingStore = createTestStore(storeId, 1L, "Test Store", StoreStatus.DRAFT, storeCategory);
 
-        when(storeRepository.getById(storeId)).thenReturn(existingStore);
+    when(storeRepository.getById(storeId)).thenReturn(existingStore);
 
-        // when
-        StoreResponse response = storeService.toggleStoreStatus(storeId);
+    // when & then
+    CustomException exception = assertThrows(CustomException.class, () ->
+        storeService.toggleStoreStatus(storeId));
+    assertThat(exception.getCode()).isEqualTo(ErrorCode.STORE_NOT_READY_FOR_OPENING.getCode());
+    verify(storeRepository).getById(storeId);
+    verify(eventPublisher, never()).publishEvent(any(StoreSavedEvent.class));
+  }
 
-        // then
-        assertThat(response.status()).isEqualTo(StoreStatus.CLOSED);
-        verify(storeRepository).getById(storeId);
-        verify(eventPublisher).publishEvent(any(StoreSavedEvent.class));
-    }
+  @Test
+  @DisplayName("SellerProfile ID로 Store ID 조회 성공 - 상점 존재")
+  void getStoreIdBySellerProfileId_storeExists_success() {
+    // given
+    Long sellerProfileId = 1L;
+    StoreCategory storeCategory = createTestStoreCategory(1L, "Category");
+    Store store = createTestStore(1L, sellerProfileId, "Test Store", StoreStatus.OPEN, storeCategory);
 
-    @Test
-    @DisplayName("상점 상태 토글 실패 - DRAFT 상태")
-    void toggleStoreStatus_fail_draftStatus() {
-        // given
-        Long storeId = 1L;
-        StoreCategory storeCategory = createTestStoreCategory(1L, "Category");
-        Store existingStore = createTestStore(storeId, 1L, "Test Store", StoreStatus.DRAFT, storeCategory);
+    when(storeRepository.findBySellerProfileId(sellerProfileId)).thenReturn(Optional.of(store));
 
-        when(storeRepository.getById(storeId)).thenReturn(existingStore);
+    // when
+    Long result = storeService.getStoreIdBySellerProfileId(sellerProfileId);
 
-        // when & then
-        CustomException exception = assertThrows(CustomException.class, () ->
-                storeService.toggleStoreStatus(storeId));
-        assertThat(exception.getCode()).isEqualTo(ErrorCode.STORE_NOT_READY_FOR_OPENING.getCode());
-        verify(storeRepository).getById(storeId);
-        verify(eventPublisher, never()).publishEvent(any(StoreSavedEvent.class));
-    }
+    // then
+    assertThat(result).isEqualTo(1L);
+    verify(storeRepository).findBySellerProfileId(sellerProfileId);
+  }
 
-    @Test
-    @DisplayName("SellerProfile ID로 Store ID 조회 성공 - 상점 존재")
-    void getStoreIdBySellerProfileId_storeExists_success() {
-        // given
-        Long sellerProfileId = 1L;
-        StoreCategory storeCategory = createTestStoreCategory(1L, "Category");
-        Store store = createTestStore(1L, sellerProfileId, "Test Store", StoreStatus.OPEN, storeCategory);
+  @Test
+  @DisplayName("SellerProfile ID로 Store ID 조회 성공 - 상점 없음")
+  void getStoreIdBySellerProfileId_storeNotExists_success() {
+    // given
+    Long sellerProfileId = 1L;
 
-        when(storeRepository.findBySellerProfileId(sellerProfileId)).thenReturn(Optional.of(store));
+    when(storeRepository.findBySellerProfileId(sellerProfileId)).thenReturn(Optional.empty());
 
-        // when
-        Long result = storeService.getStoreIdBySellerProfileId(sellerProfileId);
+    // when
+    Long result = storeService.getStoreIdBySellerProfileId(sellerProfileId);
 
-        // then
-        assertThat(result).isEqualTo(1L);
-        verify(storeRepository).findBySellerProfileId(sellerProfileId);
-    }
-
-    @Test
-    @DisplayName("SellerProfile ID로 Store ID 조회 성공 - 상점 없음")
-    void getStoreIdBySellerProfileId_storeNotExists_success() {
-        // given
-        Long sellerProfileId = 1L;
-
-        when(storeRepository.findBySellerProfileId(sellerProfileId)).thenReturn(Optional.empty());
-
-        // when
-        Long result = storeService.getStoreIdBySellerProfileId(sellerProfileId);
-
-        // then
-        assertThat(result).isNull();
-        verify(storeRepository).findBySellerProfileId(sellerProfileId);
-    }
+    // then
+    assertThat(result).isNull();
+    verify(storeRepository).findBySellerProfileId(sellerProfileId);
+  }
 }
