@@ -84,6 +84,7 @@ public class OrderService {
     }
 
     eventPublisher.publishEvent(OrderCancelSucceededEvent.fromOrder(order));
+
     // TODO: 후에 StockReplensishedEvent 듣고 그때 주문 상태 수정한 후에 아래 부분들 새 메서드에서 보내야함.
 //    eventPublisher.publishEvent(OrderCanceledForCustomerEvent.fromOrder(order));
 //    eventPublisher.publishEvent(OrderCanceledForSellerEvent.fromOrder(order));

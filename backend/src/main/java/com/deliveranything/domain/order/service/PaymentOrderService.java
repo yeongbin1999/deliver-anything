@@ -1,6 +1,5 @@
 package com.deliveranything.domain.order.service;
 
-import com.deliveranything.domain.order.dto.OrderResponse;
 import com.deliveranything.domain.order.entity.Order;
 import com.deliveranything.domain.order.enums.OrderStatus;
 import com.deliveranything.domain.order.enums.Publisher;
@@ -31,24 +30,21 @@ public class PaymentOrderService {
   }
 
   @Transactional
-  public OrderResponse cancelOrder(Long orderId, String cancelReason) {
-    Order order = getOrderWithStoreById(orderId);
+  public void cancelOrder(Long orderId, String cancelReason) {
+    Order order = getOrderById(orderId);
     order.isCancelable();
-
     order.updateStatus(OrderStatus.CANCELLATION_REQUESTED);
 
     eventPublisher.publishEvent(OrderCancelEvent.from(order, cancelReason, Publisher.CUSTOMER));
-
-    return OrderResponse.from(order);
   }
 
   private Order getOrderByMerchantId(String merchantId) {
-    return orderRepository.findOrderWithStoreByMerchantId(merchantId)
+    return orderRepository.findByMerchantId(merchantId)
         .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND));
   }
 
-  private Order getOrderWithStoreById(Long orderId) {
-    return orderRepository.findOrderWithStoreById(orderId)
+  private Order getOrderById(Long orderId) {
+    return orderRepository.findById(orderId)
         .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND));
   }
 }

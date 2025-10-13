@@ -107,12 +107,12 @@ public class CustomerOrderController {
   @PostMapping("/{orderId}/cancel")
   @Operation(summary = "주문 취소", description = "소비자가 상점에서 주문 수락 전인 주문을 취소하는 경우")
   @PreAuthorize("@profileSecurity.isCustomer(#securityUser)")
-  public ResponseEntity<ApiResponse<OrderResponse>> cancel(
+  public ResponseEntity<ApiResponse<String>> cancel(
       @AuthenticationPrincipal SecurityUser securityUser,
       @PathVariable Long orderId,
       @RequestBody OrderCancelRequest orderCancelRequest
   ) {
-    return ResponseEntity.ok().body(ApiResponse.success("소비자 주문 취소 성공",
-        paymentOrderService.cancelOrder(orderId, orderCancelRequest.cancelReason())));
+    paymentOrderService.cancelOrder(orderId, orderCancelRequest.cancelReason());
+    return ResponseEntity.ok().body(ApiResponse.success("주문 취소 요청이 접수되어 처리중입니다."));
   }
 }
