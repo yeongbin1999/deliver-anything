@@ -83,7 +83,7 @@ public class StockFacadeService {
       }
       return null;
     });
-    eventPublisher.publishEvent(new StockCommittedEvent(orderId, storeId, items));
+    eventPublisher.publishEvent(new StockCommittedEvent(orderId));
   }
 
   @Transactional
