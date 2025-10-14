@@ -3,7 +3,7 @@ package com.deliveranything.domain.user.user.controller;
 import com.deliveranything.domain.auth.service.AuthService;
 import com.deliveranything.domain.user.profile.dto.AvailableProfilesResponse;
 import com.deliveranything.domain.user.profile.dto.CreateProfileRequest;
-import com.deliveranything.domain.user.profile.dto.ProfileResponse;
+import com.deliveranything.domain.user.profile.dto.CreateProfileResponse;
 import com.deliveranything.domain.user.profile.dto.SwitchProfileRequest;
 import com.deliveranything.domain.auth.dto.SwitchProfileResult;
 import com.deliveranything.domain.user.profile.dto.SwitchProfileResponse;
@@ -184,7 +184,7 @@ public class UserController {
           }
       )
   )
-  public ResponseEntity<ApiResponse<ProfileResponse>> createProfile(
+  public ResponseEntity<ApiResponse<CreateProfileResponse>> createProfile(
       @Valid @RequestBody CreateProfileRequest request) {
 
     User currentUser = rq.getActor();
@@ -199,7 +199,7 @@ public class UserController {
     );
 
     // 응답 생성
-    ProfileResponse response = ProfileResponse.builder()
+    CreateProfileResponse response = CreateProfileResponse.builder()
         .userId(currentUser.getId())
         .profileType(request.profileType())
         .profileId(newProfile.getId())
