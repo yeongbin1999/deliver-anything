@@ -2,6 +2,7 @@ package com.deliveranything.domain.settlement.service;
 
 import com.deliveranything.domain.settlement.dto.SettlementResponse;
 import com.deliveranything.domain.settlement.dto.SummaryResponse;
+import com.deliveranything.domain.settlement.dto.projection.SettlementProjection;
 import com.deliveranything.domain.settlement.dto.projection.SettlementSummaryProjection;
 import com.deliveranything.domain.settlement.entity.SettlementBatch;
 import com.deliveranything.domain.settlement.entity.SettlementDetail;
@@ -51,8 +52,9 @@ public class SettlementBatchService {
       LocalDate startDate,
       LocalDate endDate
   ) {
-    return SettlementResponse.fromProjection(
-        settlementBatchRepository.findSettlementByTargetIdAndPeriod(targetId, startDate, endDate));
+    SettlementProjection settlementProjection = settlementBatchRepository
+        .findSettlementByTargetIdAndPeriod(targetId, startDate, endDate);
+    return SettlementResponse.fromProjectionAndPeriod(settlementProjection, startDate, endDate);
   }
 
   @Transactional(readOnly = true)

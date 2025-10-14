@@ -51,12 +51,12 @@ public interface SettlementBatchRepository extends JpaRepository<SettlementBatch
   // 기간 정산
   @Query(value = """
           SELECT new com.deliveranything.domain.settlement.dto.projection.SettlementProjection(
-              SUM(s.targetTotalAmount),
-              SUM(s.totalPlatformFee),
-              SUM(s.settledAmount),
-              SUM(s.transactionCount),
-              MIN(s.settlementDate),
-              MAX(s.settlementDate)
+              COALESCE(SUM(s.targetTotalAmount), 0L),
+              COALESCE(SUM(s.totalPlatformFee), 0L),
+              COALESCE(SUM(s.settledAmount), 0L),
+              COALESCE(SUM(s.transactionCount), 0L),
+              null,
+              null
           )
           FROM SettlementBatch s
           WHERE s.targetId = :targetId
