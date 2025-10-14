@@ -59,7 +59,7 @@ public class Order extends BaseEntity {
   @Column(nullable = false, length = 100)
   private String address;
 
-  @Column(columnDefinition = "POINT SRID 4326", nullable = false)
+  @Column(columnDefinition = "geometry", nullable = false)
   private Point destination;
 
   @Column(length = 30)
