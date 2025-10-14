@@ -10,7 +10,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.deliveranything.domain.auth.dto.RedisRefreshTokenDto;
+import com.deliveranything.domain.auth.dto.RefreshTokenDto;
 import com.deliveranything.domain.auth.repository.RefreshTokenRepository;
 import com.deliveranything.domain.user.user.entity.User;
 import com.deliveranything.domain.user.user.repository.UserRepository;
@@ -57,7 +57,7 @@ class RefreshTokenServiceTest {
       String deviceInfo = "Chrome";
 
       doNothing().when(refreshTokenRepository).deleteByUserAndDevice(1L, deviceInfo);
-      doNothing().when(refreshTokenRepository).save(any(RedisRefreshTokenDto.class));
+      doNothing().when(refreshTokenRepository).save(any(RefreshTokenDto.class));
 
       // When
       String token = refreshTokenService.genRefreshToken(mockUser, deviceInfo);
@@ -65,7 +65,7 @@ class RefreshTokenServiceTest {
       // Then
       assertNotNull(token);
       verify(refreshTokenRepository, times(1)).deleteByUserAndDevice(1L, deviceInfo);
-      verify(refreshTokenRepository, times(1)).save(any(RedisRefreshTokenDto.class));
+      verify(refreshTokenRepository, times(1)).save(any(RefreshTokenDto.class));
     }
   }
 
@@ -80,7 +80,7 @@ class RefreshTokenServiceTest {
       String tokenValue = "valid-token";
       Long userId = 1L;
 
-      RedisRefreshTokenDto mockToken = mock(RedisRefreshTokenDto.class);
+      RefreshTokenDto mockToken = mock(RefreshTokenDto.class);
       when(mockToken.getUserId()).thenReturn(userId);
       when(mockToken.isValid()).thenReturn(true);
 
@@ -121,7 +121,7 @@ class RefreshTokenServiceTest {
       // Given
       String tokenValue = "expired-token";
 
-      RedisRefreshTokenDto mockToken = mock(RedisRefreshTokenDto.class);
+      RefreshTokenDto mockToken = mock(RefreshTokenDto.class);
       when(mockToken.isValid()).thenReturn(false);
 
       when(refreshTokenRepository.findByTokenValue(tokenValue))
@@ -180,7 +180,7 @@ class RefreshTokenServiceTest {
       // Given
       String refreshTokenValue = "valid-refresh-token";
 
-      RedisRefreshTokenDto mockToken = mock(RedisRefreshTokenDto.class);
+      RefreshTokenDto mockToken = mock(RefreshTokenDto.class);
       when(mockToken.getUserId()).thenReturn(1L);
       when(mockToken.isValid()).thenReturn(true);
 

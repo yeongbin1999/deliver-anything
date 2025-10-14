@@ -1,6 +1,6 @@
 package com.deliveranything.domain.auth.service;
 
-import com.deliveranything.domain.auth.dto.RedisRefreshTokenDto;
+import com.deliveranything.domain.auth.dto.RefreshTokenDto;
 import com.deliveranything.domain.auth.repository.RefreshTokenRepository;
 import com.deliveranything.domain.user.user.entity.User;
 import com.deliveranything.domain.user.user.repository.UserRepository;
@@ -40,7 +40,7 @@ public class RefreshTokenService {
     String tokenValue = UUID.randomUUID().toString();
     LocalDateTime expiresAt = LocalDateTime.now().plusDays(refreshTokenExpirationDays);
 
-    RedisRefreshTokenDto redisToken = RedisRefreshTokenDto.builder()
+    RefreshTokenDto redisToken = RefreshTokenDto.builder()
         .userId(user.getId())
         .tokenValue(tokenValue)
         .deviceInfo(deviceInfo)
@@ -62,7 +62,7 @@ public class RefreshTokenService {
    */
   public User getUserByRefreshToken(String refreshTokenValue) {
     // 1. Redis에서 토큰 조회 (인덱스 사용)
-    RedisRefreshTokenDto redisToken = refreshTokenRepository
+    RefreshTokenDto redisToken = refreshTokenRepository
         .findByTokenValue(refreshTokenValue)
         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
