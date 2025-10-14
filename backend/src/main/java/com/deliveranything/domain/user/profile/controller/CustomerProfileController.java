@@ -31,7 +31,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-@Tag(name = "Customer Profile", description = "고객 프로필 관리 API")
+@Tag(name = "고객 프로필 관리 API", description = "CustomerProfile 관련 API")
 @Slf4j
 @RestController
 @RequestMapping("/api/v1/users/me/customer")

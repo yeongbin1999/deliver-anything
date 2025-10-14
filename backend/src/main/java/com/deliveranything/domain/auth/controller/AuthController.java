@@ -29,7 +29,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-@Tag(name = "Auth", description = "인증/인가 API")
+@Tag(name = "인증/인가 API", description = "auth 관련 API")
 @Slf4j
 @RestController
 @RequestMapping("/api/v1/auth")

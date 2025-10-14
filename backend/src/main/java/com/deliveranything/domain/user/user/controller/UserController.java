@@ -1,11 +1,11 @@
 package com.deliveranything.domain.user.user.controller;
 
+import com.deliveranything.domain.auth.dto.SwitchProfileResult;
 import com.deliveranything.domain.auth.service.AuthService;
 import com.deliveranything.domain.user.profile.dto.AvailableProfilesResponse;
 import com.deliveranything.domain.user.profile.dto.CreateProfileRequest;
 import com.deliveranything.domain.user.profile.dto.CreateProfileResponse;
 import com.deliveranything.domain.user.profile.dto.SwitchProfileRequest;
-import com.deliveranything.domain.auth.dto.SwitchProfileResult;
 import com.deliveranything.domain.user.profile.dto.SwitchProfileResponse;
 import com.deliveranything.domain.user.profile.dto.customer.CustomerProfileCreateData;
 import com.deliveranything.domain.user.profile.dto.rider.RiderProfileCreateData;
@@ -38,7 +38,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-@Tag(name = "User", description = "사용자 프로필 관리 API")
+@Tag(name = "사용자 관리 API", description = "user 관련 API")
 @Slf4j
 @RestController
 @RequestMapping("/api/v1/users/me")
@@ -244,7 +244,8 @@ public class UserController {
     rq.setAccessToken(switchResult.accessToken());
 
     log.info("프로필 전환 완료 및 Access Token 재발급: userId={}, {} -> {}",
-        currentUser.getId(), switchResult.switchProfileResponse().previousProfileType(), switchResult.switchProfileResponse().currentProfileType());
+        currentUser.getId(), switchResult.switchProfileResponse().previousProfileType(),
+        switchResult.switchProfileResponse().currentProfileType());
 
     // storeId + 프로필 상세 정보 포함된 API 응답용으로 변환 (토큰 제거)
     SwitchProfileResponse response = switchResult.switchProfileResponse().toResponse();
