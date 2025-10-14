@@ -107,4 +107,11 @@ public class TokenService {
     User user = getUserByRefreshToken(refreshTokenValue);
     return genAccessToken(user);
   }
+
+  /**
+   * Access Token에서 currentActiveProfileId 추출
+   */
+  public Long getCurrentActiveProfileId(String accessToken) {
+    return authTokenService.getCurrentActiveProfileId(accessToken);
+  }
 }

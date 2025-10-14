@@ -4,7 +4,6 @@ import lombok.Builder;
 
 @Builder
 public record RiderLocationDto(
-    Long riderProfileId,
     double latitude,
     double longitude,
     long timestamp  // 밀리초 단위,
