@@ -11,7 +11,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.deliveranything.domain.auth.dto.RedisRefreshTokenDto;
-import com.deliveranything.domain.auth.repository.RedisRefreshTokenRepository;
+import com.deliveranything.domain.auth.repository.RefreshTokenRepository;
 import com.deliveranything.domain.user.user.entity.User;
 import com.deliveranything.domain.user.user.repository.UserRepository;
 import com.deliveranything.global.exception.CustomException;
@@ -33,7 +33,7 @@ class RefreshTokenServiceTest {
   private AccessTokenService accessTokenService;
 
   @Mock
-  private RedisRefreshTokenRepository redisRefreshTokenRepository;
+  private RefreshTokenRepository refreshTokenRepository;
 
   @Mock
   private UserRepository userRepository;
@@ -56,16 +56,16 @@ class RefreshTokenServiceTest {
 
       String deviceInfo = "Chrome";
 
-      doNothing().when(redisRefreshTokenRepository).deleteByUserAndDevice(1L, deviceInfo);
-      doNothing().when(redisRefreshTokenRepository).save(any(RedisRefreshTokenDto.class));
+      doNothing().when(refreshTokenRepository).deleteByUserAndDevice(1L, deviceInfo);
+      doNothing().when(refreshTokenRepository).save(any(RedisRefreshTokenDto.class));
 
       // When
       String token = refreshTokenService.genRefreshToken(mockUser, deviceInfo);
 
       // Then
       assertNotNull(token);
-      verify(redisRefreshTokenRepository, times(1)).deleteByUserAndDevice(1L, deviceInfo);
-      verify(redisRefreshTokenRepository, times(1)).save(any(RedisRefreshTokenDto.class));
+      verify(refreshTokenRepository, times(1)).deleteByUserAndDevice(1L, deviceInfo);
+      verify(refreshTokenRepository, times(1)).save(any(RedisRefreshTokenDto.class));
     }
   }
 
@@ -87,7 +87,7 @@ class RefreshTokenServiceTest {
       User mockUser = mock(User.class);
       when(mockUser.getId()).thenReturn(userId);
 
-      when(redisRefreshTokenRepository.findByTokenValue(tokenValue))
+      when(refreshTokenRepository.findByTokenValue(tokenValue))
           .thenReturn(Optional.of(mockToken));
       when(userRepository.findById(userId)).thenReturn(Optional.of(mockUser));
 
@@ -97,7 +97,7 @@ class RefreshTokenServiceTest {
       // Then
       assertNotNull(result);
       assertEquals(userId, result.getId());
-      verify(redisRefreshTokenRepository, times(1)).findByTokenValue(tokenValue);
+      verify(refreshTokenRepository, times(1)).findByTokenValue(tokenValue);
       verify(userRepository, times(1)).findById(userId);
     }
 
@@ -106,7 +106,7 @@ class RefreshTokenServiceTest {
     void getUserByRefreshToken_fail_not_found() {
       // Given
       String tokenValue = "invalid-token";
-      when(redisRefreshTokenRepository.findByTokenValue(tokenValue))
+      when(refreshTokenRepository.findByTokenValue(tokenValue))
           .thenReturn(Optional.empty());
 
       // When & Then
@@ -124,7 +124,7 @@ class RefreshTokenServiceTest {
       RedisRefreshTokenDto mockToken = mock(RedisRefreshTokenDto.class);
       when(mockToken.isValid()).thenReturn(false);
 
-      when(redisRefreshTokenRepository.findByTokenValue(tokenValue))
+      when(refreshTokenRepository.findByTokenValue(tokenValue))
           .thenReturn(Optional.of(mockToken));
 
       // When & Then
@@ -145,13 +145,13 @@ class RefreshTokenServiceTest {
       Long userId = 1L;
       String deviceInfo = "Chrome";
 
-      doNothing().when(redisRefreshTokenRepository).deleteByUserAndDevice(userId, deviceInfo);
+      doNothing().when(refreshTokenRepository).deleteByUserAndDevice(userId, deviceInfo);
 
       // When
       refreshTokenService.invalidateRefreshToken(userId, deviceInfo);
 
       // Then
-      verify(redisRefreshTokenRepository, times(1)).deleteByUserAndDevice(userId, deviceInfo);
+      verify(refreshTokenRepository, times(1)).deleteByUserAndDevice(userId, deviceInfo);
     }
 
     @Test
@@ -160,13 +160,13 @@ class RefreshTokenServiceTest {
       // Given
       Long userId = 1L;
 
-      doNothing().when(redisRefreshTokenRepository).deleteAllByUser(userId);
+      doNothing().when(refreshTokenRepository).deleteAllByUser(userId);
 
       // When
       refreshTokenService.invalidateAllRefreshTokens(userId);
 
       // Then
-      verify(redisRefreshTokenRepository, times(1)).deleteAllByUser(userId);
+      verify(refreshTokenRepository, times(1)).deleteAllByUser(userId);
     }
   }
 
@@ -186,7 +186,7 @@ class RefreshTokenServiceTest {
 
       User mockUser = mock(User.class);
 
-      when(redisRefreshTokenRepository.findByTokenValue(refreshTokenValue))
+      when(refreshTokenRepository.findByTokenValue(refreshTokenValue))
           .thenReturn(Optional.of(mockToken));
       when(userRepository.findById(1L)).thenReturn(Optional.of(mockUser));
       when(accessTokenService.genAccessToken(mockUser)).thenReturn("new-access-token");

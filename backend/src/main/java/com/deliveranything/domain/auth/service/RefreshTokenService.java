@@ -1,7 +1,7 @@
 package com.deliveranything.domain.auth.service;
 
 import com.deliveranything.domain.auth.dto.RedisRefreshTokenDto;
-import com.deliveranything.domain.auth.repository.RedisRefreshTokenRepository;
+import com.deliveranything.domain.auth.repository.RefreshTokenRepository;
 import com.deliveranything.domain.user.user.entity.User;
 import com.deliveranything.domain.user.user.repository.UserRepository;
 import com.deliveranything.global.exception.CustomException;
@@ -21,7 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class RefreshTokenService {
 
   private final AccessTokenService accessTokenService;
-  private final RedisRefreshTokenRepository redisRefreshTokenRepository;
+  private final RefreshTokenRepository refreshTokenRepository;
   private final UserRepository userRepository;
 
   @Value("${custom.refreshToken.expirationDays}")
@@ -34,7 +34,7 @@ public class RefreshTokenService {
   @Transactional
   public String genRefreshToken(User user, String deviceInfo) {
     // 1. 기존 디바이스 토큰 삭제 (Redis)
-    redisRefreshTokenRepository.deleteByUserAndDevice(user.getId(), deviceInfo);
+    refreshTokenRepository.deleteByUserAndDevice(user.getId(), deviceInfo);
 
     // 2. 새 토큰 생성
     String tokenValue = UUID.randomUUID().toString();
@@ -49,7 +49,7 @@ public class RefreshTokenService {
         .build();
 
     // 3. Redis에 저장
-    redisRefreshTokenRepository.save(redisToken);
+    refreshTokenRepository.save(redisToken);
 
     log.info("RefreshToken 생성 (Redis): userId={}, deviceInfo={}",
         user.getId(), deviceInfo);
@@ -62,7 +62,7 @@ public class RefreshTokenService {
    */
   public User getUserByRefreshToken(String refreshTokenValue) {
     // 1. Redis에서 토큰 조회 (인덱스 사용)
-    RedisRefreshTokenDto redisToken = redisRefreshTokenRepository
+    RedisRefreshTokenDto redisToken = refreshTokenRepository
         .findByTokenValue(refreshTokenValue)
         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
@@ -81,7 +81,7 @@ public class RefreshTokenService {
    */
   @Transactional
   public void invalidateRefreshToken(Long userId, String deviceInfo) {
-    redisRefreshTokenRepository.deleteByUserAndDevice(userId, deviceInfo);
+    refreshTokenRepository.deleteByUserAndDevice(userId, deviceInfo);
     log.info("RefreshToken 무효화 (Redis): userId={}, deviceInfo={}", userId, deviceInfo);
   }
 
@@ -90,7 +90,7 @@ public class RefreshTokenService {
    */
   @Transactional
   public void invalidateAllRefreshTokens(Long userId) {
-    redisRefreshTokenRepository.deleteAllByUser(userId);
+    refreshTokenRepository.deleteAllByUser(userId);
     log.info("모든 RefreshToken 무효화 (Redis): userId={}", userId);
   }
 

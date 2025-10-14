@@ -14,7 +14,7 @@ import org.springframework.stereotype.Repository;
 @Slf4j
 @Repository
 @RequiredArgsConstructor
-public class RedisRefreshTokenRepository {
+public class RefreshTokenRepository {
 
   private final RedisTemplate<String, Object> redisTemplate;
   private final ObjectMapper objectMapper;

@@ -173,7 +173,7 @@ public class AuthController {
     String refreshToken = rq.getRefreshTokenFromCookie();
 
     // TokenService를 통해 새 Access Token 발급
-    String newAccessToken = refreshTokenService.refreshAccessToken(request.refreshToken());
+    String newAccessToken = refreshTokenService.refreshAccessToken(refreshToken);
 
     // 쿠키 + 응답 헤더에도 설정
     rq.setAccessToken(newAccessToken);

@@ -16,8 +16,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.deliveranything.domain.auth.dto.RefreshTokenRequest;
-import com.deliveranything.domain.auth.service.AccessTokenService;
 import com.deliveranything.domain.auth.service.AuthService;
 import com.deliveranything.domain.auth.service.RefreshTokenService;
 import com.deliveranything.domain.user.profile.enums.ProfileType;
@@ -431,75 +429,68 @@ class AuthControllerTest {
   @DisplayName("토큰 갱신 API")
   class RefreshTokenTest {
 
-    @Mock
-    private AccessTokenService accessTokenService;
-
     @Test
     @DisplayName("성공 - Access Token 재발급")
     void refresh_token_success() {
-      RefreshTokenRequest request = new RefreshTokenRequest("mock-refresh-token");
-
+      when(rq.getRefreshTokenFromCookie()).thenReturn("mock-refresh-token");
       when(refreshTokenService.refreshAccessToken("mock-refresh-token"))
           .thenReturn("new-access-token");
 
-      ResponseEntity<?> response = authController.refreshToken(request);
+      ResponseEntity<?> response = authController.refreshToken();
 
       assertEquals(HttpStatus.OK, response.getStatusCode());
       ApiResponse<?> body = (ApiResponse<?>) response.getBody();
       assertNotNull(body);
       assertTrue(body.isSuccess());
 
+      verify(rq, times(1)).getRefreshTokenFromCookie();
       verify(refreshTokenService, times(1)).refreshAccessToken("mock-refresh-token");
+      verify(rq, times(1)).setAccessToken("new-access-token");
     }
-
 
     @Test
     @DisplayName("실패 - 만료된 Refresh Token")
-    void refresh_token_fail_expired() throws Exception {
-      RefreshTokenRequest request = new RefreshTokenRequest("expired-token");
+    void refresh_token_fail_expired() {
       String expectedMessage = ErrorCode.REFRESH_TOKEN_EXPIRED.getMessage();
 
+      when(rq.getRefreshTokenFromCookie()).thenReturn("expired-token");
       when(refreshTokenService.refreshAccessToken("expired-token"))
           .thenThrow(new CustomException(ErrorCode.REFRESH_TOKEN_EXPIRED));
 
-      mockMvc.perform(post("/api/v1/auth/refresh")
-              .contentType(MediaType.APPLICATION_JSON)
-              .content(objectMapper.writeValueAsString(request)))
-          .andExpect(status().isUnauthorized()) // 401 Unauthorized 확인
-          .andExpect(jsonPath("$.success").value(false))
-          .andExpect(jsonPath("$.code").value("AUTH-401"))
-          .andExpect(jsonPath("$.message").value(expectedMessage));
+      CustomException exception = assertThrows(CustomException.class, () -> {
+        authController.refreshToken();
+      });
+
+      assertEquals(ErrorCode.REFRESH_TOKEN_EXPIRED.getCode(), exception.getCode());
+      assertEquals(expectedMessage, exception.getMessage());
     }
 
     @Test
     @DisplayName("실패 - Refresh Token이 null인 경우")
     void refresh_token_fail_null() {
-      RefreshTokenRequest request = new RefreshTokenRequest(null);
-
+      when(rq.getRefreshTokenFromCookie()).thenReturn(null);
       when(refreshTokenService.refreshAccessToken(null))
           .thenThrow(new CustomException(ErrorCode.REFRESH_TOKEN_NOT_FOUND));
 
       CustomException exception = assertThrows(CustomException.class, () -> {
-        authController.refreshToken(request);
+        authController.refreshToken();
       });
 
       assertEquals(ErrorCode.REFRESH_TOKEN_NOT_FOUND.getCode(), exception.getCode());
     }
 
     @Test
-    @DisplayName("실패 - 유효성 검사 실패 (빈 Refresh Token)")
-    void refresh_token_fail_validation() throws Exception {
-      mockMvc.perform(post("/api/v1/auth/refresh")
-              .contentType(MediaType.APPLICATION_JSON)
-              .content("""
-                  {
-                      "refreshToken": ""
-                  }
-                  """))
-          .andExpect(status().isBadRequest())
-          .andExpect(jsonPath("$.success").value(false))
-          .andExpect(jsonPath("$.code").value("INPUT-400"))
-          .andExpect(jsonPath("$.message").exists());
+    @DisplayName("실패 - 유효하지 않은 Refresh Token")
+    void refresh_token_fail_invalid() {
+      when(rq.getRefreshTokenFromCookie()).thenReturn("invalid-token");
+      when(refreshTokenService.refreshAccessToken("invalid-token"))
+          .thenThrow(new CustomException(ErrorCode.USER_NOT_FOUND));
+
+      CustomException exception = assertThrows(CustomException.class, () -> {
+        authController.refreshToken();
+      });
+
+      assertEquals(ErrorCode.USER_NOT_FOUND.getCode(), exception.getCode());
     }
   }
 }
