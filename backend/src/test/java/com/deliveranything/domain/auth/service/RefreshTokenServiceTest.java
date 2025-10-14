@@ -185,7 +185,6 @@ class RefreshTokenServiceTest {
       when(mockToken.isValid()).thenReturn(true);
 
       User mockUser = mock(User.class);
-      when(mockUser.getId()).thenReturn(1L);
 
       when(redisRefreshTokenRepository.findByTokenValue(refreshTokenValue))
           .thenReturn(Optional.of(mockToken));

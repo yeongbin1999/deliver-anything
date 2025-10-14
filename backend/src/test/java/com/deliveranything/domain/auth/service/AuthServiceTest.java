@@ -13,12 +13,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.deliveranything.domain.auth.enums.SocialProvider;
-import com.deliveranything.domain.store.store.service.StoreService;
-import com.deliveranything.domain.user.profile.repository.CustomerProfileRepository;
-import com.deliveranything.domain.user.profile.repository.ProfileRepository;
-import com.deliveranything.domain.user.profile.repository.RiderProfileRepository;
-import com.deliveranything.domain.user.profile.repository.SellerProfileRepository;
-import com.deliveranything.domain.user.profile.service.ProfileService;
 import com.deliveranything.domain.user.user.entity.User;
 import com.deliveranything.domain.user.user.repository.UserRepository;
 import com.deliveranything.global.exception.CustomException;
@@ -40,31 +34,16 @@ class AuthServiceTest {
   private UserRepository userRepository;
 
   @Mock
-  private ProfileRepository profileRepository;
-
-  @Mock
   private RefreshTokenService refreshTokenService;
 
   @Mock
-  private ProfileService profileService;
+  private AccessTokenService accessTokenService;
 
   @Mock
   private TokenBlacklistService tokenBlacklistService;
 
   @Mock
-  private StoreService storeService;
-
-  @Mock
   private PasswordEncoder passwordEncoder;
-
-  @Mock
-  private CustomerProfileRepository customerProfileRepository;
-
-  @Mock
-  private SellerProfileRepository sellerProfileRepository;
-
-  @Mock
-  private RiderProfileRepository riderProfileRepository;
 
   @InjectMocks
   private AuthService authService;
@@ -181,7 +160,7 @@ class AuthServiceTest {
 
       when(userRepository.findByEmail(email)).thenReturn(Optional.of(mockUser));
       when(passwordEncoder.matches(password, "encoded-password")).thenReturn(true);
-      when(refreshTokenService.genAccessToken(mockUser)).thenReturn("access-token");
+      when(accessTokenService.genAccessToken(mockUser)).thenReturn("access-token");
       when(refreshTokenService.genRefreshToken(mockUser, deviceInfo)).thenReturn("refresh-token");
 
       // When

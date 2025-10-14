@@ -17,6 +17,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.deliveranything.domain.auth.dto.RefreshTokenRequest;
+import com.deliveranything.domain.auth.service.AccessTokenService;
 import com.deliveranything.domain.auth.service.AuthService;
 import com.deliveranything.domain.auth.service.RefreshTokenService;
 import com.deliveranything.domain.user.profile.enums.ProfileType;
@@ -215,11 +216,11 @@ class AuthControllerTest {
 
       when(authService.login(anyString(), anyString(), anyString()))
           .thenReturn(loginResult);
-      when(userAgentUtil.extractDeviceInfo(any())).thenReturn("Test Device");
       when(profileService.getAvailableProfiles(any())).thenReturn(List.of());
 
       mockMvc.perform(post("/api/v1/auth/login")
               .contentType(MediaType.APPLICATION_JSON)
+              .header("X-Device-ID", "test-device-id")
               .content("""
                   {
                       "email": "test@test.com",
@@ -233,7 +234,6 @@ class AuthControllerTest {
           .andExpect(jsonPath("$.content.email").value("test@test.com"))
           .andExpect(jsonPath("$.content.currentActiveProfileType").isEmpty())
           .andExpect(jsonPath("$.content.currentActiveProfileId").isEmpty());
-
     }
 
     @Test
@@ -256,12 +256,12 @@ class AuthControllerTest {
 
       when(authService.login(anyString(), anyString(), anyString()))
           .thenReturn(loginResult);
-      when(userAgentUtil.extractDeviceInfo(any())).thenReturn("Test Device");
       when(profileService.getAvailableProfiles(any()))
           .thenReturn(List.of(ProfileType.CUSTOMER));
 
       mockMvc.perform(post("/api/v1/auth/login")
               .contentType(MediaType.APPLICATION_JSON)
+              .header("X-Device-ID", "test-device-id")
               .content("""
                   {
                       "email": "test@test.com",
@@ -273,7 +273,6 @@ class AuthControllerTest {
           .andExpect(jsonPath("$.content.currentActiveProfileType").value("CUSTOMER"))
           .andExpect(jsonPath("$.content.currentActiveProfileId").value(10))
           .andExpect(jsonPath("$.content.availableProfiles[0]").value("CUSTOMER"));
-
     }
 
     @Test
@@ -296,12 +295,12 @@ class AuthControllerTest {
 
       when(authService.login(anyString(), anyString(), anyString()))
           .thenReturn(loginResult);
-      when(userAgentUtil.extractDeviceInfo(any())).thenReturn("Test Device");
       when(profileService.getAvailableProfiles(any()))
           .thenReturn(List.of(ProfileType.SELLER));
 
       mockMvc.perform(post("/api/v1/auth/login")
               .contentType(MediaType.APPLICATION_JSON)
+              .header("X-Device-ID", "test-device-id")
               .content("""
                   {
                       "email": "seller@test.com",
@@ -311,21 +310,19 @@ class AuthControllerTest {
           .andExpect(status().isOk())
           .andExpect(jsonPath("$.success").value(true))
           .andExpect(jsonPath("$.content.storeId").value(100));
-
     }
 
     @Test
     @DisplayName("실패 - 사용자를 찾을 수 없음")
     void login_fail_user_not_found() throws Exception {
-      // CustomException에서 사용할 메시지를 직접 가져옵니다.
       String expectedMessage = ErrorCode.USER_NOT_FOUND.getMessage();
 
       when(authService.login(anyString(), anyString(), anyString()))
           .thenThrow(new CustomException(ErrorCode.USER_NOT_FOUND));
-      when(userAgentUtil.extractDeviceInfo(any())).thenReturn("Test Device");
 
       mockMvc.perform(post("/api/v1/auth/login")
               .contentType(MediaType.APPLICATION_JSON)
+              .header("X-Device-ID", "test-device-id")
               .content("""
                   {
                       "email": "notfound@test.com",
@@ -434,6 +431,9 @@ class AuthControllerTest {
   @DisplayName("토큰 갱신 API")
   class RefreshTokenTest {
 
+    @Mock
+    private AccessTokenService accessTokenService;
+
     @Test
     @DisplayName("성공 - Access Token 재발급")
     void refresh_token_success() {
@@ -467,7 +467,7 @@ class AuthControllerTest {
               .content(objectMapper.writeValueAsString(request)))
           .andExpect(status().isUnauthorized()) // 401 Unauthorized 확인
           .andExpect(jsonPath("$.success").value(false))
-          .andExpect(jsonPath("$.code").value("TOKEN-401"))
+          .andExpect(jsonPath("$.code").value("AUTH-401"))
           .andExpect(jsonPath("$.message").value(expectedMessage));
     }
 

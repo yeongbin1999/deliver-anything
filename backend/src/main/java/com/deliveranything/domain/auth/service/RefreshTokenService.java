@@ -27,12 +27,6 @@ public class RefreshTokenService {
   @Value("${custom.refreshToken.expirationDays}")
   private int refreshTokenExpirationDays;
 
-  /**
-   * JWT Access Token 생성
-   */
-  public String genAccessToken(User user) {
-    return accessTokenService.genAccessToken(user);
-  }
 
   /**
    * RefreshToken 생성 (Redis 저장)
@@ -105,6 +99,7 @@ public class RefreshTokenService {
    */
   public String refreshAccessToken(String refreshTokenValue) {
     User user = getUserByRefreshToken(refreshTokenValue);
-    return genAccessToken(user);
+    return accessTokenService.genAccessToken(user);
   }
+
 }

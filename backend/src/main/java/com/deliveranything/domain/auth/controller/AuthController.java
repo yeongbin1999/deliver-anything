@@ -122,18 +122,20 @@ public class AuthController {
   public ResponseEntity<ApiResponse<Void>> logout(
       @AuthenticationPrincipal SecurityUser securityUser,
       @RequestHeader("Authorization") String authorization,
-      @RequestHeader("X-Device-ID") String deviceId
+      @RequestHeader(value = "User-Agent", required = false) String userAgent
   ) {
     // Bearer 접두사 제거
     String accessToken = authorization.replace("Bearer ", "");
 
+    String deviceInfo = userAgent != null ? userAgent : "unknown";
+
     //  accessToken 파라미터 전달
-    authService.logout(securityUser.getId(), deviceId, accessToken);
+    authService.logout(securityUser.getId(), deviceInfo, accessToken);
 
     // 쿠키 삭제
     rq.deleteRefreshToken();
 
-    log.info("로그아웃 완료: userId={}, deviceId={}", securityUser.getId(), deviceId);
+    log.info("로그아웃 완료: userId={}, deviceInfo={}", securityUser.getId(), deviceInfo);
 
     return ResponseEntity.ok(ApiResponse.success("로그아웃이 완료되었습니다.", null));
   }

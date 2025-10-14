@@ -37,6 +37,7 @@ public class AuthService {
   private final ProfileRepository profileRepository;
 
   private final RefreshTokenService refreshTokenService;
+  private final AccessTokenService accessTokenService;
   private final ProfileService profileService;
   private final TokenBlacklistService tokenBlacklistService;
   private final StoreService storeService;
@@ -140,7 +141,7 @@ public class AuthService {
     log.info("로그인 성공: userId={}, email={}", user.getId(), email);
 
     // 토큰 발급
-    String accessToken = refreshTokenService.genAccessToken(user);
+    String accessToken = accessTokenService.genAccessToken(user);
     String refreshToken = refreshTokenService.genRefreshToken(user, deviceInfo);
 
     // 추가: storeId 조회
@@ -267,7 +268,7 @@ public class AuthService {
         log.info("이미 활성화된 프로필입니다: userId={}, targetProfile={}",
             userId, targetProfileType);
 
-        String newAccessToken = refreshTokenService.genAccessToken(user);
+      String newAccessToken = accessTokenService.genAccessToken(user);
 
         // 기존 AccessToken 블랙리스트 등록
         if (oldAccessToken != null && !oldAccessToken.isEmpty()) {
@@ -306,8 +307,8 @@ public class AuthService {
       User updatedUser = userRepository.findById(userId)
           .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-      // Access Token만 재발급 (Refresh Token 유지)
-      String newAccessToken = refreshTokenService.genAccessToken(updatedUser);
+    // Access Token만 재발급 (Refresh Token 유지)
+    String newAccessToken = accessTokenService.genAccessToken(updatedUser);
 
       // 기존 AccessToken 블랙리스트 등록
       if (oldAccessToken != null && !oldAccessToken.isEmpty()) {
