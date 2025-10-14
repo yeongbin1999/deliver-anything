@@ -5,7 +5,7 @@ import com.deliveranything.domain.auth.dto.LoginResponse;
 import com.deliveranything.domain.auth.dto.SignupRequest;
 import com.deliveranything.domain.auth.dto.SignupResponse;
 import com.deliveranything.domain.auth.service.AuthService;
-import com.deliveranything.domain.auth.service.TokenService;
+import com.deliveranything.domain.auth.service.RefreshTokenService;
 import com.deliveranything.domain.user.profile.enums.ProfileType;
 import com.deliveranything.domain.user.profile.service.ProfileService;
 import com.deliveranything.domain.user.user.entity.User;
@@ -37,7 +37,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
   private final AuthService authService;
-  private final TokenService tokenService;
+  private final RefreshTokenService refreshTokenService;
   private final ProfileService profileService;
   private final Rq rq;
 
@@ -171,7 +171,7 @@ public class AuthController {
     String refreshToken = rq.getRefreshTokenFromCookie();
 
     // TokenService를 통해 새 Access Token 발급
-    String newAccessToken = tokenService.refreshAccessToken(refreshToken);
+    String newAccessToken = refreshTokenService.refreshAccessToken(request.refreshToken());
 
     // 쿠키 + 응답 헤더에도 설정
     rq.setAccessToken(newAccessToken);

@@ -18,9 +18,9 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class TokenService {
+public class RefreshTokenService {
 
-  private final AuthTokenService authTokenService;
+  private final AccessTokenService accessTokenService;
   private final RedisRefreshTokenRepository redisRefreshTokenRepository;
   private final UserRepository userRepository;
 
@@ -31,7 +31,7 @@ public class TokenService {
    * JWT Access Token 생성
    */
   public String genAccessToken(User user) {
-    return authTokenService.genAccessToken(user);
+    return accessTokenService.genAccessToken(user);
   }
 
   /**

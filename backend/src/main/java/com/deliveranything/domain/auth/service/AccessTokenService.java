@@ -17,7 +17,7 @@ import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
-public class AuthTokenService {
+public class AccessTokenService {
 
   @Value("${custom.jwt.secretKey}")
   private String jwtSecretKey;

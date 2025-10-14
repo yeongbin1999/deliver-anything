@@ -18,7 +18,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.deliveranything.domain.auth.dto.RefreshTokenRequest;
 import com.deliveranything.domain.auth.service.AuthService;
-import com.deliveranything.domain.auth.service.TokenService;
+import com.deliveranything.domain.auth.service.RefreshTokenService;
 import com.deliveranything.domain.user.profile.enums.ProfileType;
 import com.deliveranything.domain.user.profile.service.ProfileService;
 import com.deliveranything.domain.user.user.entity.User;
@@ -55,7 +55,7 @@ class AuthControllerTest {
   private AuthService authService;
 
   @Mock
-  private TokenService tokenService;
+  private RefreshTokenService refreshTokenService;
 
   @Mock
   private ProfileService profileService;
@@ -334,7 +334,6 @@ class AuthControllerTest {
           .andExpect(jsonPath("$.code").value("USER-404"));
     }
 
-    // ✅ 추가된 테스트 케이스
     @Test
     @DisplayName("실패 - 유효성 검사 실패 (빈 비밀번호)")
     void login_fail_validation() throws Exception {
@@ -360,7 +359,6 @@ class AuthControllerTest {
     @Test
     @DisplayName("단일 로그아웃 성공")
     void logout_success() {
-      // Given
       SecurityUser mockSecurityUser = mock(SecurityUser.class);
       when(mockSecurityUser.getId()).thenReturn(1L);
 
@@ -369,14 +367,12 @@ class AuthControllerTest {
 
       doNothing().when(authService).logout(anyLong(), anyString(), anyString());
 
-      // When
       ResponseEntity<?> response = authController.logout(
           mockSecurityUser,
           authorization,
           userAgent
       );
 
-      // Then
       assertEquals(HttpStatus.OK, response.getStatusCode());
       ApiResponse<?> body = (ApiResponse<?>) response.getBody();
       assertNotNull(body);
@@ -389,7 +385,6 @@ class AuthControllerTest {
     @Test
     @DisplayName("단일 로그아웃 성공 - User-Agent 없음")
     void logout_without_user_agent() {
-      // Given
       SecurityUser mockSecurityUser = mock(SecurityUser.class);
       when(mockSecurityUser.getId()).thenReturn(1L);
 
@@ -397,14 +392,12 @@ class AuthControllerTest {
 
       doNothing().when(authService).logout(anyLong(), anyString(), anyString());
 
-      // When
       ResponseEntity<?> response = authController.logout(
           mockSecurityUser,
           authorization,
           null
       );
 
-      // Then
       assertEquals(HttpStatus.OK, response.getStatusCode());
       verify(authService, times(1)).logout(1L, "unknown", "mock-access-token");
     }
@@ -412,7 +405,6 @@ class AuthControllerTest {
     @Test
     @DisplayName("전체 로그아웃 성공")
     void logout_all_success() {
-      // Given
       SecurityUser mockSecurityUser = mock(SecurityUser.class);
       when(mockSecurityUser.getId()).thenReturn(1L);
 
@@ -420,13 +412,11 @@ class AuthControllerTest {
 
       doNothing().when(authService).logoutAll(anyLong(), anyString());
 
-      // When
       ResponseEntity<?> response = authController.logoutAll(
           mockSecurityUser,
           authorization
       );
 
-      // Then
       assertEquals(HttpStatus.OK, response.getStatusCode());
       ApiResponse<?> body = (ApiResponse<?>) response.getBody();
       assertNotNull(body);
@@ -443,35 +433,30 @@ class AuthControllerTest {
     @Test
     @DisplayName("성공 - Access Token 재발급")
     void refresh_token_success() {
-      // Given
       RefreshTokenRequest request = new RefreshTokenRequest("mock-refresh-token");
 
-      when(tokenService.refreshAccessToken("mock-refresh-token"))
+      when(refreshTokenService.refreshAccessToken("mock-refresh-token"))
           .thenReturn("new-access-token");
 
-      // When
       ResponseEntity<?> response = authController.refreshToken(request);
 
-      // Then
       assertEquals(HttpStatus.OK, response.getStatusCode());
       ApiResponse<?> body = (ApiResponse<?>) response.getBody();
       assertNotNull(body);
       assertTrue(body.isSuccess());
 
-      verify(tokenService, times(1)).refreshAccessToken("mock-refresh-token");
+      verify(refreshTokenService, times(1)).refreshAccessToken("mock-refresh-token");
     }
 
 
     @Test
     @DisplayName("실패 - 만료된 Refresh Token")
     void refresh_token_fail_expired() {
-      // Given
       RefreshTokenRequest request = new RefreshTokenRequest("expired-token");
 
-      when(tokenService.refreshAccessToken("expired-token"))
+      when(refreshTokenService.refreshAccessToken("expired-token"))
           .thenThrow(new CustomException(ErrorCode.REFRESH_TOKEN_EXPIRED));
 
-      // When & Then
       CustomException exception = assertThrows(CustomException.class, () -> {
         authController.refreshToken(request);
       });
@@ -482,13 +467,11 @@ class AuthControllerTest {
     @Test
     @DisplayName("실패 - Refresh Token이 null인 경우")
     void refresh_token_fail_null() {
-      // Given
       RefreshTokenRequest request = new RefreshTokenRequest(null);
 
-      when(tokenService.refreshAccessToken(null))
+      when(refreshTokenService.refreshAccessToken(null))
           .thenThrow(new CustomException(ErrorCode.REFRESH_TOKEN_NOT_FOUND));
 
-      // When & Then
       CustomException exception = assertThrows(CustomException.class, () -> {
         authController.refreshToken(request);
       });
