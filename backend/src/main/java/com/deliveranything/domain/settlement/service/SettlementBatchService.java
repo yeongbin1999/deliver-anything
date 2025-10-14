@@ -2,7 +2,6 @@ package com.deliveranything.domain.settlement.service;
 
 import com.deliveranything.domain.settlement.dto.SettlementResponse;
 import com.deliveranything.domain.settlement.dto.SummaryResponse;
-import com.deliveranything.domain.settlement.dto.projection.SettlementProjection;
 import com.deliveranything.domain.settlement.dto.projection.SettlementSummaryProjection;
 import com.deliveranything.domain.settlement.entity.SettlementBatch;
 import com.deliveranything.domain.settlement.entity.SettlementDetail;
@@ -15,12 +14,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-@Slf4j
 @RequiredArgsConstructor
 @Service
 public class SettlementBatchService {
@@ -38,9 +35,6 @@ public class SettlementBatchService {
 
   @Transactional(readOnly = true)
   public List<SettlementResponse> getSettlementsByWeek(Long targetId) {
-    List<SettlementProjection> list = settlementBatchRepository.findWeeklySettlementsByTargetId(
-        targetId);
-
     return settlementBatchRepository.findWeeklySettlementsByTargetId(targetId).stream()
         .map(SettlementResponse::fromProjection)
         .toList();
@@ -59,23 +53,6 @@ public class SettlementBatchService {
       LocalDate startDate,
       LocalDate endDate
   ) {
-
-//    Optional<SettlementProjection> sp = settlementBatchRepository.findSettlementByTargetIdAndPeriod(
-//        targetId, startDate, endDate);
-//    if (sp.isPresent()) {
-//      log.warn("preqweqwe");
-//      System.out.println(sp.get().minDate());
-//      System.out.println(sp.get().maxDate());
-//      System.out.println(sp.get().settledAmount());
-//      System.out.println(sp.get().targetTotalAmount());
-//      System.out.println(sp.get().totalPlatformFee());
-//      System.out.println(sp.get().transactionCount());
-//
-//    } else {
-//      log.warn("etyqweqwe");
-//      System.out.println("asfasf");
-//    }
-
     return SettlementResponse.fromProjection(
         settlementBatchRepository.findSettlementByTargetIdAndPeriod(targetId, startDate, endDate));
   }

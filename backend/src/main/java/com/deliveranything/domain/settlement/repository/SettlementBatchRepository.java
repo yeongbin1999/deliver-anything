@@ -14,9 +14,6 @@ public interface SettlementBatchRepository extends JpaRepository<SettlementBatch
 
   List<SettlementBatch> findAllByTargetId(Long targetId);
 
-  List<SettlementBatch> findAllByTargetIdAndSettlementDateBetween(Long targetId, LocalDate start,
-      LocalDate end);
-
   // 주간별 집계 쿼리
   @Query(value = """
           SELECT new com.deliveranything.domain.settlement.dto.projection.SettlementProjection(
@@ -29,7 +26,7 @@ public interface SettlementBatchRepository extends JpaRepository<SettlementBatch
           )
           FROM SettlementBatch s
           WHERE s.targetId = :targetId
-          GROUP BY FUNCTION('YEARWEEK', s.settlementDate)
+          GROUP BY YEAR(s.settlementDate), WEEK(s.settlementDate)
           ORDER BY MIN(s.settlementDate) DESC
       """)
   List<SettlementProjection> findWeeklySettlementsByTargetId(@Param("targetId") Long targetId);
