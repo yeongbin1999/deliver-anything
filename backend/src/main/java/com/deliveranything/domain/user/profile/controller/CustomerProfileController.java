@@ -199,8 +199,9 @@ public class CustomerProfileController {
       @PathVariable Long addressId,
       @Valid @RequestBody AddressUpdateRequest request) {
 
-    Long userId = rq.getActor().getId();
-    log.info("배송지 수정 요청: userId={}, addressId={}", userId, addressId);
+    // 🔴 수정됨: userId 대신 profileId 사용
+    Long profileId = securityUser.getCurrentActiveProfile().getId();
+    log.info("배송지 수정 요청: profileId={}, addressId={}", profileId, addressId);
 
     // 최소 하나의 필드는 입력되어야 함
     if ((request.addressName() == null || request.addressName().isBlank())
@@ -211,8 +212,9 @@ public class CustomerProfileController {
           .body(ApiResponse.fail("VALIDATION-001", "수정할 정보를 입력해주세요."));
     }
 
+    // 🔴 수정됨: userId 대신 profileId 전달
     boolean success = customerProfileService.updateAddress(
-        userId,
+        profileId,
         addressId,
         request.addressName(),
         request.address(),
@@ -243,6 +245,7 @@ public class CustomerProfileController {
       @AuthenticationPrincipal SecurityUser securityUser,
       @PathVariable Long addressId) {
 
+    // ✅ 주의: Service 메서드가 userId를 받도록 설계되어 있어 이 부분은 유지합니다.
     Long userId = rq.getActor().getId();
     log.info("배송지 삭제 요청: userId={}, addressId={}", userId, addressId);
 
@@ -268,10 +271,12 @@ public class CustomerProfileController {
       @AuthenticationPrincipal SecurityUser securityUser,
       @PathVariable Long addressId) {
 
-    Long userId = rq.getActor().getId();
-    log.info("기본 배송지 설정 요청: userId={}, addressId={}", userId, addressId);
+    // 🔴 수정됨: userId 대신 profileId 사용
+    Long profileId = securityUser.getCurrentActiveProfile().getId();
+    log.info("기본 배송지 설정 요청: profileId={}, addressId={}", profileId, addressId);
 
-    boolean success = customerProfileService.setDefaultAddress(userId, addressId);
+    // 🔴 수정됨: userId 대신 profileId 전달
+    boolean success = customerProfileService.setDefaultAddress(profileId, addressId);
 
     if (!success) {
       return ResponseEntity.badRequest()
