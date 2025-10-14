@@ -317,6 +317,9 @@ class AuthControllerTest {
     @Test
     @DisplayName("실패 - 사용자를 찾을 수 없음")
     void login_fail_user_not_found() throws Exception {
+      // CustomException에서 사용할 메시지를 직접 가져옵니다.
+      String expectedMessage = ErrorCode.USER_NOT_FOUND.getMessage();
+
       when(authService.login(anyString(), anyString(), anyString()))
           .thenThrow(new CustomException(ErrorCode.USER_NOT_FOUND));
       when(userAgentUtil.extractDeviceInfo(any())).thenReturn("Test Device");
@@ -331,7 +334,8 @@ class AuthControllerTest {
                   """))
           .andExpect(status().isNotFound())
           .andExpect(jsonPath("$.success").value(false))
-          .andExpect(jsonPath("$.code").value("USER-404"));
+          .andExpect(jsonPath("$.code").value("USER-404"))
+          .andExpect(jsonPath("$.message").value(expectedMessage));
     }
 
     @Test
@@ -348,7 +352,7 @@ class AuthControllerTest {
           .andExpect(status().isBadRequest())
           .andExpect(jsonPath("$.success").value(false))
           .andExpect(jsonPath("$.code").value("INPUT-400"))
-          .andExpect(jsonPath("$.message").exists()); // 구체적인 메시지는 DTO에 따라 다름
+          .andExpect(jsonPath("$.message").exists());
     }
   }
 
@@ -451,17 +455,20 @@ class AuthControllerTest {
 
     @Test
     @DisplayName("실패 - 만료된 Refresh Token")
-    void refresh_token_fail_expired() {
+    void refresh_token_fail_expired() throws Exception {
       RefreshTokenRequest request = new RefreshTokenRequest("expired-token");
+      String expectedMessage = ErrorCode.REFRESH_TOKEN_EXPIRED.getMessage();
 
       when(refreshTokenService.refreshAccessToken("expired-token"))
           .thenThrow(new CustomException(ErrorCode.REFRESH_TOKEN_EXPIRED));
 
-      CustomException exception = assertThrows(CustomException.class, () -> {
-        authController.refreshToken(request);
-      });
-
-      assertEquals(ErrorCode.REFRESH_TOKEN_EXPIRED.getCode(), exception.getCode());
+      mockMvc.perform(post("/api/v1/auth/refresh")
+              .contentType(MediaType.APPLICATION_JSON)
+              .content(objectMapper.writeValueAsString(request)))
+          .andExpect(status().isUnauthorized()) // 401 Unauthorized 확인
+          .andExpect(jsonPath("$.success").value(false))
+          .andExpect(jsonPath("$.code").value("TOKEN-401"))
+          .andExpect(jsonPath("$.message").value(expectedMessage));
     }
 
     @Test
@@ -492,7 +499,7 @@ class AuthControllerTest {
           .andExpect(status().isBadRequest())
           .andExpect(jsonPath("$.success").value(false))
           .andExpect(jsonPath("$.code").value("INPUT-400"))
-          .andExpect(jsonPath("$.message").exists()); // 구체적인 메시지는 DTO에 따라 다름
+          .andExpect(jsonPath("$.message").exists());
     }
   }
 }
