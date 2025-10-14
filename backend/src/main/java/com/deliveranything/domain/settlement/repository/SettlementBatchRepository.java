@@ -5,7 +5,6 @@ import com.deliveranything.domain.settlement.dto.projection.SettlementSummaryPro
 import com.deliveranything.domain.settlement.entity.SettlementBatch;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -72,27 +71,26 @@ public interface SettlementBatchRepository extends JpaRepository<SettlementBatch
   // 요약 카드에 필요한 쿼리
   @Query(value = """
           SELECT new com.deliveranything.domain.settlement.dto.projection.SettlementSummaryProjection(
-              SUM(s.transactionCount),
-              SUM(CASE
-                  WHEN FUNCTION('YEARWEEK', s.settlementDate) = FUNCTION('YEARWEEK', CURRENT_DATE())
+              CAST(COALESCE(SUM(s.transactionCount), 0) AS long),
+              CAST(COALESCE(SUM(CASE
+                  WHEN YEAR(s.settlementDate) = YEAR(CURRENT_DATE) AND WEEK(s.settlementDate) = WEEK(CURRENT_DATE)
                   THEN s.transactionCount
                   ELSE 0
-              END),
-              SUM(CASE
-                  WHEN FUNCTION('YEARWEEK', s.settlementDate) = FUNCTION('YEARWEEK', CURRENT_DATE())
+              END), 0) AS long),
+              CAST(COALESCE(SUM(CASE
+                  WHEN YEAR(s.settlementDate) = YEAR(CURRENT_DATE) AND WEEK(s.settlementDate) = WEEK(CURRENT_DATE)
                   THEN s.settledAmount
                   ELSE 0
-              END),
-              SUM(CASE
-                  WHEN FUNCTION('DATE_FORMAT', s.settlementDate, '%Y-%m') = FUNCTION('DATE_FORMAT', CURRENT_DATE(), '%Y-%m')
+              END), 0) AS long),
+              CAST(COALESCE(SUM(CASE
+                  WHEN YEAR(s.settlementDate) = YEAR(CURRENT_DATE) AND MONTH(s.settlementDate) = MONTH(CURRENT_DATE)
                   THEN s.settledAmount
                   ELSE 0
-              END),
-              SUM(s.settledAmount)
+              END), 0) AS long),
+              CAST(COALESCE(SUM(s.settledAmount), 0) AS long)
           )
           FROM SettlementBatch s
           WHERE s.targetId = :targetId
       """)
-  Optional<SettlementSummaryProjection> findSettlementSummaryByTargetId(
-      @Param("targetId") Long targetId);
+  SettlementSummaryProjection findSettlementSummaryByTargetId(@Param("targetId") Long targetId);
 }
