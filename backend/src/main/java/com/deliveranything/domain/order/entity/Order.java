@@ -91,7 +91,7 @@ public class Order extends BaseEntity {
     this.totalPrice = totalPrice;
     this.storePrice = storePrice;
     this.deliveryPrice = deliveryPrice;
-    this.status = OrderStatus.PENDING;
+    this.status = OrderStatus.CREATED;
     this.merchantId = UUID.randomUUID().toString();
   }
 
