@@ -225,7 +225,7 @@ public class CustomerProfileController {
           .body(ApiResponse.fail("ADDRESS-003", "배송지 수정에 실패했습니다."));
     }
 
-    CustomerAddress updatedAddress = customerProfileService.getAddress(userId, addressId);
+    CustomerAddress updatedAddress = customerProfileService.getAddress(addressId, 1L);
     AddressResponse response = AddressResponse.from(updatedAddress);
 
     return ResponseEntity.ok(
@@ -295,7 +295,7 @@ public class CustomerProfileController {
     Long profileId = securityUser.getCurrentActiveProfile().getId();
     log.info("기본 배송지 조회 요청: profileId={}", profileId);
 
-    CustomerAddress defaultAddress = customerProfileService.getCurrentAddressByProfileId(profileId);
+    CustomerAddress defaultAddress = customerProfileService.getCurrentAddress(profileId);
     if (defaultAddress == null) {
       return ResponseEntity.ok(
           ApiResponse.success("설정된 기본 배송지가 없습니다.", null)

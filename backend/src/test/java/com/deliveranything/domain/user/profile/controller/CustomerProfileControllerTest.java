@@ -383,7 +383,7 @@ class CustomerProfileControllerTest {
       SecurityUser mockSecurityUser = createMockSecurityUser(1L, 10L);
 
       CustomerAddress mockAddress = createMockAddress(1L, "집", "서울시 강남구", 37.123456, 127.123456);
-      when(customerProfileService.getCurrentAddressByProfileId(10L))
+      when(customerProfileService.getCurrentAddress(10L))
           .thenReturn(mockAddress);
 
       ResponseEntity<?> response = customerProfileController.getDefaultAddress(mockSecurityUser);
@@ -399,7 +399,7 @@ class CustomerProfileControllerTest {
     void getDefaultAddress_not_set() {
       SecurityUser mockSecurityUser = createMockSecurityUser(1L, 10L);
 
-      when(customerProfileService.getCurrentAddressByProfileId(10L))
+      when(customerProfileService.getCurrentAddress(10L))
           .thenReturn(null);
 
       ResponseEntity<?> response = customerProfileController.getDefaultAddress(mockSecurityUser);

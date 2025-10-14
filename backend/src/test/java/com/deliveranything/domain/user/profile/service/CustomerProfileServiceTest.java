@@ -15,11 +15,9 @@ import static org.mockito.Mockito.when;
 
 import com.deliveranything.domain.user.profile.entity.CustomerAddress;
 import com.deliveranything.domain.user.profile.entity.CustomerProfile;
-import com.deliveranything.domain.user.profile.entity.Profile;
 import com.deliveranything.domain.user.profile.repository.CustomerAddressRepository;
 import com.deliveranything.domain.user.profile.repository.CustomerProfileRepository;
 import com.deliveranything.domain.user.profile.repository.ProfileRepository;
-import com.deliveranything.domain.user.user.entity.User;
 import com.deliveranything.domain.user.user.repository.UserRepository;
 import java.util.List;
 import java.util.Optional;
@@ -50,60 +48,10 @@ class CustomerProfileServiceTest {
   @InjectMocks
   private CustomerProfileService customerProfileService;
 
-  @Nested
-  @DisplayName("프로필 생성 테스트")
-  class CreateProfileTest {
-
-    @Test
-    @DisplayName("성공 - 프로필 생성")
-    void createProfile_success() {
-      User mockUser = mock(User.class);
-      when(userRepository.findById(1L)).thenReturn(Optional.of(mockUser));
-      when(customerProfileRepository.findByUserId(1L)).thenReturn(Optional.empty());
-
-      Profile mockProfile = mock(Profile.class);
-      when(profileRepository.save(any(Profile.class))).thenReturn(mockProfile);
-
-      CustomerProfile mockCustomerProfile = mock(CustomerProfile.class);
-      when(mockCustomerProfile.getId()).thenReturn(10L);
-      when(customerProfileRepository.save(any(CustomerProfile.class)))
-          .thenReturn(mockCustomerProfile);
-
-      CustomerProfile result = customerProfileService.createProfile(1L, "닉네임");
-
-      assertNotNull(result);
-      assertEquals(10L, result.getId());
-      verify(profileRepository, times(1)).save(any(Profile.class));
-      verify(customerProfileRepository, times(1)).save(any(CustomerProfile.class));
-    }
-
-    @Test
-    @DisplayName("실패 - 사용자를 찾을 수 없음")
-    void createProfile_fail_user_not_found() {
-      when(userRepository.findById(1L)).thenReturn(Optional.empty());
-
-      CustomerProfile result = customerProfileService.createProfile(1L, "닉네임");
-
-      assertNull(result);
-      verify(profileRepository, never()).save(any());
-    }
-
-    @Test
-    @DisplayName("성공 - 이미 프로필 존재")
-    void createProfile_already_exists() {
-      User mockUser = mock(User.class);
-      when(userRepository.findById(1L)).thenReturn(Optional.of(mockUser));
-
-      CustomerProfile existingProfile = mock(CustomerProfile.class);
-      when(customerProfileRepository.findByUserId(1L)).thenReturn(Optional.of(existingProfile));
-
-      CustomerProfile result = customerProfileService.createProfile(1L, "닉네임");
-
-      assertNotNull(result);
-      assertEquals(existingProfile, result);
-      verify(profileRepository, never()).save(any());
-    }
-  }
+  // ❌ 삭제: createProfile 테스트 (메서드가 서비스에 없음)
+  // @Nested
+  // @DisplayName("프로필 생성 테스트")
+  // class CreateProfileTest { ... }
 
   @Nested
   @DisplayName("프로필 조회 테스트")
@@ -115,7 +63,7 @@ class CustomerProfileServiceTest {
       CustomerProfile mockProfile = mock(CustomerProfile.class);
       when(customerProfileRepository.findByUserId(1L)).thenReturn(Optional.of(mockProfile));
 
-      CustomerProfile result = customerProfileService.getProfile(1L);
+      CustomerProfile result = customerProfileService.getProfileByUserId(1L);
 
       assertNotNull(result);
       assertEquals(mockProfile, result);
@@ -126,7 +74,7 @@ class CustomerProfileServiceTest {
     void getProfile_not_found() {
       when(customerProfileRepository.findByUserId(1L)).thenReturn(Optional.empty());
 
-      CustomerProfile result = customerProfileService.getProfile(1L);
+      CustomerProfile result = customerProfileService.getProfileByUserId(1L);
 
       assertNull(result);
     }
@@ -143,26 +91,7 @@ class CustomerProfileServiceTest {
       assertEquals(mockProfile, result);
     }
 
-    @Test
-    @DisplayName("성공 - 프로필 존재 확인")
-    void hasProfile_true() {
-      CustomerProfile mockProfile = mock(CustomerProfile.class);
-      when(customerProfileRepository.findByUserId(1L)).thenReturn(Optional.of(mockProfile));
-
-      boolean result = customerProfileService.hasProfile(1L);
-
-      assertTrue(result);
-    }
-
-    @Test
-    @DisplayName("성공 - 프로필 존재하지 않음")
-    void hasProfile_false() {
-      when(customerProfileRepository.findByUserId(1L)).thenReturn(Optional.empty());
-
-      boolean result = customerProfileService.hasProfile(1L);
-
-      assertFalse(result);
-    }
+    // ❌ 삭제: hasProfile 테스트 (메서드가 서비스에 없음)
   }
 
   @Nested
@@ -203,45 +132,32 @@ class CustomerProfileServiceTest {
   @DisplayName("배송지 목록 조회 테스트")
   class GetAddressesTest {
 
-    @Test
-    @DisplayName("성공 - userId로 배송지 목록 조회")
-    void getAddresses_success() {
-      CustomerProfile mockProfile = mock(CustomerProfile.class);
-      when(customerProfileRepository.findByUserId(1L)).thenReturn(Optional.of(mockProfile));
+    // ❌ 삭제: getAddresses(userId) 테스트 (메서드가 서비스에 없음)
 
+    @Test
+    @DisplayName("성공 - profileId로 배송지 목록 조회")
+    void getAddressesByProfileId_success() {
       CustomerAddress address1 = mock(CustomerAddress.class);
       CustomerAddress address2 = mock(CustomerAddress.class);
-      when(customerAddressRepository.findAddressesByProfile(mockProfile))
+      when(customerAddressRepository.findAddressesByProfileId(10L))
           .thenReturn(List.of(address1, address2));
 
-      List<CustomerAddress> result = customerProfileService.getAddresses(1L);
+      List<CustomerAddress> result = customerProfileService.getAddressesByProfileId(10L);
 
       assertNotNull(result);
       assertEquals(2, result.size());
     }
 
     @Test
-    @DisplayName("실패 - 프로필 없음")
-    void getAddresses_profile_not_found() {
-      when(customerProfileRepository.findByUserId(1L)).thenReturn(Optional.empty());
-
-      List<CustomerAddress> result = customerProfileService.getAddresses(1L);
-
-      assertNotNull(result);
-      assertTrue(result.isEmpty());
-    }
-
-    @Test
-    @DisplayName("성공 - profileId로 배송지 목록 조회")
-    void getAddressesByProfileId_success() {
-      CustomerAddress address1 = mock(CustomerAddress.class);
+    @DisplayName("성공 - 배송지 없음")
+    void getAddressesByProfileId_empty() {
       when(customerAddressRepository.findAddressesByProfileId(10L))
-          .thenReturn(List.of(address1));
+          .thenReturn(List.of());
 
       List<CustomerAddress> result = customerProfileService.getAddressesByProfileId(10L);
 
       assertNotNull(result);
-      assertEquals(1, result.size());
+      assertTrue(result.isEmpty());
     }
   }
 
@@ -250,60 +166,41 @@ class CustomerProfileServiceTest {
   class GetAddressTest {
 
     @Test
-    @DisplayName("성공 - 배송지 조회")
-    void getAddress_success() {
-      CustomerProfile mockProfile = mock(CustomerProfile.class);
-      when(mockProfile.getId()).thenReturn(10L);
-      when(customerProfileRepository.findByUserId(1L)).thenReturn(Optional.of(mockProfile));
+    @DisplayName("성공 - profileId로 배송지 조회")
+    void getAddressByProfileId_success() {
 
       CustomerAddress mockAddress = mock(CustomerAddress.class);
-      CustomerProfile addressProfile = mock(CustomerProfile.class);
-      when(addressProfile.getId()).thenReturn(10L);
-      when(mockAddress.getCustomerProfile()).thenReturn(addressProfile);
+      CustomerProfile customerProfile = mock(CustomerProfile.class);
+      when(customerProfile.getId()).thenReturn(10L);
+      when(mockAddress.getCustomerProfile()).thenReturn(customerProfile);
       when(customerAddressRepository.findById(1L)).thenReturn(Optional.of(mockAddress));
 
-      CustomerAddress result = customerProfileService.getAddress(1L, 1L);
+      CustomerAddress result = customerProfileService.getAddressByProfileId(10L, 1L);
 
       assertNotNull(result);
       assertEquals(mockAddress, result);
     }
 
     @Test
-    @DisplayName("실패 - 프로필 없음")
-    void getAddress_profile_not_found() {
-      when(customerProfileRepository.findByUserId(1L)).thenReturn(Optional.empty());
-
-      CustomerAddress result = customerProfileService.getAddress(1L, 1L);
-
-      assertNull(result);
-    }
-
-    @Test
     @DisplayName("실패 - 배송지 없음")
-    void getAddress_address_not_found() {
-      CustomerProfile mockProfile = mock(CustomerProfile.class);
-      when(customerProfileRepository.findByUserId(1L)).thenReturn(Optional.of(mockProfile));
+    void getAddressByProfileId_not_found() {
       when(customerAddressRepository.findById(1L)).thenReturn(Optional.empty());
 
-      CustomerAddress result = customerProfileService.getAddress(1L, 1L);
+      CustomerAddress result = customerProfileService.getAddressByProfileId(10L, 1L);
 
       assertNull(result);
     }
 
     @Test
     @DisplayName("실패 - 소유자 불일치")
-    void getAddress_not_owned() {
-      CustomerProfile mockProfile = mock(CustomerProfile.class);
-      when(mockProfile.getId()).thenReturn(10L);
-      when(customerProfileRepository.findByUserId(1L)).thenReturn(Optional.of(mockProfile));
-
+    void getAddressByProfileId_not_owned() {
       CustomerAddress mockAddress = mock(CustomerAddress.class);
       CustomerProfile addressProfile = mock(CustomerProfile.class);
-      when(addressProfile.getId()).thenReturn(20L);
+      when(addressProfile.getId()).thenReturn(20L);  // 다른 프로필 ID
       when(mockAddress.getCustomerProfile()).thenReturn(addressProfile);
       when(customerAddressRepository.findById(1L)).thenReturn(Optional.of(mockAddress));
 
-      CustomerAddress result = customerProfileService.getAddress(1L, 1L);
+      CustomerAddress result = customerProfileService.getAddressByProfileId(10L, 1L);
 
       assertNull(result);
     }
@@ -374,19 +271,12 @@ class CustomerProfileServiceTest {
     @Test
     @DisplayName("성공 - 배송지 수정")
     void updateAddress_success() {
-      CustomerProfile mockProfile = mock(CustomerProfile.class);
-      when(mockProfile.getId()).thenReturn(10L);
-      when(customerProfileRepository.findByUserId(1L)).thenReturn(Optional.of(mockProfile));
-
       CustomerAddress mockAddress = mock(CustomerAddress.class);
-      CustomerProfile addressProfile = mock(CustomerProfile.class);
-      when(addressProfile.getId()).thenReturn(10L);
-      when(mockAddress.getCustomerProfile()).thenReturn(addressProfile);
       when(customerAddressRepository.findById(1L)).thenReturn(Optional.of(mockAddress));
       when(customerAddressRepository.save(mockAddress)).thenReturn(mockAddress);
 
       boolean result = customerProfileService.updateAddress(
-          1L, 1L, "새주소명", "새주소", 37.789, 127.789
+          10L, 1L, "새주소명", "새주소", 37.789, 127.789
       );
 
       assertTrue(result);
@@ -397,12 +287,10 @@ class CustomerProfileServiceTest {
     @Test
     @DisplayName("실패 - 배송지 없음")
     void updateAddress_fail_not_found() {
-      CustomerProfile mockProfile = mock(CustomerProfile.class);
-      when(customerProfileRepository.findByUserId(1L)).thenReturn(Optional.of(mockProfile));
       when(customerAddressRepository.findById(1L)).thenReturn(Optional.empty());
 
       boolean result = customerProfileService.updateAddress(
-          1L, 1L, "새주소명", "새주소", 37.789, 127.789
+          10L, 1L, "새주소명", "새주소", 37.789, 127.789
       );
 
       assertFalse(result);
@@ -417,14 +305,7 @@ class CustomerProfileServiceTest {
     @Test
     @DisplayName("성공 - 배송지 삭제")
     void deleteAddress_success() {
-      CustomerProfile mockProfile = mock(CustomerProfile.class);
-      when(mockProfile.getId()).thenReturn(10L);
-      when(customerProfileRepository.findByUserId(1L)).thenReturn(Optional.of(mockProfile));
-
       CustomerAddress mockAddress = mock(CustomerAddress.class);
-      CustomerProfile addressProfile = mock(CustomerProfile.class);
-      when(addressProfile.getId()).thenReturn(10L);
-      when(mockAddress.getCustomerProfile()).thenReturn(addressProfile);
       when(mockAddress.isDefault()).thenReturn(false);
       when(customerAddressRepository.findById(1L)).thenReturn(Optional.of(mockAddress));
 
@@ -437,14 +318,7 @@ class CustomerProfileServiceTest {
     @Test
     @DisplayName("실패 - 기본 배송지는 삭제 불가")
     void deleteAddress_fail_default_address() {
-      CustomerProfile mockProfile = mock(CustomerProfile.class);
-      when(mockProfile.getId()).thenReturn(10L);
-      when(customerProfileRepository.findByUserId(1L)).thenReturn(Optional.of(mockProfile));
-
       CustomerAddress mockAddress = mock(CustomerAddress.class);
-      CustomerProfile addressProfile = mock(CustomerProfile.class);
-      when(addressProfile.getId()).thenReturn(10L);
-      when(mockAddress.getCustomerProfile()).thenReturn(addressProfile);
       when(mockAddress.isDefault()).thenReturn(true);
       when(customerAddressRepository.findById(1L)).thenReturn(Optional.of(mockAddress));
 
@@ -457,8 +331,6 @@ class CustomerProfileServiceTest {
     @Test
     @DisplayName("실패 - 배송지 없음")
     void deleteAddress_fail_not_found() {
-      CustomerProfile mockProfile = mock(CustomerProfile.class);
-      when(customerProfileRepository.findByUserId(1L)).thenReturn(Optional.of(mockProfile));
       when(customerAddressRepository.findById(1L)).thenReturn(Optional.empty());
 
       boolean result = customerProfileService.deleteAddress(1L, 1L);
@@ -476,17 +348,13 @@ class CustomerProfileServiceTest {
     @DisplayName("성공 - 기본 배송지 설정")
     void setDefaultAddress_success() {
       CustomerProfile mockProfile = mock(CustomerProfile.class);
-      when(mockProfile.getId()).thenReturn(10L);
-      when(customerProfileRepository.findByUserId(1L)).thenReturn(Optional.of(mockProfile));
+      when(customerProfileRepository.findByProfileId(10L)).thenReturn(Optional.of(mockProfile));
 
       CustomerAddress mockAddress = mock(CustomerAddress.class);
-      CustomerProfile addressProfile = mock(CustomerProfile.class);
-      when(addressProfile.getId()).thenReturn(10L);
-      when(mockAddress.getCustomerProfile()).thenReturn(addressProfile);
       when(customerAddressRepository.findById(2L)).thenReturn(Optional.of(mockAddress));
       when(customerProfileRepository.save(mockProfile)).thenReturn(mockProfile);
 
-      boolean result = customerProfileService.setDefaultAddress(1L, 2L);
+      boolean result = customerProfileService.setDefaultAddress(10L, 2L);
 
       assertTrue(result);
       verify(mockProfile, times(1)).updateDefaultAddressId(2L);
@@ -496,9 +364,9 @@ class CustomerProfileServiceTest {
     @Test
     @DisplayName("실패 - 프로필 없음")
     void setDefaultAddress_fail_profile_not_found() {
-      when(customerProfileRepository.findByUserId(1L)).thenReturn(Optional.empty());
+      when(customerProfileRepository.findByProfileId(10L)).thenReturn(Optional.empty());
 
-      boolean result = customerProfileService.setDefaultAddress(1L, 2L);
+      boolean result = customerProfileService.setDefaultAddress(10L, 2L);
 
       assertFalse(result);
       verify(customerProfileRepository, never()).save(any());
@@ -508,10 +376,10 @@ class CustomerProfileServiceTest {
     @DisplayName("실패 - 배송지 없음")
     void setDefaultAddress_fail_address_not_found() {
       CustomerProfile mockProfile = mock(CustomerProfile.class);
-      when(customerProfileRepository.findByUserId(1L)).thenReturn(Optional.of(mockProfile));
+      when(customerProfileRepository.findByProfileId(10L)).thenReturn(Optional.of(mockProfile));
       when(customerAddressRepository.findById(2L)).thenReturn(Optional.empty());
 
-      boolean result = customerProfileService.setDefaultAddress(1L, 2L);
+      boolean result = customerProfileService.setDefaultAddress(10L, 2L);
 
       assertFalse(result);
       verify(customerProfileRepository, never()).save(any());
@@ -532,7 +400,7 @@ class CustomerProfileServiceTest {
       CustomerAddress mockAddress = mock(CustomerAddress.class);
       when(customerAddressRepository.findById(1L)).thenReturn(Optional.of(mockAddress));
 
-      CustomerAddress result = customerProfileService.getCurrentAddressByProfileId(10L);
+      CustomerAddress result = customerProfileService.getCurrentAddress(10L);
 
       assertNotNull(result);
       assertEquals(mockAddress, result);
@@ -543,7 +411,7 @@ class CustomerProfileServiceTest {
     void getCurrentAddressByProfileId_profile_not_found() {
       when(customerProfileRepository.findByProfileId(10L)).thenReturn(Optional.empty());
 
-      CustomerAddress result = customerProfileService.getCurrentAddressByProfileId(10L);
+      CustomerAddress result = customerProfileService.getCurrentAddress(10L);
 
       assertNull(result);
     }
@@ -555,7 +423,7 @@ class CustomerProfileServiceTest {
       when(mockProfile.getDefaultAddressId()).thenReturn(null);
       when(customerProfileRepository.findByProfileId(10L)).thenReturn(Optional.of(mockProfile));
 
-      CustomerAddress result = customerProfileService.getCurrentAddressByProfileId(10L);
+      CustomerAddress result = customerProfileService.getCurrentAddress(10L);
 
       assertNull(result);
     }
@@ -568,7 +436,7 @@ class CustomerProfileServiceTest {
       when(customerProfileRepository.findByProfileId(10L)).thenReturn(Optional.of(mockProfile));
       when(customerAddressRepository.findById(1L)).thenReturn(Optional.empty());
 
-      CustomerAddress result = customerProfileService.getCurrentAddressByProfileId(10L);
+      CustomerAddress result = customerProfileService.getCurrentAddress(10L);
 
       assertNull(result);
     }
