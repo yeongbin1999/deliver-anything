@@ -21,8 +21,10 @@ import org.springframework.transaction.annotation.Transactional;
 public class RefreshTokenService {
 
   private final AccessTokenService accessTokenService;
+  private final TokenBlacklistService tokenBlacklistService;
   private final RefreshTokenRepository refreshTokenRepository;
   private final UserRepository userRepository;
+  private final TokenRefreshRateLimiter rateLimiter;
 
   @Value("${custom.refreshToken.expirationDays}")
   private int refreshTokenExpirationDays;
@@ -60,20 +62,78 @@ public class RefreshTokenService {
   /**
    * RefreshToken으로 사용자 조회 (Redis)
    */
+  public String refreshAccessToken(String refreshTokenValue, String oldAccessToken) {
+    // 1. 사용자 조회 및 검증 (Rate Limiting 전에 토큰 유효성 먼저 확인)
+    User user = getUserByRefreshToken(refreshTokenValue);
+
+    // 2. Rate Limiting 체크 (1분에 5회 제한)
+    try {
+      rateLimiter.checkAndIncrementRefreshAttempt(user.getId());
+    } catch (CustomException e) {
+      // Rate Limit 초과 시 상세 로그
+      long remainingTime = rateLimiter.getRemainingTime(user.getId());
+      log.warn("토큰 재발급 Rate Limit 초과: userId={}, 다음 시도까지 {}초 대기 필요",
+          user.getId(), remainingTime);
+      throw e;
+    }
+
+    // 3. 기존 Access Token 블랙리스트 처리
+    if (oldAccessToken != null && !oldAccessToken.isBlank()) {
+      if (accessTokenService.isValidToken(oldAccessToken)
+          && !accessTokenService.isTokenExpired(oldAccessToken)) {
+        tokenBlacklistService.addToBlacklist(oldAccessToken);
+        log.info("토큰 재발급: 기존 Access Token 블랙리스트 등록 완료 - userId={}", user.getId());
+      } else {
+        log.debug("기존 Access Token이 이미 만료되었거나 유효하지 않음 - 블랙리스트 스킵: userId={}",
+            user.getId());
+      }
+    } else {
+      log.debug("기존 Access Token이 제공되지 않음 (정상: 토큰 만료 후 재발급): userId={}",
+          user.getId());
+    }
+
+    // 4. 새 Access Token 발급
+    String newAccessToken = accessTokenService.genAccessToken(user);
+
+    int remainingAttempts = rateLimiter.getRemainingAttempts(user.getId());
+    log.info("새 Access Token 발급 완료: userId={}, 남은 재발급 횟수={}/5",
+        user.getId(), remainingAttempts);
+
+    return newAccessToken;
+  }
+
+  /**
+   * RefreshToken으로 사용자 조회 (Redis)
+   */
   public User getUserByRefreshToken(String refreshTokenValue) {
+    // null 체크
+    if (refreshTokenValue == null || refreshTokenValue.isBlank()) {
+      log.warn("Refresh Token 값이 null 또는 빈 문자열입니다.");
+      throw new CustomException(ErrorCode.REFRESH_TOKEN_NOT_FOUND);
+    }
+
     // 1. Redis에서 토큰 조회 (인덱스 사용)
     RefreshTokenDto redisToken = refreshTokenRepository
         .findByTokenValue(refreshTokenValue)
-        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        .orElseThrow(() -> {
+          log.warn("Redis에서 Refresh Token을 찾을 수 없습니다: {}",
+              refreshTokenValue.substring(0, Math.min(8, refreshTokenValue.length())));
+          return new CustomException(ErrorCode.REFRESH_TOKEN_INVALID);
+        });
 
     // 2. 유효성 검증
     if (!redisToken.isValid()) {
-      throw new CustomException(ErrorCode.USER_NOT_FOUND);
+      log.warn("만료된 Refresh Token: userId={}", redisToken.getUserId());
+      throw new CustomException(ErrorCode.REFRESH_TOKEN_EXPIRED);
     }
 
     // 3. 사용자 조회
     return userRepository.findById(redisToken.getUserId())
-        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        .orElseThrow(() -> {
+          log.error("Refresh Token은 존재하지만 사용자를 찾을 수 없음: userId={}",
+              redisToken.getUserId());
+          return new CustomException(ErrorCode.USER_NOT_FOUND);
+        });
   }
 
   /**
@@ -92,14 +152,6 @@ public class RefreshTokenService {
   public void invalidateAllRefreshTokens(Long userId) {
     refreshTokenRepository.deleteAllByUser(userId);
     log.info("모든 RefreshToken 무효화 (Redis): userId={}", userId);
-  }
-
-  /**
-   * Refresh Token으로 Access Token 재발급
-   */
-  public String refreshAccessToken(String refreshTokenValue) {
-    User user = getUserByRefreshToken(refreshTokenValue);
-    return accessTokenService.genAccessToken(user);
   }
 
 }

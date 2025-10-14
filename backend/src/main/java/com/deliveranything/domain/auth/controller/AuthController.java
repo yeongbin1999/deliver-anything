@@ -11,6 +11,8 @@ import com.deliveranything.domain.user.profile.service.ProfileService;
 import com.deliveranything.domain.user.user.entity.User;
 import com.deliveranything.global.common.ApiResponse;
 import com.deliveranything.global.common.Rq;
+import com.deliveranything.global.exception.CustomException;
+import com.deliveranything.global.exception.ErrorCode;
 import com.deliveranything.global.security.auth.SecurityUser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -172,12 +174,20 @@ public class AuthController {
     // HttpOnly 쿠키에서 Refresh Token 추출
     String refreshToken = rq.getRefreshTokenFromCookie();
 
-    // TokenService를 통해 새 Access Token 발급
-    String newAccessToken = refreshTokenService.refreshAccessToken(refreshToken);
+    if (refreshToken == null || refreshToken.isBlank()) {
+      log.warn("Refresh Token이 쿠키에 존재하지 않습니다.");
+      throw new CustomException(ErrorCode.REFRESH_TOKEN_NOT_FOUND);
+    }
+
+    String oldAccessToken = rq.getAccessTokenFromHeader();
+    String newAccessToken = refreshTokenService.refreshAccessToken(
+        refreshToken,
+        oldAccessToken
+    );
 
     // 쿠키 + 응답 헤더에도 설정
     rq.setAccessToken(newAccessToken);
 
-    return ResponseEntity.ok(ApiResponse.success());
+    return ResponseEntity.ok(ApiResponse.success("토큰이 재발급되었습니다.", null));
   }
 }

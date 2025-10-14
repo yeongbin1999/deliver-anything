@@ -1,7 +1,7 @@
 package com.deliveranything.domain.auth.service;
 
-import com.deliveranything.domain.auth.enums.SocialProvider;
 import com.deliveranything.domain.auth.dto.SwitchProfileResult;
+import com.deliveranything.domain.auth.enums.SocialProvider;
 import com.deliveranything.domain.store.store.service.StoreService;
 import com.deliveranything.domain.user.profile.dto.SwitchProfileResponse;
 import com.deliveranything.domain.user.profile.dto.customer.CustomerProfileDetail;
@@ -217,6 +217,7 @@ public class AuthService {
     }
   }
 
+
   /**
    * 이메일 인증
    */
@@ -234,96 +235,53 @@ public class AuthService {
   /**
    * 프로필 전환 + Access Token 재발급 (Refresh Token 유지)
    */
-    @Transactional
-    public SwitchProfileResult switchProfileWithTokenReissue(
-        Long userId,
-        ProfileType targetProfileType,
-        String oldAccessToken,
-        String deviceId) {
+  @Transactional
+  public SwitchProfileResult switchProfileWithTokenReissue(
+      Long userId,
+      ProfileType targetProfileType,
+      String oldAccessToken,
+      String deviceId) {
 
-      User user = userRepository.findById(userId)
-          .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+    User user = userRepository.findById(userId)
+        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-      // 온보딩 체크 제거 → 프로필 존재 여부로 변경
-      if (!user.hasActiveProfile()) {
-        log.warn("프로필이 없는 사용자입니다: userId={}", userId);
-        throw new CustomException(ErrorCode.PROFILE_REQUIRED);
-      }
+    // 온보딩 체크 제거 → 프로필 존재 여부로 변경
+    if (!user.hasActiveProfile()) {
+      log.warn("프로필이 없는 사용자입니다: userId={}", userId);
+      throw new CustomException(ErrorCode.PROFILE_REQUIRED);
+    }
 
-      // 현재 프로필 정보 저장
-      ProfileType previousProfileType = user.getCurrentActiveProfileType();
-      Long previousProfileId = user.getCurrentActiveProfileId();
+    // 현재 프로필 정보 저장
+    ProfileType previousProfileType = user.getCurrentActiveProfileType();
+    Long previousProfileId = user.getCurrentActiveProfileId();
 
-      // 타겟 프로필 조회
-      Profile targetProfile = profileRepository
-          .findByUserIdAndType(userId, targetProfileType)
-          .orElseThrow(() -> {
-            log.warn("해당 프로필을 찾을 수 없습니다: userId={}, targetProfile={}",
-                userId, targetProfileType);
-            return new CustomException(ErrorCode.PROFILE_NOT_FOUND);
-          });
+    // 타겟 프로필 조회
+    Profile targetProfile = profileRepository
+        .findByUserIdAndType(userId, targetProfileType)
+        .orElseThrow(() -> {
+          log.warn("해당 프로필을 찾을 수 없습니다: userId={}, targetProfile={}",
+              userId, targetProfileType);
+          return new CustomException(ErrorCode.PROFILE_NOT_FOUND);
+        });
 
-      // 이미 활성화된 프로필인 경우 - Access Token만 재발급
-      if (user.getCurrentActiveProfileType() == targetProfileType) {
-        log.info("이미 활성화된 프로필입니다: userId={}, targetProfile={}",
-            userId, targetProfileType);
+    // 이미 활성화된 프로필인 경우 - Access Token만 재발급
+    if (user.getCurrentActiveProfileType() == targetProfileType) {
+      log.info("이미 활성화된 프로필입니다: userId={}, targetProfile={}",
+          userId, targetProfileType);
 
       String newAccessToken = accessTokenService.genAccessToken(user);
-
-        // 기존 AccessToken 블랙리스트 등록
-        if (oldAccessToken != null && !oldAccessToken.isEmpty()) {
-          tokenBlacklistService.addToBlacklist(oldAccessToken);
-          log.info("프로필 전환 - 기존 accessToken 블랙리스트 등록: userId={}", userId);
-        }
-
-        // storeId 조회
-        Long storeId = getStoreIdIfSeller(user);
-
-        // 프로필 상세 정보 조회
-        Object profileDetail = getCurrentProfileDetail(user);
-
-        SwitchProfileResponse switchProfileResponse = SwitchProfileResponse.builder()
-            .userId(userId)
-            .previousProfileType(previousProfileType)
-            .previousProfileId(previousProfileId)
-            .currentProfileType(targetProfileType)
-            .currentProfileId(targetProfile.getId())
-            .storeId(storeId)
-            .currentProfileDetail(profileDetail)
-            .build();
-
-        return new SwitchProfileResult(switchProfileResponse, newAccessToken);
-      }
-
-      // 프로필 전환 수행 (User 객체로 전달)
-      boolean switched = profileService.switchProfile(user, targetProfileType, deviceId);
-
-      if (!switched) {
-        log.error("프로필 전환 실패: userId={}, targetProfile={}", userId, targetProfileType);
-        throw new CustomException(ErrorCode.PROFILE_NOT_FOUND);
-      }
-
-      // 전환된 user로 새 Access Token 생성
-      User updatedUser = userRepository.findById(userId)
-          .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-
-    // Access Token만 재발급 (Refresh Token 유지)
-    String newAccessToken = accessTokenService.genAccessToken(updatedUser);
 
       // 기존 AccessToken 블랙리스트 등록
       if (oldAccessToken != null && !oldAccessToken.isEmpty()) {
         tokenBlacklistService.addToBlacklist(oldAccessToken);
-        log.info("프로필 전환 완료 및 기존 accessToken 블랙리스트 등록: userId={}", userId);
+        log.info("프로필 전환 - 기존 accessToken 블랙리스트 등록: userId={}", userId);
       }
 
       // storeId 조회
-      Long storeId = getStoreIdIfSeller(updatedUser);
+      Long storeId = getStoreIdIfSeller(user);
 
       // 프로필 상세 정보 조회
-      Object profileDetail = getCurrentProfileDetail(updatedUser);
-
-      log.info("프로필 전환 완료 및 Access Token 재발급: userId={}, {} -> {}",
-          userId, previousProfileType, targetProfileType);
+      Object profileDetail = getCurrentProfileDetail(user);
 
       SwitchProfileResponse switchProfileResponse = SwitchProfileResponse.builder()
           .userId(userId)
@@ -337,6 +295,50 @@ public class AuthService {
 
       return new SwitchProfileResult(switchProfileResponse, newAccessToken);
     }
+
+    // 프로필 전환 수행 (User 객체로 전달)
+    boolean switched = profileService.switchProfile(user, targetProfileType, deviceId);
+
+    if (!switched) {
+      log.error("프로필 전환 실패: userId={}, targetProfile={}", userId, targetProfileType);
+      throw new CustomException(ErrorCode.PROFILE_NOT_FOUND);
+    }
+
+    // 전환된 user로 새 Access Token 생성
+    User updatedUser = userRepository.findById(userId)
+        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+    // Access Token만 재발급 (Refresh Token 유지)
+    String newAccessToken = accessTokenService.genAccessToken(updatedUser);
+
+    // 기존 AccessToken 블랙리스트 등록
+    if (oldAccessToken != null && !oldAccessToken.isEmpty()) {
+      tokenBlacklistService.addToBlacklist(oldAccessToken);
+      log.info("프로필 전환 완료 및 기존 accessToken 블랙리스트 등록: userId={}", userId);
+    }
+
+    // storeId 조회
+    Long storeId = getStoreIdIfSeller(updatedUser);
+
+    // 프로필 상세 정보 조회
+    Object profileDetail = getCurrentProfileDetail(updatedUser);
+
+    log.info("프로필 전환 완료 및 Access Token 재발급: userId={}, {} -> {}",
+        userId, previousProfileType, targetProfileType);
+
+    SwitchProfileResponse switchProfileResponse = SwitchProfileResponse.builder()
+        .userId(userId)
+        .previousProfileType(previousProfileType)
+        .previousProfileId(previousProfileId)
+        .currentProfileType(targetProfileType)
+        .currentProfileId(targetProfile.getId())
+        .storeId(storeId)
+        .currentProfileDetail(profileDetail)
+        .build();
+
+    return new SwitchProfileResult(switchProfileResponse, newAccessToken);
+  }
+
   /**
    * 판매자 프로필인 경우 상점 ID 조회 판매자가 아니거나 상점이 없으면 null 반환
    */

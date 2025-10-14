@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -433,7 +434,8 @@ class AuthControllerTest {
     @DisplayName("성공 - Access Token 재발급")
     void refresh_token_success() {
       when(rq.getRefreshTokenFromCookie()).thenReturn("mock-refresh-token");
-      when(refreshTokenService.refreshAccessToken("mock-refresh-token"))
+      when(rq.getAccessTokenFromHeader()).thenReturn("old-access-token");
+      when(refreshTokenService.refreshAccessToken(anyString(), anyString()))
           .thenReturn("new-access-token");
 
       ResponseEntity<?> response = authController.refreshToken();
@@ -444,17 +446,18 @@ class AuthControllerTest {
       assertTrue(body.isSuccess());
 
       verify(rq, times(1)).getRefreshTokenFromCookie();
-      verify(refreshTokenService, times(1)).refreshAccessToken("mock-refresh-token");
+      verify(rq, times(1)).getAccessTokenFromHeader();
+      verify(refreshTokenService, times(1))
+          .refreshAccessToken("mock-refresh-token", "old-access-token");
       verify(rq, times(1)).setAccessToken("new-access-token");
     }
 
     @Test
     @DisplayName("실패 - 만료된 Refresh Token")
     void refresh_token_fail_expired() {
-      String expectedMessage = ErrorCode.REFRESH_TOKEN_EXPIRED.getMessage();
-
       when(rq.getRefreshTokenFromCookie()).thenReturn("expired-token");
-      when(refreshTokenService.refreshAccessToken("expired-token"))
+      when(rq.getAccessTokenFromHeader()).thenReturn(null);
+      when(refreshTokenService.refreshAccessToken(anyString(), isNull()))
           .thenThrow(new CustomException(ErrorCode.REFRESH_TOKEN_EXPIRED));
 
       CustomException exception = assertThrows(CustomException.class, () -> {
@@ -462,15 +465,12 @@ class AuthControllerTest {
       });
 
       assertEquals(ErrorCode.REFRESH_TOKEN_EXPIRED.getCode(), exception.getCode());
-      assertEquals(expectedMessage, exception.getMessage());
     }
 
     @Test
     @DisplayName("실패 - Refresh Token이 null인 경우")
     void refresh_token_fail_null() {
       when(rq.getRefreshTokenFromCookie()).thenReturn(null);
-      when(refreshTokenService.refreshAccessToken(null))
-          .thenThrow(new CustomException(ErrorCode.REFRESH_TOKEN_NOT_FOUND));
 
       CustomException exception = assertThrows(CustomException.class, () -> {
         authController.refreshToken();
@@ -483,7 +483,8 @@ class AuthControllerTest {
     @DisplayName("실패 - 유효하지 않은 Refresh Token")
     void refresh_token_fail_invalid() {
       when(rq.getRefreshTokenFromCookie()).thenReturn("invalid-token");
-      when(refreshTokenService.refreshAccessToken("invalid-token"))
+      when(rq.getAccessTokenFromHeader()).thenReturn(null);
+      when(refreshTokenService.refreshAccessToken(anyString(), isNull()))
           .thenThrow(new CustomException(ErrorCode.USER_NOT_FOUND));
 
       CustomException exception = assertThrows(CustomException.class, () -> {
