@@ -14,6 +14,7 @@ public enum ErrorCode {
   TOKEN_NOT_FOUND(HttpStatus.UNAUTHORIZED, "AUTH-401", "토큰이 제공되지 않았습니다."),
   REFRESH_TOKEN_INVALID(HttpStatus.UNAUTHORIZED, "AUTH-401", "유효하지 않은 리프레시 토큰입니다."),
   REFRESH_TOKEN_EXPIRED(HttpStatus.UNAUTHORIZED, "AUTH-401", "만료된 리프레시 토큰입니다."),
+  REFRESH_TOKEN_NOT_FOUND(HttpStatus.UNAUTHORIZED, "AUTH-401", "리프레시 토큰이 제공되지 않았습니다."),
   PROFILE_NOT_ALLOWED(HttpStatus.FORBIDDEN, "AUTH-403", "해당 프로필로 사용할 권한이 없습니다."),
   PROFILE_SWITCH_FAILED(HttpStatus.BAD_REQUEST, "AUTH-400", "프로필 전환에 실패했습니다."),
 

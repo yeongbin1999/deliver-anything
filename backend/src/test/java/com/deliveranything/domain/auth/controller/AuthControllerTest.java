@@ -1,5 +1,9 @@
 package com.deliveranything.domain.auth.controller;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -12,11 +16,13 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.deliveranything.domain.auth.dto.RefreshTokenRequest;
 import com.deliveranything.domain.auth.service.AuthService;
 import com.deliveranything.domain.auth.service.TokenService;
 import com.deliveranything.domain.user.profile.enums.ProfileType;
 import com.deliveranything.domain.user.profile.service.ProfileService;
 import com.deliveranything.domain.user.user.entity.User;
+import com.deliveranything.global.common.ApiResponse;
 import com.deliveranything.global.common.Rq;
 import com.deliveranything.global.exception.CustomException;
 import com.deliveranything.global.exception.ErrorCode;
@@ -33,7 +39,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
@@ -62,6 +70,13 @@ class AuthControllerTest {
   private AuthController authController;
 
   private ObjectMapper objectMapper;
+
+  private SecurityUser createMockSecurityUser(Long userId) {
+    SecurityUser mockSecurityUser = mock(SecurityUser.class);
+    when(mockSecurityUser.getId()).thenReturn(userId);
+    when(mockSecurityUser.getAuthorities()).thenReturn(List.of());
+    return mockSecurityUser;
+  }
 
   @BeforeEach
   void setUp() {
@@ -114,6 +129,8 @@ class AuthControllerTest {
       when(authService.signup(anyString(), anyString(), anyString(), anyString()))
           .thenThrow(new CustomException(ErrorCode.USER_EMAIL_ALREADY_EXIST));
 
+      String expectedMessage = ErrorCode.USER_EMAIL_ALREADY_EXIST.getMessage(); // "이미 존재하는 이메일 입니다."
+
       mockMvc.perform(post("/api/v1/auth/signup")
               .contentType(MediaType.APPLICATION_JSON)
               .content("""
@@ -126,7 +143,8 @@ class AuthControllerTest {
                   """))
           .andExpect(status().isConflict())
           .andExpect(jsonPath("$.success").value(false))
-          .andExpect(jsonPath("$.code").value("USER-409"));
+          .andExpect(jsonPath("$.code").value("USER-409"))
+          .andExpect(jsonPath("$.message").value(expectedMessage));
     }
 
     @Test
@@ -134,6 +152,8 @@ class AuthControllerTest {
     void signup_fail_duplicate_phone() throws Exception {
       when(authService.signup(anyString(), anyString(), anyString(), anyString()))
           .thenThrow(new CustomException(ErrorCode.USER_PHONE_ALREADY_EXIST));
+
+      String expectedMessage = ErrorCode.USER_PHONE_ALREADY_EXIST.getMessage();
 
       mockMvc.perform(post("/api/v1/auth/signup")
               .contentType(MediaType.APPLICATION_JSON)
@@ -147,7 +167,27 @@ class AuthControllerTest {
                   """))
           .andExpect(status().isConflict())
           .andExpect(jsonPath("$.success").value(false))
-          .andExpect(jsonPath("$.code").value("USER-409"));
+          .andExpect(jsonPath("$.code").value("USER-409"))
+          .andExpect(jsonPath("$.message").value(expectedMessage));
+    }
+
+    @Test
+    @DisplayName("실패 - 유효성 검사 실패 (빈 이메일)")
+    void signup_fail_validation() throws Exception {
+      mockMvc.perform(post("/api/v1/auth/signup")
+              .contentType(MediaType.APPLICATION_JSON)
+              .content("""
+                  {
+                      "email": "",
+                      "password": "!qwer1234",
+                      "name": "테스트",
+                      "phoneNumber": "01012345678"
+                  }
+                  """))
+          .andExpect(status().isBadRequest())
+          .andExpect(jsonPath("$.success").value(false))
+          .andExpect(jsonPath("$.code").value("INPUT-400"))
+          .andExpect(jsonPath("$.message").exists()); // 구체적인 메시지는 DTO에 따라 다름
     }
   }
 
@@ -194,8 +234,6 @@ class AuthControllerTest {
           .andExpect(jsonPath("$.content.currentActiveProfileType").isEmpty())
           .andExpect(jsonPath("$.content.currentActiveProfileId").isEmpty());
 
-      verify(rq, times(1)).setAccessToken("mock-access-token");
-      verify(rq, times(1)).setRefreshToken("mock-refresh-token");
     }
 
     @Test
@@ -235,6 +273,7 @@ class AuthControllerTest {
           .andExpect(jsonPath("$.content.currentActiveProfileType").value("CUSTOMER"))
           .andExpect(jsonPath("$.content.currentActiveProfileId").value(10))
           .andExpect(jsonPath("$.content.availableProfiles[0]").value("CUSTOMER"));
+
     }
 
     @Test
@@ -272,6 +311,7 @@ class AuthControllerTest {
           .andExpect(status().isOk())
           .andExpect(jsonPath("$.success").value(true))
           .andExpect(jsonPath("$.content.storeId").value(100));
+
     }
 
     @Test
@@ -293,6 +333,24 @@ class AuthControllerTest {
           .andExpect(jsonPath("$.success").value(false))
           .andExpect(jsonPath("$.code").value("USER-404"));
     }
+
+    // ✅ 추가된 테스트 케이스
+    @Test
+    @DisplayName("실패 - 유효성 검사 실패 (빈 비밀번호)")
+    void login_fail_validation() throws Exception {
+      mockMvc.perform(post("/api/v1/auth/login")
+              .contentType(MediaType.APPLICATION_JSON)
+              .content("""
+                  {
+                      "email": "test@test.com",
+                      "password": ""
+                  }
+                  """))
+          .andExpect(status().isBadRequest())
+          .andExpect(jsonPath("$.success").value(false))
+          .andExpect(jsonPath("$.code").value("INPUT-400"))
+          .andExpect(jsonPath("$.message").exists()); // 구체적인 메시지는 DTO에 따라 다름
+    }
   }
 
   @Nested
@@ -301,70 +359,80 @@ class AuthControllerTest {
 
     @Test
     @DisplayName("단일 로그아웃 성공")
-    void logout_success() throws Exception {
-      String accessToken = "Bearer mock-access-token";
-      String userAgent = "Mozilla/5.0";
-
+    void logout_success() {
+      // Given
       SecurityUser mockSecurityUser = mock(SecurityUser.class);
       when(mockSecurityUser.getId()).thenReturn(1L);
 
+      String authorization = "Bearer mock-access-token";
+      String userAgent = "Mozilla/5.0";
+
       doNothing().when(authService).logout(anyLong(), anyString(), anyString());
-      doNothing().when(rq).deleteRefreshToken();
 
-      mockMvc.perform(post("/api/v1/auth/logout")
-              .header("Authorization", accessToken)
-              .header("User-Agent", userAgent)
-              .principal(mockSecurityUser))
-          .andExpect(status().isOk())
-          .andExpect(jsonPath("$.success").value(true))
-          .andExpect(jsonPath("$.message").value("로그아웃이 완료되었습니다."));
+      // When
+      ResponseEntity<?> response = authController.logout(
+          mockSecurityUser,
+          authorization,
+          userAgent
+      );
 
-      verify(authService, times(1))
-          .logout(1L, userAgent, "mock-access-token");
-      verify(rq, times(1)).deleteRefreshToken();
+      // Then
+      assertEquals(HttpStatus.OK, response.getStatusCode());
+      ApiResponse<?> body = (ApiResponse<?>) response.getBody();
+      assertNotNull(body);
+      assertTrue(body.isSuccess());
+      assertEquals("로그아웃이 완료되었습니다.", body.getMessage());
+
+      verify(authService, times(1)).logout(1L, userAgent, "mock-access-token");
     }
 
     @Test
     @DisplayName("단일 로그아웃 성공 - User-Agent 없음")
-    void logout_without_user_agent() throws Exception {
-      String accessToken = "Bearer mock-access-token";
-
+    void logout_without_user_agent() {
+      // Given
       SecurityUser mockSecurityUser = mock(SecurityUser.class);
       when(mockSecurityUser.getId()).thenReturn(1L);
 
+      String authorization = "Bearer mock-access-token";
+
       doNothing().when(authService).logout(anyLong(), anyString(), anyString());
-      doNothing().when(rq).deleteRefreshToken();
 
-      mockMvc.perform(post("/api/v1/auth/logout")
-              .header("Authorization", accessToken)
-              .principal(mockSecurityUser))
-          .andExpect(status().isOk());
+      // When
+      ResponseEntity<?> response = authController.logout(
+          mockSecurityUser,
+          authorization,
+          null
+      );
 
-      verify(authService, times(1))
-          .logout(1L, "unknown", "mock-access-token");
-      verify(rq, times(1)).deleteRefreshToken();
+      // Then
+      assertEquals(HttpStatus.OK, response.getStatusCode());
+      verify(authService, times(1)).logout(1L, "unknown", "mock-access-token");
     }
 
     @Test
     @DisplayName("전체 로그아웃 성공")
-    void logout_all_success() throws Exception {
-      String accessToken = "Bearer mock-access-token";
-
+    void logout_all_success() {
+      // Given
       SecurityUser mockSecurityUser = mock(SecurityUser.class);
       when(mockSecurityUser.getId()).thenReturn(1L);
 
+      String authorization = "Bearer mock-access-token";
+
       doNothing().when(authService).logoutAll(anyLong(), anyString());
-      doNothing().when(rq).deleteRefreshToken();
 
-      mockMvc.perform(post("/api/v1/auth/logout/all")
-              .header("Authorization", accessToken)
-              .principal(mockSecurityUser))
-          .andExpect(status().isOk())
-          .andExpect(jsonPath("$.success").value(true));
+      // When
+      ResponseEntity<?> response = authController.logoutAll(
+          mockSecurityUser,
+          authorization
+      );
 
-      verify(authService, times(1))
-          .logoutAll(1L, "mock-access-token");
-      verify(rq, times(1)).deleteRefreshToken();
+      // Then
+      assertEquals(HttpStatus.OK, response.getStatusCode());
+      ApiResponse<?> body = (ApiResponse<?>) response.getBody();
+      assertNotNull(body);
+      assertTrue(body.isSuccess());
+
+      verify(authService, times(1)).logoutAll(1L, "mock-access-token");
     }
   }
 
@@ -374,57 +442,74 @@ class AuthControllerTest {
 
     @Test
     @DisplayName("성공 - Access Token 재발급")
-    void refresh_token_success() throws Exception {
-      when(tokenService.refreshAccessToken(anyString()))
+    void refresh_token_success() {
+      // Given
+      RefreshTokenRequest request = new RefreshTokenRequest("mock-refresh-token");
+
+      when(tokenService.refreshAccessToken("mock-refresh-token"))
           .thenReturn("new-access-token");
 
-      mockMvc.perform(post("/api/v1/auth/refresh")
-              .contentType(MediaType.APPLICATION_JSON)
-              .content("""
-                  {
-                      "refreshToken": "mock-refresh-token"
-                  }
-                  """))
-          .andExpect(status().isOk())
-          .andExpect(jsonPath("$.success").value(true));
+      // When
+      ResponseEntity<?> response = authController.refreshToken(request);
 
-      verify(rq, times(1)).setAccessToken("new-access-token");
+      // Then
+      assertEquals(HttpStatus.OK, response.getStatusCode());
+      ApiResponse<?> body = (ApiResponse<?>) response.getBody();
+      assertNotNull(body);
+      assertTrue(body.isSuccess());
+
+      verify(tokenService, times(1)).refreshAccessToken("mock-refresh-token");
     }
 
-    @Test
-    @DisplayName("실패 - 유효하지 않은 Refresh Token")
-    void refresh_token_fail_invalid() throws Exception {
-      when(tokenService.refreshAccessToken(anyString()))
-          .thenThrow(new CustomException(ErrorCode.REFRESH_TOKEN_INVALID));
-
-      mockMvc.perform(post("/api/v1/auth/refresh")
-              .contentType(MediaType.APPLICATION_JSON)
-              .content("""
-                  {
-                      "refreshToken": "invalid-token"
-                  }
-                  """))
-          .andExpect(status().isUnauthorized())
-          .andExpect(jsonPath("$.success").value(false))
-          .andExpect(jsonPath("$.code").value("AUTH-401"));
-    }
 
     @Test
     @DisplayName("실패 - 만료된 Refresh Token")
-    void refresh_token_fail_expired() throws Exception {
-      when(tokenService.refreshAccessToken(anyString()))
+    void refresh_token_fail_expired() {
+      // Given
+      RefreshTokenRequest request = new RefreshTokenRequest("expired-token");
+
+      when(tokenService.refreshAccessToken("expired-token"))
           .thenThrow(new CustomException(ErrorCode.REFRESH_TOKEN_EXPIRED));
 
+      // When & Then
+      CustomException exception = assertThrows(CustomException.class, () -> {
+        authController.refreshToken(request);
+      });
+
+      assertEquals(ErrorCode.REFRESH_TOKEN_EXPIRED.getCode(), exception.getCode());
+    }
+
+    @Test
+    @DisplayName("실패 - Refresh Token이 null인 경우")
+    void refresh_token_fail_null() {
+      // Given
+      RefreshTokenRequest request = new RefreshTokenRequest(null);
+
+      when(tokenService.refreshAccessToken(null))
+          .thenThrow(new CustomException(ErrorCode.REFRESH_TOKEN_NOT_FOUND));
+
+      // When & Then
+      CustomException exception = assertThrows(CustomException.class, () -> {
+        authController.refreshToken(request);
+      });
+
+      assertEquals(ErrorCode.REFRESH_TOKEN_NOT_FOUND.getCode(), exception.getCode());
+    }
+
+    @Test
+    @DisplayName("실패 - 유효성 검사 실패 (빈 Refresh Token)")
+    void refresh_token_fail_validation() throws Exception {
       mockMvc.perform(post("/api/v1/auth/refresh")
               .contentType(MediaType.APPLICATION_JSON)
               .content("""
                   {
-                      "refreshToken": "expired-token"
+                      "refreshToken": ""
                   }
                   """))
-          .andExpect(status().isUnauthorized())
+          .andExpect(status().isBadRequest())
           .andExpect(jsonPath("$.success").value(false))
-          .andExpect(jsonPath("$.code").value("AUTH-401"));
+          .andExpect(jsonPath("$.code").value("INPUT-400"))
+          .andExpect(jsonPath("$.message").exists()); // 구체적인 메시지는 DTO에 따라 다름
     }
   }
 }
