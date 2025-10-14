@@ -66,7 +66,7 @@ public interface SettlementBatchRepository extends JpaRepository<SettlementBatch
           WHERE s.targetId = :targetId
             AND s.settlementDate BETWEEN :startDate AND :endDate
       """)
-  Optional<SettlementProjection> findSettlementByTargetIdAndPeriod(
+  SettlementProjection findSettlementByTargetIdAndPeriod(
       @Param("targetId") Long targetId,
       @Param("startDate") LocalDate startDate,
       @Param("endDate") LocalDate endDate
