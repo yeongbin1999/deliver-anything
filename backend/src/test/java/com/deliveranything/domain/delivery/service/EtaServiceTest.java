@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 import com.deliveranything.domain.delivery.event.dto.OrderAssignFailedEvent;
+import com.deliveranything.domain.notification.subscriber.delivery.OrderAssignFailedNotifier;
 import com.deliveranything.domain.order.event.OrderAcceptedEvent;
 import java.util.ArrayList;
 import java.util.List;
@@ -42,6 +43,8 @@ class EtaServiceTest {
   private WebClient.RequestHeadersSpec requestHeadersSpec;
   @Mock
   private WebClient.ResponseSpec responseSpec;
+  @Mock
+  private OrderAssignFailedNotifier orderAssignFailedNotifier;
 
   @Mock
   private ApplicationEventPublisher eventPublisher;
