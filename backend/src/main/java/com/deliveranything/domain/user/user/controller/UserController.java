@@ -30,6 +30,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -287,8 +288,15 @@ public class UserController {
     );
   }
 
-  @PostMapping("/verify-email/send") // 새로운 엔드포인트 이름
-  @Operation(summary = "로그인 사용자 이메일 인증 코드 발송")
+  /**
+   * 로그인 사용자 이메일 인증 코드 발송 (/verify-email/send) 이메일 주소는 서버에서 `rq.getActor().getEmail()`로 강제 주입
+   */
+  @PostMapping("/verify-email/send")
+  @Operation(
+      summary = "1. 로그인 사용자 이메일 인증 코드 발송",
+      description = "로그인된 사용자(`rq.getActor()`)의 이메일로 인증 코드를 발송합니다. **이메일 주소는 서버에서 강제 주입**되므로 클라이언트 요청 DTO가 필요 없습니다.",
+      security = @SecurityRequirement(name = "bearerAuth")
+  )
   public ResponseEntity<ApiResponse<Void>> sendVerificationCodeForMyEmail() {
 
     // 1. **필터가 성공했으므로** rq.getActor()는 null이 아님. 안전하게 호출 가능.
@@ -308,8 +316,15 @@ public class UserController {
     );
   }
 
+  /**
+   * 로그인 사용자 이메일 인증 코드 검증 (/verify-email/verify) 이메일 주소는 서버에서 `rq.getActor().getEmail()`로 강제 주입
+   */
   @PostMapping("/verify-email/verify")
-  @Operation(summary = "로그인 사용자 이메일 인증 코드 검증")
+  @Operation(
+      summary = "2. 로그인 사용자 이메일 인증 코드 검증",
+      description = "클라이언트가 보낸 인증 코드를 검증하고, 성공 시 사용자 엔티티의 `isEmailVerified` 필드를 `true`로 업데이트합니다. **인증 대상 이메일은 로그인 정보로 서버에서 강제 주입**됩니다.",
+      security = @SecurityRequirement(name = "bearerAuth")
+  )
   public ResponseEntity<ApiResponse<Void>> verifyCode(
       @Valid @RequestBody MyEmailVerifyRequest clientRequest // 인증 키값
   ) {
