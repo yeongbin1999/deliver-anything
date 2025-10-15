@@ -1,4 +1,4 @@
-package com.deliveranything.domain.auth.controller;
+package com.deliveranything.domain.auth.auth.controller;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -17,7 +17,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.deliveranything.domain.auth.auth.controller.AuthController;
 import com.deliveranything.domain.auth.auth.service.AuthService;
 import com.deliveranything.domain.auth.auth.service.RefreshTokenService;
 import com.deliveranything.domain.user.profile.enums.ProfileType;

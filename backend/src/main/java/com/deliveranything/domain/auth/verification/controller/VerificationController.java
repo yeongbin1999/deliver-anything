@@ -4,11 +4,13 @@ import com.deliveranything.domain.auth.verification.dto.VerificationSendRequest;
 import com.deliveranything.domain.auth.verification.dto.VerificationVerifyRequest;
 import com.deliveranything.domain.auth.verification.service.VerificationService;
 import com.deliveranything.global.common.ApiResponse;
+import com.deliveranything.global.common.Rq;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springdoc.core.service.SecurityService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -23,6 +25,8 @@ import org.springframework.web.bind.annotation.RestController;
 public class VerificationController {
 
   private final VerificationService verificationService;
+  private final Rq rq;
+  private final SecurityService securityService;
 
   @PostMapping("/send")
   @Operation(

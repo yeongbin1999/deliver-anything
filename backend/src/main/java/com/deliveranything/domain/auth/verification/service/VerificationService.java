@@ -6,6 +6,8 @@ import com.deliveranything.domain.auth.verification.entity.VerificationToken;
 import com.deliveranything.domain.auth.verification.enums.VerificationPurpose;
 import com.deliveranything.domain.auth.verification.enums.VerificationType;
 import com.deliveranything.domain.auth.verification.repository.VerificationTokenRepository;
+import com.deliveranything.domain.user.user.entity.User;
+import com.deliveranything.domain.user.user.repository.UserRepository;
 import com.deliveranything.global.exception.CustomException;
 import com.deliveranything.global.exception.ErrorCode;
 import com.deliveranything.global.infra.EmailService;
@@ -33,6 +35,7 @@ public class VerificationService {
   private static final String REDIS_KEY_PREFIX = "verification:";
   private static final String RATE_LIMIT_PREFIX = "verification_limit:";
   private static final int MAX_ATTEMPTS_PER_HOUR = 5;
+  private final UserRepository userRepository;
 
   /**
    * 인증 코드 발송
@@ -78,8 +81,8 @@ public class VerificationService {
     // Rate Limit 카운트 증가
     incrementRateLimit(identifier);
 
-    log.info("인증 코드 발송 완료: identifier={}, type={}, purpose={}",
-        identifier, type, purpose);
+    log.info("인증 코드 발송 완료: identifier={}, type={}, purpose={}, expirationMinutes={}",
+        identifier, type, purpose, verificationExpirationMinutes);
   }
 
   /**
@@ -104,6 +107,19 @@ public class VerificationService {
     if (!storedCode.equals(inputCode)) {
       log.warn("인증 코드 불일치: identifier={}", identifier);
       throw new CustomException(ErrorCode.TOKEN_INVALID);
+    }
+
+    // 🔽 문제 해결 핵심 로직: 이메일 인증 목적일 때 User 상태 업데이트
+    if (purpose == VerificationPurpose.EMAIL_VERIFICATION) {
+      // 1. 인증된 이메일(identifier)로 User 엔티티를 찾습니다.
+      User user = userRepository.findByEmail(identifier)
+          .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+      // 2. User 엔티티의 verifyEmail() 메서드를 호출하여 상태를 true로 변경합니다.
+      user.verifyEmail();
+      // @Transactional 때문에 변경사항이 DB에 자동 반영됩니다.
+
+      log.info("이메일 인증 완료 및 User 상태 업데이트: userId={}, email={}", user.getId(), identifier);
     }
 
     // DB에서도 확인 및 사용 처리

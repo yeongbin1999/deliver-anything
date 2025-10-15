@@ -40,7 +40,6 @@ public class SwaggerConfig {
     // OpenAPI 객체 구성
     return new OpenAPI()
         .addServersItem(new Server().url("https://api.deliver-anything.shop"))
-        .addServersItem(new Server().url("http://localhost:8080"))
         .components(new Components().addSecuritySchemes("Bearer Token", apiKey))
         .addSecurityItem(securityRequirement);
   }

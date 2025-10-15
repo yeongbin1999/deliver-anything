@@ -11,6 +11,7 @@ import java.time.Duration;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -27,8 +28,10 @@ public class PasswordResetService {
   private final PasswordEncoder passwordEncoder;
   private final RedisTemplate<String, String> redisTemplate;
 
+  @Value("${custom.email.verification.expirationMinutes}")
+  private int verificationExpirationMinutes;
+
   private static final String RESET_TOKEN_PREFIX = "password_reset_token:";
-  private static final int RESET_TOKEN_EXPIRATION_MINUTES = 30;
 
   /**
    * 1단계: 비밀번호 재설정 요청 - 이메일로 인증 코드 발송
@@ -60,7 +63,7 @@ public class PasswordResetService {
         )
     );
 
-    log.info("비밀번호 재설정 인증 코드 발송 완료: {}", email);
+    log.info("비밀번호 재설정 인증 코드 발송 완료: {}, 만료시간: {}분", email, verificationExpirationMinutes);
   }
 
   /**
@@ -85,15 +88,16 @@ public class PasswordResetService {
     // 재설정 토큰 생성 (UUID)
     String resetToken = UUID.randomUUID().toString();
 
-    // Redis에 토큰 저장 (30분 유효)
+    // Redis에 토큰 저장 (인증 코드와 동일한 만료 시간 사용)
     String redisKey = RESET_TOKEN_PREFIX + resetToken;
     redisTemplate.opsForValue().set(
         redisKey,
         user.getId().toString(),
-        Duration.ofMinutes(RESET_TOKEN_EXPIRATION_MINUTES)
+        Duration.ofMinutes(verificationExpirationMinutes)
     );
 
-    log.info("비밀번호 재설정 토큰 발급: userId={}", user.getId());
+    log.info("비밀번호 재설정 토큰 발급: userId={}, 만료시간: {}분",
+        user.getId(), verificationExpirationMinutes);
     return resetToken;
   }
 

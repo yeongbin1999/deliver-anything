@@ -1,4 +1,4 @@
-package com.deliveranything.domain.auth.service;
+package com.deliveranything.domain.auth.auth.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -13,10 +13,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.deliveranything.domain.auth.auth.enums.SocialProvider;
-import com.deliveranything.domain.auth.auth.service.AccessTokenService;
-import com.deliveranything.domain.auth.auth.service.AuthService;
-import com.deliveranything.domain.auth.auth.service.RefreshTokenService;
-import com.deliveranything.domain.auth.auth.service.TokenBlacklistService;
 import com.deliveranything.domain.user.user.entity.User;
 import com.deliveranything.domain.user.user.repository.UserRepository;
 import com.deliveranything.global.exception.CustomException;
@@ -291,44 +287,7 @@ class AuthServiceTest {
     }
   }
 
-  @Nested
-  @DisplayName("이메일 인증 테스트")
-  class VerifyEmailTest {
-
-    @Test
-    @DisplayName("성공 - 이메일 인증")
-    void verifyEmail_success() {
-      // Given
-      Long userId = 1L;
-      User mockUser = mock(User.class);
-
-      when(userRepository.findById(userId)).thenReturn(Optional.of(mockUser));
-      doNothing().when(mockUser).verifyEmail();
-      when(userRepository.save(mockUser)).thenReturn(mockUser);
-
-      // When
-      authService.verifyEmail(userId);
-
-      // Then
-      verify(mockUser, times(1)).verifyEmail();
-      verify(userRepository, times(1)).save(mockUser);
-    }
-
-    @Test
-    @DisplayName("실패 - 사용자를 찾을 수 없음")
-    void verifyEmail_fail_user_not_found() {
-      // Given
-      Long userId = 999L;
-      when(userRepository.findById(userId)).thenReturn(Optional.empty());
-
-      // When & Then
-      CustomException exception = assertThrows(CustomException.class, () -> {
-        authService.verifyEmail(userId);
-      });
-
-      assertEquals("USER-404", exception.getCode());
-    }
-  }
+  // ❌ VerifyEmailTest 제거 - VerificationService가 처리
 
   @Nested
   @DisplayName("OAuth2 로그인 테스트")
