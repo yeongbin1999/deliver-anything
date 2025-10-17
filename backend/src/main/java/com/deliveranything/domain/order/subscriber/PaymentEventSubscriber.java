@@ -6,7 +6,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.connection.Message;
 import org.springframework.data.redis.connection.MessageListener;
-import org.springframework.data.redis.listener.ChannelTopic;
+import org.springframework.data.redis.listener.PatternTopic;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
@@ -21,15 +21,12 @@ public class PaymentEventSubscriber implements MessageListener {
 
   @PostConstruct
   public void registerListener() {
-    container.addMessageListener(this, new ChannelTopic("payment-completed-event"));
-    container.addMessageListener(this, new ChannelTopic("payment-failed-event"));
-    container.addMessageListener(this, new ChannelTopic("payment-cancel-success-event"));
-    container.addMessageListener(this, new ChannelTopic("payment-cancel-failed-event"));
+    container.addMessageListener(this, new PatternTopic("payment-*-event"));
   }
 
   @Override
   public void onMessage(@NonNull Message message, byte[] pattern) {
-    String topic = new String(pattern);
+    String topic = new String(message.getChannel());
     String json = new String(message.getBody());
     log.debug("Received Redis event topic={}, body={}", topic, json);
     paymentEventHandler.handle(topic, json);
