@@ -18,7 +18,7 @@ import org.springframework.stereotype.Component;
 public class StockEventSubscriber implements MessageListener {
 
   private final RedisMessageListenerContainer container;
-  private final StockEventHandler orderEventHandler;
+  private final StockEventHandler stockEventHandler;
 
   @PostConstruct
   public void registerListener() {
@@ -30,6 +30,6 @@ public class StockEventSubscriber implements MessageListener {
     String topic = new String(pattern);
     String json = new String(message.getBody());
     log.debug("Received Redis event topic={}, body={}", topic, json);
-    orderEventHandler.handle(topic, json);
+    stockEventHandler.handle(topic, json);
   }
 }
