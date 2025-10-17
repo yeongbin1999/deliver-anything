@@ -6,7 +6,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.connection.Message;
 import org.springframework.data.redis.connection.MessageListener;
-import org.springframework.data.redis.listener.ChannelTopic;
+import org.springframework.data.redis.listener.PatternTopic;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
@@ -21,11 +21,7 @@ public class StockEventSubscriber implements MessageListener {
 
   @PostConstruct
   public void registerListener() {
-    container.addMessageListener(this, new ChannelTopic("stock-reserved-event"));
-    container.addMessageListener(this, new ChannelTopic("stock-reserve-failed-event"));
-    container.addMessageListener(this, new ChannelTopic("stock-committed-event"));
-    container.addMessageListener(this, new ChannelTopic("stock-released-event"));
-    container.addMessageListener(this, new ChannelTopic("stock-replenished-event"));
+    container.addMessageListener(this, new PatternTopic("stock-*-event"));
   }
 
   @Override
