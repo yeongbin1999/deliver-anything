@@ -1,6 +1,7 @@
 package com.deliveranything.domain.order.subscriber;
 
 import com.deliveranything.domain.order.handler.PaymentEventHandler;
+import com.deliveranything.global.enums.RedisTopic;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,7 +22,7 @@ public class PaymentEventSubscriber implements MessageListener {
 
   @PostConstruct
   public void registerListener() {
-    container.addMessageListener(this, new PatternTopic("payment-*-event"));
+    container.addMessageListener(this, new PatternTopic(RedisTopic.PAYMENT_EVENT.getPattern()));
   }
 
   @Override

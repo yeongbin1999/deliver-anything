@@ -1,6 +1,7 @@
 package com.deliveranything.domain.order.subscriber;
 
 import com.deliveranything.domain.order.handler.StockEventHandler;
+import com.deliveranything.global.enums.RedisTopic;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,7 +22,7 @@ public class StockEventSubscriber implements MessageListener {
 
   @PostConstruct
   public void registerListener() {
-    container.addMessageListener(this, new PatternTopic("stock-*-event"));
+    container.addMessageListener(this, new PatternTopic(RedisTopic.STOCK_EVENT.getPattern()));
   }
 
   @Override
