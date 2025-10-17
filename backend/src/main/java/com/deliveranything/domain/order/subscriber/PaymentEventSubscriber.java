@@ -1,8 +1,6 @@
-package com.deliveranything.domain.order.subscriber.payment;
+package com.deliveranything.domain.order.subscriber;
 
-import com.deliveranything.domain.order.service.OrderService;
-import com.deliveranything.domain.payment.event.PaymentSuccessEvent;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.deliveranything.domain.order.handler.PaymentEventHandler;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,24 +14,24 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class PaymentSuccessEventSubscriber implements MessageListener {
+public class PaymentEventSubscriber implements MessageListener {
 
   private final RedisMessageListenerContainer container;
-  private final ObjectMapper objectMapper;
-  private final OrderService orderService;
+  private final PaymentEventHandler paymentEventHandler;
 
   @PostConstruct
   public void registerListener() {
     container.addMessageListener(this, new ChannelTopic("payment-completed-event"));
+    container.addMessageListener(this, new ChannelTopic("payment-failed-event"));
+    container.addMessageListener(this, new ChannelTopic("payment-cancel-success-event"));
+    container.addMessageListener(this, new ChannelTopic("payment-cancel-failed-event"));
   }
 
   @Override
   public void onMessage(@NonNull Message message, byte[] pattern) {
-    try {
-      orderService.processPaymentCompletion(objectMapper.readValue(new String(message.getBody()),
-          PaymentSuccessEvent.class).merchantUid());
-    } catch (Exception e) {
-      log.error("Failed to process payment completed event from Redis", e);
-    }
+    String topic = new String(pattern);
+    String json = new String(message.getBody());
+    log.debug("Received Redis event topic={}, body={}", topic, json);
+    paymentEventHandler.handle(topic, json);
   }
 }
