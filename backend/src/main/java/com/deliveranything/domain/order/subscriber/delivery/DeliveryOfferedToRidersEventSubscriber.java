@@ -16,7 +16,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class OrderAssignedEventSubscriber implements MessageListener {
+public class DeliveryOfferedToRidersEventSubscriber implements MessageListener {
 
   private final RedisMessageListenerContainer container;
   private final ObjectMapper objectMapper;
@@ -24,7 +24,7 @@ public class OrderAssignedEventSubscriber implements MessageListener {
 
   @PostConstruct
   public void registerListener() {
-    container.addMessageListener(this, new ChannelTopic("order-assigned-event"));
+    container.addMessageListener(this, new ChannelTopic("delivery-offered-to-riders-event"));
   }
 
   @Override
