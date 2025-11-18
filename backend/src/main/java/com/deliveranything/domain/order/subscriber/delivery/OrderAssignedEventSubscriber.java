@@ -1,6 +1,6 @@
 package com.deliveranything.domain.order.subscriber.delivery;
 
-import com.deliveranything.domain.delivery.event.dto.OrderAssignedEvent;
+import com.deliveranything.domain.delivery.event.dto.DeliveryOfferedToRidersEvent;
 import com.deliveranything.domain.order.service.OrderService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
@@ -31,9 +31,9 @@ public class OrderAssignedEventSubscriber implements MessageListener {
   public void onMessage(@NonNull Message message, byte[] pattern) {
     try {
       log.info("라이더에게 상점이 수락한 주문이 뿌려짐");
-      
-      OrderAssignedEvent event = objectMapper.readValue(message.getBody(),
-          OrderAssignedEvent.class);
+
+      DeliveryOfferedToRidersEvent event = objectMapper.readValue(message.getBody(),
+          DeliveryOfferedToRidersEvent.class);
       orderService.processOrderTransmitted(event.orderId());
     } catch (Exception e) {
       log.error("Failed to process order assigned event from Redis", e);

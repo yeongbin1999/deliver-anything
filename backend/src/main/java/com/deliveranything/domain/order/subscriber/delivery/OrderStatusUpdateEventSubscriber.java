@@ -25,7 +25,7 @@ public class OrderStatusUpdateEventSubscriber implements MessageListener {
 
   @PostConstruct
   public void registerListener() {
-    container.addMessageListener(this, new ChannelTopic("order-delivery-status"));
+    container.addMessageListener(this, new ChannelTopic("order-status-update-event"));
   }
 
   @Override

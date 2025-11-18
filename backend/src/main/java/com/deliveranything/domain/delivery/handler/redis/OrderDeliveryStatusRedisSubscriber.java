@@ -34,7 +34,7 @@ public class OrderDeliveryStatusRedisSubscriber implements MessageListener {
 
   @PostConstruct
   public void subscribe() {
-    container.addMessageListener(this, new PatternTopic("order-delivery-status"));
+    container.addMessageListener(this, new PatternTopic("order-status-update-event"));
   }
 
   @Override
