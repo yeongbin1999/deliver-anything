@@ -5,8 +5,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
-import com.deliveranything.domain.delivery.event.dto.OrderAssignFailedEvent;
-import com.deliveranything.domain.notification.subscriber.delivery.OrderAssignFailedNotifier;
+import com.deliveranything.domain.delivery.event.dto.DeliveryOfferFailedEvent;
+import com.deliveranything.domain.notification.subscriber.delivery.DeliveryOfferFailedNotifier;
 import com.deliveranything.domain.order.event.OrderAcceptedEvent;
 import java.util.ArrayList;
 import java.util.List;
@@ -44,13 +44,13 @@ class EtaServiceTest {
   @Mock
   private WebClient.ResponseSpec responseSpec;
   @Mock
-  private OrderAssignFailedNotifier orderAssignFailedNotifier;
+  private DeliveryOfferFailedNotifier deliveryOfferFailedNotifier;
 
   @Mock
   private ApplicationEventPublisher eventPublisher;
 
   private OrderAcceptedEvent orderAcceptedEvent;
-  private OrderAssignFailedEvent orderAssignFailedEvent;
+  private DeliveryOfferFailedEvent deliveryOfferFailedEvent;
 
   @BeforeEach
   void setUp() {
@@ -71,7 +71,7 @@ class EtaServiceTest {
         "order123", new ArrayList<>(), 1L, 1L, "storeName",
         37.5, 127.0, 37.6, 127.1
     );
-    orderAssignFailedEvent = new OrderAssignFailedEvent(orderAcceptedEvent);
+    deliveryOfferFailedEvent = new DeliveryOfferFailedEvent(orderAcceptedEvent);
   }
 
   @Test

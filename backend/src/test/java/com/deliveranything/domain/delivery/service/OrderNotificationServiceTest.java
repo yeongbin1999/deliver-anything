@@ -5,7 +5,7 @@ import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
-import com.deliveranything.domain.delivery.event.dto.OrderAssignFailedEvent;
+import com.deliveranything.domain.delivery.event.dto.DeliveryOfferFailedEvent;
 import com.deliveranything.domain.delivery.event.dto.RiderNotificationDto;
 import com.deliveranything.domain.order.event.OrderAcceptedEvent;
 import com.deliveranything.domain.order.event.dto.OrderItemInfo;
@@ -34,7 +34,7 @@ class OrderNotificationServiceTest {
   private EtaService etaService;
 
   private OrderAcceptedEvent orderAcceptedEvent;
-  private OrderAssignFailedEvent orderAssignFailedEvent;
+  private DeliveryOfferFailedEvent deliveryOfferFailedEvent;
 
   @BeforeEach
   void setUp() {
@@ -44,7 +44,7 @@ class OrderNotificationServiceTest {
         "storeName",
         37.5, 127.0, 37.6, 127.1
     );
-    orderAssignFailedEvent = new OrderAssignFailedEvent(orderAcceptedEvent);
+    deliveryOfferFailedEvent = new DeliveryOfferFailedEvent(orderAcceptedEvent);
   }
 
   @Test

@@ -17,7 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Component
 @RequiredArgsConstructor
-public class OrderAcceptedNotifier {
+public class DeliveryOfferedNotifier {
 
   private final ObjectMapper objectMapper;
   private final NotificationService notificationService;

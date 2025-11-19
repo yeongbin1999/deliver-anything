@@ -28,6 +28,5 @@ public class OrderDeliveryStatusNotifier {
     } catch (Exception e) {
       throw new CustomException(ErrorCode.SSE_SUBSCRIBE_UNAVAILABLE);
     }
-
   }
 }

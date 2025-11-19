@@ -2,7 +2,7 @@ package com.deliveranything.domain.delivery.handler.redis;
 
 import com.deliveranything.domain.delivery.event.dto.RiderNotificationDto;
 import com.deliveranything.domain.delivery.service.OrderNotificationService;
-import com.deliveranything.domain.notification.subscriber.delivery.OrderAcceptedNotifier;
+import com.deliveranything.domain.notification.subscriber.delivery.DeliveryOfferedNotifier;
 import com.deliveranything.domain.order.event.OrderAcceptedEvent;
 import com.deliveranything.global.exception.CustomException;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -29,7 +29,7 @@ public class OrderAcceptedRedisSubscriber implements MessageListener {
   public static final String CHANNEL = "order-accepted-event";
 
   private final ObjectMapper objectMapper;
-  private final OrderAcceptedNotifier orderAcceptedNotifier;
+  private final DeliveryOfferedNotifier deliveryOfferedNotifier;
   private final OrderNotificationService orderNotificationService;
   private final RedisMessageListenerContainer container;
 
@@ -51,7 +51,7 @@ public class OrderAcceptedRedisSubscriber implements MessageListener {
 
       List<RiderNotificationDto> notifications = orderNotificationService.processOrderEvent(event);
       if (!notifications.isEmpty()) {
-        orderAcceptedNotifier.publish(notifications);
+        deliveryOfferedNotifier.publish(notifications);
       } else {
         log.warn("No available riders for orderId: {} (This is not an error)", event.orderId());
       }
