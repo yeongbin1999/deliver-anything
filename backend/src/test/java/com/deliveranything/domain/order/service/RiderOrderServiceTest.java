@@ -45,7 +45,7 @@ class RiderOrderServiceTest {
         .willReturn(Optional.of(mockOrder));
 
     // when
-    OrderResponse response = riderOrderService.getOrder(orderId);
+    OrderResponse response = riderOrderService.getOrderResponse(orderId);
 
     // then
     assertThat(response).isNotNull();
@@ -62,7 +62,7 @@ class RiderOrderServiceTest {
         .willReturn(Optional.empty());
 
     // when & then
-    assertThatThrownBy(() -> riderOrderService.getOrder(orderId))
+    assertThatThrownBy(() -> riderOrderService.getOrderResponse(orderId))
         .isInstanceOf(CustomException.class)
         .hasMessageContaining(ErrorCode.ORDER_NOT_FOUND.getMessage());
   }
