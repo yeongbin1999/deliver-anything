@@ -2,7 +2,6 @@ package com.deliveranything.domain.delivery.publisher;
 
 import com.deliveranything.domain.delivery.event.dto.DeliveryOfferedToRidersEvent;
 import com.deliveranything.domain.delivery.event.dto.DeliveryStatusEvent;
-import com.deliveranything.domain.delivery.event.dto.OrderStatusUpdateEvent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
@@ -25,11 +24,5 @@ public class DeliveryEventPublisher {
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
   public void handleDeliveryOfferedToRidersEvent(DeliveryOfferedToRidersEvent event) {
     redisTemplate.convertAndSend("delivery-offered-to-riders-event", event);
-  }
-
-  // 배달 수락-거절 이벤트 발행
-  @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-  public void handleOrderStatusUpdateEvent(OrderStatusUpdateEvent event) {
-    redisTemplate.convertAndSend("order-status-update-event", event);
   }
 }

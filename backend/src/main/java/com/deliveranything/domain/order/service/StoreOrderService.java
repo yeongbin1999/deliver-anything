@@ -4,8 +4,8 @@ import com.deliveranything.domain.order.dto.OrderResponse;
 import com.deliveranything.domain.order.entity.Order;
 import com.deliveranything.domain.order.enums.OrderStatus;
 import com.deliveranything.domain.order.enums.Publisher;
-import com.deliveranything.domain.order.event.OrderAcceptedEvent;
 import com.deliveranything.domain.order.event.OrderRejectedEvent;
+import com.deliveranything.domain.order.event.OrderStoreAcceptedEvent;
 import com.deliveranything.domain.order.repository.OrderRepository;
 import com.deliveranything.domain.order.repository.OrderRepositoryCustom;
 import com.deliveranything.global.common.CursorPageResponse;
@@ -101,7 +101,7 @@ public class StoreOrderService {
     log.info("상점이 주문 수락 했을 때 상점의 latitude 위도 -90~90: {} / longitude 경도 -180~180: {}",
         order.getStore().getLocation().getY(), order.getStore().getLocation().getX());
 
-    eventPublisher.publishEvent(OrderAcceptedEvent.from(order));
+    eventPublisher.publishEvent(OrderStoreAcceptedEvent.from(order));
   }
 
   @Transactional

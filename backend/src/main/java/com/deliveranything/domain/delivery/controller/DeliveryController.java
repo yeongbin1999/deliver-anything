@@ -2,7 +2,6 @@ package com.deliveranything.domain.delivery.controller;
 
 import com.deliveranything.domain.delivery.dto.request.DeliveryAreaRequestDto;
 import com.deliveranything.domain.delivery.dto.request.DeliveryStatusRequestDto;
-import com.deliveranything.domain.delivery.dto.request.RiderDecisionRequestDto;
 import com.deliveranything.domain.delivery.dto.request.RiderToggleStatusRequestDto;
 import com.deliveranything.domain.delivery.dto.response.CurrentDeliveringDetailsDto;
 import com.deliveranything.domain.delivery.dto.response.CurrentDeliveringResponseDto;
@@ -67,17 +66,6 @@ public class DeliveryController {
   ) {
     deliveryService.changeDeliveryStatus(deliveryId, DeliveryStatus.valueOf(next.status()));
     return ResponseEntity.ok().build();
-  }
-
-  @PostMapping("/decision")
-  @Operation(summary = "라이더 배달 수락/거절 결정",
-      description = "라이더가 배달 요청에 대해 수락 또는 거절을 결정합니다.")
-  public ResponseEntity<ApiResponse<Void>> decideOrderDelivery(
-      @Valid @RequestBody RiderDecisionRequestDto decisionRequestDto,
-      @AuthenticationPrincipal SecurityUser user
-  ) {
-    deliveryService.publishRiderDecision(decisionRequestDto, user.getCurrentActiveProfileIdSafe());
-    return ResponseEntity.ok(ApiResponse.success());
   }
 
   @GetMapping("/today")

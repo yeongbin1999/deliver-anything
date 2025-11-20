@@ -1,7 +1,7 @@
 package com.deliveranything.domain.delivery.event.dto;
 
-import com.deliveranything.domain.order.event.OrderAcceptedEvent;
+import com.deliveranything.domain.order.event.OrderStoreAcceptedEvent;
 
-public record DeliveryOfferFailedEvent(OrderAcceptedEvent order) {
+public record DeliveryOfferFailedEvent(OrderStoreAcceptedEvent order) {
 
 }

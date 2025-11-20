@@ -4,7 +4,7 @@ import com.deliveranything.domain.order.entity.Order;
 import com.deliveranything.domain.order.event.dto.OrderItemInfo;
 import java.util.List;
 
-public record OrderAcceptedEvent(
+public record OrderStoreAcceptedEvent(
     String orderId,
     List<OrderItemInfo> orderItems,
     Long sellerId,
@@ -16,8 +16,8 @@ public record OrderAcceptedEvent(
     Double customerLat
 ) {
 
-  public static OrderAcceptedEvent from(Order order) {
-    return new OrderAcceptedEvent(
+  public static OrderStoreAcceptedEvent from(Order order) {
+    return new OrderStoreAcceptedEvent(
         order.getId().toString(),
         order.getOrderItems().stream().map(OrderItemInfo::fromOrderItem).toList(),
         order.getStore().getSellerProfileId(),

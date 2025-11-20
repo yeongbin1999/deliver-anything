@@ -12,17 +12,15 @@ import static org.mockito.Mockito.times;
 import com.deliveranything.domain.order.dto.OrderResponse;
 import com.deliveranything.domain.order.entity.Order;
 import com.deliveranything.domain.order.enums.OrderStatus;
-import com.deliveranything.domain.order.enums.Publisher;
-import com.deliveranything.domain.order.event.OrderAcceptedEvent;
 import com.deliveranything.domain.order.event.OrderRejectedEvent;
+import com.deliveranything.domain.order.event.OrderStoreAcceptedEvent;
 import com.deliveranything.domain.order.repository.OrderRepository;
 import com.deliveranything.domain.order.repository.OrderRepositoryCustom;
-import com.deliveranything.domain.store.store.entity.Store;
 import com.deliveranything.domain.store.category.entity.StoreCategory;
+import com.deliveranything.domain.store.store.entity.Store;
 import com.deliveranything.domain.user.profile.entity.CustomerProfile;
 import com.deliveranything.global.common.CursorPageResponse;
 import com.deliveranything.global.util.PointUtil;
-import org.locationtech.jts.geom.Point;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -31,6 +29,7 @@ import java.util.stream.IntStream;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.locationtech.jts.geom.Point;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -90,11 +89,13 @@ class StoreOrderServiceTest {
         })
         .collect(Collectors.toList());
 
-    given(orderRepositoryCustom.findOrdersWithStoreByStoreId(anyLong(), any(List.class), nullable(LocalDateTime.class), nullable(Long.class), anyInt()))
+    given(orderRepositoryCustom.findOrdersWithStoreByStoreId(anyLong(), any(List.class),
+        nullable(LocalDateTime.class), nullable(Long.class), anyInt()))
         .willReturn(mockOrders);
 
     // when
-    CursorPageResponse<OrderResponse> response = storeOrderService.getStoreOrdersByCursor(storeId, null, size);
+    CursorPageResponse<OrderResponse> response = storeOrderService.getStoreOrdersByCursor(storeId,
+        null, size);
 
     // then
     assertThat(response.hasNext()).isTrue();
@@ -254,7 +255,7 @@ class StoreOrderServiceTest {
     storeOrderService.acceptOrder(orderId);
 
     // then
-    then(eventPublisher).should(times(1)).publishEvent(any(OrderAcceptedEvent.class));
+    then(eventPublisher).should(times(1)).publishEvent(any(OrderStoreAcceptedEvent.class));
   }
 
   @Test

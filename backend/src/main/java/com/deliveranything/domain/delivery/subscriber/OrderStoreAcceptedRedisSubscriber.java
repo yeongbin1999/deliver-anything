@@ -3,7 +3,7 @@ package com.deliveranything.domain.delivery.subscriber;
 import com.deliveranything.domain.delivery.event.dto.RiderNotificationDto;
 import com.deliveranything.domain.delivery.service.OrderNotificationService;
 import com.deliveranything.domain.notification.subscriber.delivery.DeliveryOfferedNotifier;
-import com.deliveranything.domain.order.event.OrderAcceptedEvent;
+import com.deliveranything.domain.order.event.OrderStoreAcceptedEvent;
 import com.deliveranything.global.exception.CustomException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -24,9 +24,9 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class OrderAcceptedRedisSubscriber implements MessageListener {
+public class OrderStoreAcceptedRedisSubscriber implements MessageListener {
 
-  public static final String CHANNEL = "order-accepted-event";
+  public static final String CHANNEL = "order-store-accepted-event";
 
   private final ObjectMapper objectMapper;
   private final DeliveryOfferedNotifier deliveryOfferedNotifier;
@@ -42,7 +42,8 @@ public class OrderAcceptedRedisSubscriber implements MessageListener {
   public void onMessage(Message message, byte[] pattern) {
     try {
       String payload = new String(message.getBody());
-      OrderAcceptedEvent event = objectMapper.readValue(payload, OrderAcceptedEvent.class);
+      OrderStoreAcceptedEvent event = objectMapper.readValue(payload,
+          OrderStoreAcceptedEvent.class);
 
       log.info("주문 수락 이벤트 수신 했을 때 도착지의 latitude 위도 -90~90: {} / longitude 경도 -180~180: {}",
           event.customerLat(), event.customerLon());

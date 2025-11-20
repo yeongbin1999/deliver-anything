@@ -2,7 +2,7 @@ package com.deliveranything.domain.delivery.service;
 
 import static com.deliveranything.domain.delivery.service.RiderLocationService.RIDER_GEO_KEY;
 
-import com.deliveranything.domain.order.event.OrderAcceptedEvent;
+import com.deliveranything.domain.order.event.OrderStoreAcceptedEvent;
 import com.deliveranything.domain.user.profile.entity.RiderProfile;
 import com.deliveranything.domain.user.profile.enums.RiderToggleStatus;
 import com.deliveranything.domain.user.profile.repository.RiderProfileRepository;
@@ -43,7 +43,7 @@ public class ReactiveRiderEtaService {
    * @return Map<riderId, etaMinutes>
    */
   public Map<String, Double> findNearbyRidersEta(
-      OrderAcceptedEvent order, double radiusKm
+      OrderStoreAcceptedEvent order, double radiusKm
   ) {
     double customerLat = order.customerLat();
     double customerLon = order.customerLon();

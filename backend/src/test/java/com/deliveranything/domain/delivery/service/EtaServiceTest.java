@@ -7,7 +7,7 @@ import static org.mockito.Mockito.when;
 
 import com.deliveranything.domain.delivery.event.dto.DeliveryOfferFailedEvent;
 import com.deliveranything.domain.notification.subscriber.delivery.DeliveryOfferFailedNotifier;
-import com.deliveranything.domain.order.event.OrderAcceptedEvent;
+import com.deliveranything.domain.order.event.OrderStoreAcceptedEvent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -49,7 +49,7 @@ class EtaServiceTest {
   @Mock
   private ApplicationEventPublisher eventPublisher;
 
-  private OrderAcceptedEvent orderAcceptedEvent;
+  private OrderStoreAcceptedEvent orderStoreAcceptedEvent;
   private DeliveryOfferFailedEvent deliveryOfferFailedEvent;
 
   @BeforeEach
@@ -67,11 +67,11 @@ class EtaServiceTest {
     when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
 
     // Sample order event
-    orderAcceptedEvent = new OrderAcceptedEvent(
+    orderStoreAcceptedEvent = new OrderStoreAcceptedEvent(
         "order123", new ArrayList<>(), 1L, 1L, "storeName",
         37.5, 127.0, 37.6, 127.1
     );
-    deliveryOfferFailedEvent = new DeliveryOfferFailedEvent(orderAcceptedEvent);
+    deliveryOfferFailedEvent = new DeliveryOfferFailedEvent(orderStoreAcceptedEvent);
   }
 
   @Test
@@ -89,7 +89,7 @@ class EtaServiceTest {
     when(responseSpec.bodyToMono(Map.class)).thenReturn(Mono.just(mockResponse));
 
     // When
-    Map<String, Double> result = etaService.getDistance(orderAcceptedEvent);
+    Map<String, Double> result = etaService.getDistance(orderStoreAcceptedEvent);
 
     // Then
     assertThat(result.get("distance")).isEqualTo(5.0);
@@ -103,7 +103,7 @@ class EtaServiceTest {
         Mono.error(new RuntimeException("API Error")));
 
     // When
-    Map<String, Double> result = etaService.getDistance(orderAcceptedEvent);
+    Map<String, Double> result = etaService.getDistance(orderStoreAcceptedEvent);
 
     // Then
     assertThat(result.get("distance")).isEqualTo(0.0);
@@ -128,7 +128,7 @@ class EtaServiceTest {
         .thenReturn(Mono.just(mockResponse2));
 
     // When
-    Map<String, Double> result = etaService.getEtaForMultiple(orderAcceptedEvent, riderPoints,
+    Map<String, Double> result = etaService.getEtaForMultiple(orderStoreAcceptedEvent, riderPoints,
         riderIds);
 
     // Then
@@ -153,7 +153,7 @@ class EtaServiceTest {
         .thenReturn(Mono.error(new RuntimeException("API Error")));
 
     // When
-    Map<String, Double> result = etaService.getEtaForMultiple(orderAcceptedEvent, riderPoints,
+    Map<String, Double> result = etaService.getEtaForMultiple(orderStoreAcceptedEvent, riderPoints,
         riderIds);
 
     // Then

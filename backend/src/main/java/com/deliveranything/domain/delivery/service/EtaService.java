@@ -2,7 +2,7 @@ package com.deliveranything.domain.delivery.service;
 
 import com.deliveranything.domain.delivery.event.dto.DeliveryOfferFailedEvent;
 import com.deliveranything.domain.notification.subscriber.delivery.DeliveryOfferFailedNotifier;
-import com.deliveranything.domain.order.event.OrderAcceptedEvent;
+import com.deliveranything.domain.order.event.OrderStoreAcceptedEvent;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -41,7 +41,7 @@ public class EtaService {
    * Thread에서 처리
    */
   public Map<String, Double> getEtaForMultiple(
-      OrderAcceptedEvent order,
+      OrderStoreAcceptedEvent order,
       List<Point> riderPoints,
       List<String> riderIds
   ) {
@@ -116,7 +116,7 @@ public class EtaService {
    * 상점 <-> 주문자 사이 거리 계산 (동기식) - Virtual Thread에서 블로킹 호출해도 효율적
    */
   public Map<String, Double> getDistance(
-      OrderAcceptedEvent order
+      OrderStoreAcceptedEvent order
   ) {
     Double storeLat = order.storeLat();
     Double storeLon = order.storeLon();
