@@ -1,7 +1,7 @@
 package com.deliveranything.domain.order.subscriber;
 
 import com.deliveranything.domain.order.handler.DeliveryEventHandler;
-import com.deliveranything.global.enums.RedisTopic;
+import com.deliveranything.global.enums.RedisTopicPattern;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,7 +22,8 @@ public class DeliveryEventSubscriber implements MessageListener {
 
   @PostConstruct
   public void registerListener() {
-    container.addMessageListener(this, new PatternTopic(RedisTopic.DELIVERY_EVENT.getPattern()));
+    container.addMessageListener(this,
+        new PatternTopic(RedisTopicPattern.DELIVERY_EVENTS.getPattern()));
   }
 
   @Override
