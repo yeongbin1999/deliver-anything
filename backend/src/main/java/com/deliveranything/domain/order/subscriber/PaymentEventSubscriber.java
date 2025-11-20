@@ -1,6 +1,7 @@
 package com.deliveranything.domain.order.subscriber;
 
 import com.deliveranything.domain.order.handler.PaymentEventHandler;
+import com.deliveranything.global.enums.RedisTopic;
 import com.deliveranything.global.enums.RedisTopicPattern;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -28,9 +29,16 @@ public class PaymentEventSubscriber implements MessageListener {
 
   @Override
   public void onMessage(@NonNull Message message, byte[] pattern) {
-    String topic = new String(message.getChannel());
+    String topicStr = new String(message.getChannel());
     String json = new String(message.getBody());
-    log.debug("Received Redis event topic={}, body={}", topic, json);
+    log.debug("Received Redis event topic={}, body={}", topicStr, json);
+
+    RedisTopic topic = RedisTopic.fromTopic(topicStr);
+    if (topic == null) {
+      log.warn("Unknown topic received: {}", topicStr);
+      return;
+    }
+
     paymentEventHandler.handle(topic, json);
   }
 }
