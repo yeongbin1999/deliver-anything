@@ -3,7 +3,7 @@ package com.deliveranything.domain.delivery.service;
 import com.deliveranything.domain.delivery.dto.OrderDetailsDto;
 import com.deliveranything.domain.delivery.event.dto.RiderNotificationDto;
 import com.deliveranything.domain.order.enums.OrderStatus;
-import com.deliveranything.domain.order.event.OrderAcceptedEvent;
+import com.deliveranything.domain.order.event.OrderStoreAcceptedEvent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -25,7 +25,7 @@ public class OrderNotificationService {
   /**
    * 주문 이벤트 처리 (동기식, Virtual Thread에서 실행) - 상점-고객 거리 계산 - 반경 내 라이더 조회 및 ETA 계산 - 라이더별 알림 DTO 생성
    */
-  public List<RiderNotificationDto> processOrderEvent(OrderAcceptedEvent orderEvent) {
+  public List<RiderNotificationDto> processOrderEvent(OrderStoreAcceptedEvent orderEvent) {
     double customerLat = orderEvent.customerLat();
     double customerLon = orderEvent.customerLon();
     String orderId = orderEvent.orderId();

@@ -106,15 +106,6 @@ public class OrderService {
   }
 
   @Transactional
-  public void processDeliveryRiderAssigned(Long orderId) {
-    Order order = getOrderById(orderId);
-    order.updateStatus(OrderStatus.RIDER_ASSIGNED);
-
-    eventPublisher.publishEvent(OrderStatusChangedForCustomerEvent.fromOrder(order));
-    eventPublisher.publishEvent(OrderStatusChangedForSellerEvent.fromOrder(order));
-  }
-
-  @Transactional
   public void processDeliveryPickedUp(Long orderId) {
     Order order = getOrderById(orderId);
     order.updateStatus(OrderStatus.DELIVERING);

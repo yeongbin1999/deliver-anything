@@ -5,9 +5,9 @@ import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
-import com.deliveranything.domain.delivery.event.dto.OrderAssignFailedEvent;
+import com.deliveranything.domain.delivery.event.dto.DeliveryOfferFailedEvent;
 import com.deliveranything.domain.delivery.event.dto.RiderNotificationDto;
-import com.deliveranything.domain.order.event.OrderAcceptedEvent;
+import com.deliveranything.domain.order.event.OrderStoreAcceptedEvent;
 import com.deliveranything.domain.order.event.dto.OrderItemInfo;
 import java.util.ArrayList;
 import java.util.List;
@@ -33,25 +33,25 @@ class OrderNotificationServiceTest {
   @Mock
   private EtaService etaService;
 
-  private OrderAcceptedEvent orderAcceptedEvent;
-  private OrderAssignFailedEvent orderAssignFailedEvent;
+  private OrderStoreAcceptedEvent orderStoreAcceptedEvent;
+  private DeliveryOfferFailedEvent deliveryOfferFailedEvent;
 
   @BeforeEach
   void setUp() {
     // Sample order event
-    orderAcceptedEvent = new OrderAcceptedEvent(
+    orderStoreAcceptedEvent = new OrderStoreAcceptedEvent(
         "order123", new ArrayList<>(), 1L, 1L,
         "storeName",
         37.5, 127.0, 37.6, 127.1
     );
-    orderAssignFailedEvent = new OrderAssignFailedEvent(orderAcceptedEvent);
+    deliveryOfferFailedEvent = new DeliveryOfferFailedEvent(orderStoreAcceptedEvent);
   }
 
   @Test
   @DisplayName("배송비 계산 - 기본 거리 (3km 이하)")
   void 배송비_계산_기본거리_테스트() {
     // Given: 거리 2km
-    OrderAcceptedEvent event = createOrderEvent();
+    OrderStoreAcceptedEvent event = createOrderEvent();
 
     // Mock 설정
     when(etaService.getDistance(event))
@@ -74,7 +74,7 @@ class OrderNotificationServiceTest {
   @DisplayName("배송비 계산 - 초과 거리 (3km 초과)")
   void 배송비_계산_초과거리_테스트() {
     // Given: 거리 5km
-    OrderAcceptedEvent event = createOrderEvent();
+    OrderStoreAcceptedEvent event = createOrderEvent();
 
     // Mock 설정
     when(etaService.getDistance(event))
@@ -95,7 +95,7 @@ class OrderNotificationServiceTest {
   @DisplayName("배송비 계산 - 소수점 거리")
   void 배송비_계산_소수점거리_테스트() {
     // Given: 거리 4.3km
-    OrderAcceptedEvent event = createOrderEvent();
+    OrderStoreAcceptedEvent event = createOrderEvent();
 
     // Mock 설정
     when(etaService.getDistance(event))
@@ -115,7 +115,7 @@ class OrderNotificationServiceTest {
   @DisplayName("라이더 없음 - 빈 리스트 반환")
   void 라이더_없음_테스트() {
     // Given: 라이더 없음
-    OrderAcceptedEvent event = createOrderEvent();
+    OrderStoreAcceptedEvent event = createOrderEvent();
 
     // Mock 설정
     when(etaService.getDistance(event))
@@ -134,7 +134,7 @@ class OrderNotificationServiceTest {
   @DisplayName("여러 라이더 - 각각 다른 ETA")
   void 여러_라이더_테스트() {
     // Given: 2명의 라이더
-    OrderAcceptedEvent event = createOrderEvent();
+    OrderStoreAcceptedEvent event = createOrderEvent();
 
     // Mock 설정
     when(etaService.getDistance(event))
@@ -165,7 +165,7 @@ class OrderNotificationServiceTest {
   @DisplayName("거리 정보가 없을 때 기본값 처리")
   void 거리정보_없음_테스트() {
     // Given: 거리 정보 없음
-    OrderAcceptedEvent event = createOrderEvent();
+    OrderStoreAcceptedEvent event = createOrderEvent();
 
     // Mock 설정
     when(etaService.getDistance(event))
@@ -182,10 +182,10 @@ class OrderNotificationServiceTest {
     assertThat(result.get(0).orderDetailsDto().distance()).isEqualTo(0.0);
   }
 
-  private OrderAcceptedEvent createOrderEvent() {
+  private OrderStoreAcceptedEvent createOrderEvent() {
     List<OrderItemInfo> orderItems = new ArrayList<>();
     orderItems.add(new OrderItemInfo(1L, 2));
-    return new OrderAcceptedEvent(
+    return new OrderStoreAcceptedEvent(
         "order123",
         orderItems,
         1L, 1L,

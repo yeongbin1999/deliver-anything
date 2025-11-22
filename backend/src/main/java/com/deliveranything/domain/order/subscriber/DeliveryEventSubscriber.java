@@ -1,6 +1,6 @@
 package com.deliveranything.domain.order.subscriber;
 
-import com.deliveranything.domain.order.handler.StockEventHandler;
+import com.deliveranything.domain.order.handler.DeliveryEventHandler;
 import com.deliveranything.global.enums.RedisTopic;
 import com.deliveranything.global.enums.RedisTopicPattern;
 import jakarta.annotation.PostConstruct;
@@ -16,15 +16,15 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class StockEventSubscriber implements MessageListener {
+public class DeliveryEventSubscriber implements MessageListener {
 
   private final RedisMessageListenerContainer container;
-  private final StockEventHandler stockEventHandler;
+  private final DeliveryEventHandler deliveryEventHandler;
 
   @PostConstruct
   public void registerListener() {
     container.addMessageListener(this,
-        new PatternTopic(RedisTopicPattern.STOCK_EVENTS.getPattern()));
+        new PatternTopic(RedisTopicPattern.DELIVERY_EVENTS.getPattern()));
   }
 
   @Override
@@ -39,6 +39,6 @@ public class StockEventSubscriber implements MessageListener {
       return;
     }
 
-    stockEventHandler.handle(topic, json);
+    deliveryEventHandler.handle(topic, json);
   }
 }

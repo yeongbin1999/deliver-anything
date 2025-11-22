@@ -1,8 +1,8 @@
 package com.deliveranything.domain.delivery.service;
 
-import com.deliveranything.domain.delivery.event.dto.OrderAssignFailedEvent;
-import com.deliveranything.domain.notification.subscriber.delivery.OrderAssignFailedNotifier;
-import com.deliveranything.domain.order.event.OrderAcceptedEvent;
+import com.deliveranything.domain.delivery.event.dto.DeliveryOfferFailedEvent;
+import com.deliveranything.domain.notification.subscriber.delivery.DeliveryOfferFailedNotifier;
+import com.deliveranything.domain.order.event.OrderStoreAcceptedEvent;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,14 +34,14 @@ public class EtaService {
   private String kakaoApiKey;
 
   private static final String KAKAO_BASE_URL = "https://apis-navi.kakaomobility.com/v1";
-  private final OrderAssignFailedNotifier orderAssignFailedNotifier;
+  private final DeliveryOfferFailedNotifier deliveryOfferFailedNotifier;
 
   /**
    * 여러 라이더의 ETA 계산 (동기식 + 병렬 처리) - Virtual Thread에서 병렬로 실행 - @Async로 각 API 호출을 독립적인 Virtual
    * Thread에서 처리
    */
   public Map<String, Double> getEtaForMultiple(
-      OrderAcceptedEvent order,
+      OrderStoreAcceptedEvent order,
       List<Point> riderPoints,
       List<String> riderIds
   ) {
@@ -70,7 +70,7 @@ public class EtaService {
     log.info("Calculated ETA for {} out of {} riders", result.size(), riderIds.size());
 
     if (result.isEmpty()) {
-      orderAssignFailedNotifier.publish(new OrderAssignFailedEvent(order));
+      deliveryOfferFailedNotifier.publish(new DeliveryOfferFailedEvent(order));
     }
 
     return result;
@@ -116,7 +116,7 @@ public class EtaService {
    * 상점 <-> 주문자 사이 거리 계산 (동기식) - Virtual Thread에서 블로킹 호출해도 효율적
    */
   public Map<String, Double> getDistance(
-      OrderAcceptedEvent order
+      OrderStoreAcceptedEvent order
   ) {
     Double storeLat = order.storeLat();
     Double storeLon = order.storeLon();
@@ -140,7 +140,7 @@ public class EtaService {
 
         if (response == null || !response.containsKey("routes")) {
           log.warn("Invalid response from Kakao API");
-          orderAssignFailedNotifier.publish(new OrderAssignFailedEvent(order));
+          deliveryOfferFailedNotifier.publish(new DeliveryOfferFailedEvent(order));
           return Map.of("distance", 0.0);
         }
 
@@ -158,7 +158,7 @@ public class EtaService {
 
     } catch (ExecutionException | InterruptedException e) {
       log.warn("Distance calculation failed");
-      orderAssignFailedNotifier.publish(new OrderAssignFailedEvent(order));
+      deliveryOfferFailedNotifier.publish(new DeliveryOfferFailedEvent(order));
     }
     return Map.of("distance", 0.0);
   }

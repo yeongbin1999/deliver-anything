@@ -1,6 +1,6 @@
 package com.deliveranything.domain.notification.subscriber.delivery;
 
-import com.deliveranything.domain.delivery.event.dto.OrderStatusUpdateEvent;
+import com.deliveranything.domain.delivery.event.dto.DeliveryOfferFailedEvent;
 import com.deliveranything.domain.notification.enums.NotificationMessage;
 import com.deliveranything.domain.notification.enums.NotificationType;
 import com.deliveranything.domain.notification.service.NotificationService;
@@ -12,22 +12,22 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class OrderDeliveryStatusNotifier {
+public class DeliveryOfferFailedNotifier {
 
-  private final ObjectMapper objectMapper;
   private final NotificationService notificationService;
+  private final ObjectMapper objectMapper;
 
-  public void publish(Long profileId, OrderStatusUpdateEvent event) {
+  public void publish(DeliveryOfferFailedEvent event) {
     try {
-      notificationService.sendNotification(
-          profileId,
-          NotificationType.RIDER_DECISION,
-          NotificationMessage.RIDER_DECISION.getMessage(),
-          objectMapper.writeValueAsString(event)
-      );
+      if (event.order() != null) {
+        notificationService.sendNotification(
+            event.order().sellerId(),
+            NotificationType.RIDER_OFFER_FAILED,
+            NotificationMessage.RIDER_OFFER_FAILED.getMessage(),
+            objectMapper.writeValueAsString(event));
+      }
     } catch (Exception e) {
       throw new CustomException(ErrorCode.SSE_SUBSCRIBE_UNAVAILABLE);
     }
-
   }
 }

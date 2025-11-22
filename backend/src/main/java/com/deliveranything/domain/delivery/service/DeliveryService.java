@@ -1,7 +1,6 @@
 package com.deliveranything.domain.delivery.service;
 
 import com.deliveranything.domain.delivery.dto.request.DeliveryAreaRequestDto;
-import com.deliveranything.domain.delivery.dto.request.RiderDecisionRequestDto;
 import com.deliveranything.domain.delivery.dto.request.RiderToggleStatusRequestDto;
 import com.deliveranything.domain.delivery.dto.response.CurrentDeliveringDetailsDto;
 import com.deliveranything.domain.delivery.dto.response.CurrentDeliveringResponseDto;
@@ -13,7 +12,6 @@ import com.deliveranything.domain.delivery.dto.response.TodayDeliveringResponseD
 import com.deliveranything.domain.delivery.entity.Delivery;
 import com.deliveranything.domain.delivery.enums.DeliveryStatus;
 import com.deliveranything.domain.delivery.event.dto.DeliveryStatusEvent;
-import com.deliveranything.domain.delivery.event.dto.OrderStatusUpdateEvent;
 import com.deliveranything.domain.delivery.repository.DeliveryRepository;
 import com.deliveranything.domain.order.dto.OrderResponse;
 import com.deliveranything.domain.order.entity.Order;
@@ -31,7 +29,6 @@ import com.deliveranything.global.exception.CustomException;
 import com.deliveranything.global.exception.ErrorCode;
 import com.deliveranything.global.util.CursorUtil;
 import jakarta.transaction.Transactional;
-import jakarta.validation.Valid;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -78,18 +75,6 @@ public class DeliveryService {
         .nextStatus(next)
         .build();
 
-    eventPublisher.publishEvent(event);
-  }
-
-  // 라이더 배달 수락/거절 처리 및 상태 이벤트 발행
-  public void publishRiderDecision(@Valid RiderDecisionRequestDto decisionRequestDto,
-      Long currentActiveProfileId) {
-    DeliveryStatus status = DeliveryStatus.valueOf(decisionRequestDto.decisionStatus());
-
-    // 이벤트만 발행 - 실제 상태 변경은 구독자에서 처리
-    OrderStatusUpdateEvent event = new OrderStatusUpdateEvent(
-        decisionRequestDto.orderId(), currentActiveProfileId, status,
-        decisionRequestDto.etaMinutes());
     eventPublisher.publishEvent(event);
   }
 

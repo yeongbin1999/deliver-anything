@@ -5,7 +5,5 @@ public enum DeliveryStatus {
   RIDER_ASSIGNED,
   PICKED_UP,
   IN_PROGRESS,
-  COMPLETED,
-  CANCELED,
-  REJECTED
+  COMPLETED
 }

@@ -1,7 +1,5 @@
 package com.deliveranything.domain.order.publisher;
 
-import com.deliveranything.domain.delivery.event.dto.OrderAssignedEvent;
-import com.deliveranything.domain.order.event.OrderAcceptedEvent;
 import com.deliveranything.domain.order.event.OrderCancelEvent;
 import com.deliveranything.domain.order.event.OrderCancelSucceededEvent;
 import com.deliveranything.domain.order.event.OrderCompletedEvent;
@@ -10,6 +8,8 @@ import com.deliveranything.domain.order.event.OrderPaymentFailedEvent;
 import com.deliveranything.domain.order.event.OrderPaymentRequestedEvent;
 import com.deliveranything.domain.order.event.OrderPaymentSucceededEvent;
 import com.deliveranything.domain.order.event.OrderRejectedEvent;
+import com.deliveranything.domain.order.event.OrderRiderAcceptedEvent;
+import com.deliveranything.domain.order.event.OrderStoreAcceptedEvent;
 import com.deliveranything.domain.order.event.sse.customer.OrderCancelFailedForCustomerEvent;
 import com.deliveranything.domain.order.event.sse.customer.OrderCanceledForCustomerEvent;
 import com.deliveranything.domain.order.event.sse.customer.OrderCreateFailedForCustomerEvent;
@@ -61,13 +61,8 @@ public class OrderEventPublisher {
   }
 
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-  public void handleOrderAcceptedEvent(OrderAcceptedEvent event) {
-    redisTemplate.convertAndSend("order-accepted-event", event);
-  }
-
-  @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-  public void handleOrderAssignedEvent(OrderAssignedEvent event) {
-    redisTemplate.convertAndSend("order-assigned-event", event);
+  public void handleOrderAcceptedEvent(OrderStoreAcceptedEvent event) {
+    redisTemplate.convertAndSend("order-store-accepted-event", event);
   }
 
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
@@ -83,6 +78,11 @@ public class OrderEventPublisher {
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
   public void handleOrderCancelSucceededEvent(OrderCancelSucceededEvent event) {
     redisTemplate.convertAndSend("order-cancel-succeeded-event", event);
+  }
+
+  @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+  public void handleOrderRiderAcceptedEvent(OrderRiderAcceptedEvent event) {
+    redisTemplate.convertAndSend("order-rider-accepted-event", event);
   }
 
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
