@@ -27,7 +27,8 @@ public enum RedisTopic {
   // Order Events
   ORDER_CREATED_EVENT("order-created-event"),
   ORDER_PAYMENT_REQUESTED_EVENT("order-payment-requested-event"),
-  ORDER_PAYMENT_SUCCEEDED_EVENT("order-payment-succeeded-event"), // Corrected from 'Succeeded'
+  ORDER_PAYMENT_SUCCEEDED_EVENT("order-payment-succeeded-event"),
+  ORDER_PAYMENT_FAILED_EVENT("order-payment-failed-event"),
   ORDER_REJECTED_EVENT("order-rejected-event"),
   ORDER_STORE_ACCEPTED_EVENT("order-store-accepted-event"),
   ORDER_COMPLETED_EVENT("order-completed-event"),
