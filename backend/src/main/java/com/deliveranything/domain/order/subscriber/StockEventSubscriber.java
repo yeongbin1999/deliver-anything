@@ -1,44 +1,24 @@
 package com.deliveranything.domain.order.subscriber;
 
+import com.deliveranything.domain.order.handler.RedisEventHandler;
 import com.deliveranything.domain.order.handler.StockEventHandler;
-import com.deliveranything.global.enums.RedisTopic;
 import com.deliveranything.global.enums.RedisTopicPattern;
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.connection.Message;
-import org.springframework.data.redis.connection.MessageListener;
-import org.springframework.data.redis.listener.PatternTopic;
-import org.springframework.data.redis.listener.RedisMessageListenerContainer;
-import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 
-@Slf4j
 @Component
 @RequiredArgsConstructor
-public class StockEventSubscriber implements MessageListener {
+public class StockEventSubscriber extends AbstractRedisEventSubscriber {
 
-  private final RedisMessageListenerContainer container;
   private final StockEventHandler stockEventHandler;
 
-  @PostConstruct
-  public void registerListener() {
-    container.addMessageListener(this,
-        new PatternTopic(RedisTopicPattern.STOCK_EVENTS.getPattern()));
+  @Override
+  protected RedisTopicPattern getTopicPattern() {
+    return RedisTopicPattern.STOCK_EVENTS;
   }
 
   @Override
-  public void onMessage(@NonNull Message message, byte[] pattern) {
-    String topicStr = new String(message.getChannel());
-    String json = new String(message.getBody());
-    log.debug("Received Redis event topic={}, body={}", topicStr, json);
-
-    RedisTopic topic = RedisTopic.fromTopic(topicStr);
-    if (topic == null) {
-      log.warn("Unknown topic received: {}", topicStr);
-      return;
-    }
-
-    stockEventHandler.handle(topic, json);
+  protected RedisEventHandler getHandler() {
+    return stockEventHandler;
   }
 }

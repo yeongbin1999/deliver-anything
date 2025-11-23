@@ -13,11 +13,12 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class DeliveryEventHandler {
+public class DeliveryEventHandler implements RedisEventHandler {
 
   private final ObjectMapper objectMapper;
   private final OrderService orderService;
 
+  @Override
   public void handle(RedisTopic topic, String json) {
     try {
       switch (topic) {
