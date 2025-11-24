@@ -52,7 +52,7 @@ public class CustomerOrderController {
   public ResponseEntity<ApiResponse<CursorPageResponse<OrderResponse>>> getAll(
       @AuthenticationPrincipal SecurityUser securityUser,
       @RequestParam(required = false) String nextPageToken,
-      @RequestParam(defaultValue = "10") int size
+      @RequestParam(defaultValue = "10") long size
   ) {
     return ResponseEntity.ok().body(ApiResponse.success("소비자 전체 주문 내역 조회 성공",
         customerOrderService.getCustomerOrdersByCursor(securityUser.getCurrentActiveProfileIdSafe(),
@@ -84,7 +84,7 @@ public class CustomerOrderController {
   public ResponseEntity<ApiResponse<CursorPageResponse<OrderResponse>>> getCompletedOrders(
       @AuthenticationPrincipal SecurityUser securityUser,
       @RequestParam(required = false) String nextPageToken,
-      @RequestParam(defaultValue = "10") int size
+      @RequestParam(defaultValue = "10") long size
   ) {
     return ResponseEntity.ok().body(ApiResponse.success("배달 완료된 소비자 주문 조회 성공",
         customerOrderService.getCompletedOrdersByCursor(

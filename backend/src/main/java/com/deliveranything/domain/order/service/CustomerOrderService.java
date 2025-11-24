@@ -70,7 +70,7 @@ public class CustomerOrderService {
   public CursorPageResponse<OrderResponse> getCustomerOrdersByCursor(
       Long customerId,
       String nextPageToken,
-      int size
+      long size
   ) {
     return getOrdersByCursorInternal(customerId, nextPageToken, size, Collections.emptyList());
   }
@@ -94,7 +94,7 @@ public class CustomerOrderService {
   public CursorPageResponse<OrderResponse> getCompletedOrdersByCursor(
       Long customerId,
       String nextPageToken,
-      int size
+      long size
   ) {
     return getOrdersByCursorInternal(customerId, nextPageToken, size,
         OrderStatus.COMPLETED_STATUSES);
@@ -103,7 +103,7 @@ public class CustomerOrderService {
   private CursorPageResponse<OrderResponse> getOrdersByCursorInternal(
       Long customerId,
       String nextPageToken,
-      int size,
+      long size,
       List<OrderStatus> statuses
   ) {
     LocalDateTime lastCreatedAt = null;
@@ -124,10 +124,10 @@ public class CustomerOrderService {
     List<Order> orders;
     if (statuses == null || statuses.isEmpty()) {
       orders = orderRepositoryCustom.findOrdersWithStoreByCustomerId(customerId,
-          lastCreatedAt, lastOrderId, size + 1);
+          lastCreatedAt, lastOrderId, size + 1L);
     } else {
       orders = orderRepositoryCustom.findOrdersWithStoreByCustomerId(customerId,
-          statuses, lastCreatedAt, lastOrderId, size + 1);
+          statuses, lastCreatedAt, lastOrderId, size + 1L);
     }
 
     List<OrderResponse> orderResponses = orders.stream()
