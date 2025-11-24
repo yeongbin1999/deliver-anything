@@ -17,7 +17,8 @@ public class OrderRepositoryCustom {
 
   private final JPAQueryFactory queryFactory;
 
-  public List<Order> findOrdersWithStoreByCustomerId(Long customerId, Long cursor, int size) {
+  public List<Order> findOrdersWithStoreByCustomerId(Long customerId, LocalDateTime lastCreatedAt,
+      Long lastOrderId, int size) {
     QOrder order = QOrder.order;
     QStore store = QStore.store;
 
@@ -25,9 +26,9 @@ public class OrderRepositoryCustom {
         .join(order.store, store).fetchJoin()
         .where(
             order.customer.id.eq(customerId),
-            cursor != null ? order.id.lt(cursor) : null
+            storeCursorCondition(lastCreatedAt, lastOrderId)
         )
-        .orderBy(order.id.desc())
+        .orderBy(order.createdAt.desc(), order.id.desc())
         .limit(size)
         .fetch();
   }

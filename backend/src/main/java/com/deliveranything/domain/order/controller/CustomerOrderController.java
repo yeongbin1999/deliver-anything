@@ -42,7 +42,6 @@ public class CustomerOrderController {
       @AuthenticationPrincipal SecurityUser securityUser,
       @Valid @RequestBody OrderCreateRequest orderCreateRequest
   ) {
-
     return ResponseEntity.ok().body(ApiResponse.success("주문이 접수되어 처리중입니다.",
         customerOrderService.createOrder(securityUser.getCurrentActiveProfileIdSafe(),
             orderCreateRequest)));
@@ -53,12 +52,12 @@ public class CustomerOrderController {
   @PreAuthorize("@profileSecurity.isCustomer(#securityUser)")
   public ResponseEntity<ApiResponse<CursorPageResponse<OrderResponse>>> getAll(
       @AuthenticationPrincipal SecurityUser securityUser,
-      @RequestParam(required = false) Long cursor,
+      @RequestParam(required = false) String nextPageToken,
       @RequestParam(defaultValue = "10") int size
   ) {
     return ResponseEntity.ok().body(ApiResponse.success("소비자 전체 주문 내역 조회 성공",
         customerOrderService.getCustomerOrdersByCursor(securityUser.getCurrentActiveProfileIdSafe(),
-            cursor, size)));
+            nextPageToken, size)));
   }
 
   @GetMapping("/{orderId}")

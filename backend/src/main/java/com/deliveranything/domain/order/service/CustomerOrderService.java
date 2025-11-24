@@ -19,13 +19,17 @@ import com.deliveranything.global.exception.ErrorCode;
 import com.deliveranything.global.util.CursorUtil;
 import com.deliveranything.global.util.PointUtil;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeParseException;
+import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class CustomerOrderService {
@@ -73,29 +77,10 @@ public class CustomerOrderService {
   @Transactional(readOnly = true)
   public CursorPageResponse<OrderResponse> getCustomerOrdersByCursor(
       Long customerId,
-      Long cursor,
+      String nextPageToken,
       int size
   ) {
-    List<Order> orders = orderRepositoryCustom.findOrdersWithStoreByCustomerId(customerId, cursor,
-        size + 1);
-
-    List<OrderResponse> orderResponses = orders.stream()
-        .limit(size)
-        .map(OrderResponse::from)
-        .toList();
-
-    boolean hasNext = orders.size() > size;
-
-    try {
-      OrderResponse lastResponse = orderResponses.getLast();
-      return new CursorPageResponse<>(
-          orderResponses,
-          hasNext ? CursorUtil.encode(lastResponse.createdAt(), lastResponse.id()) : null,
-          hasNext
-      );
-    } catch (NoSuchElementException e) {
-      return new CursorPageResponse<>(orderResponses, null, hasNext);
-    }
+    return getOrdersByCursorInternal(customerId, nextPageToken, size, Collections.emptyList());
   }
 
   @Transactional(readOnly = true)
@@ -120,6 +105,16 @@ public class CustomerOrderService {
       String nextPageToken,
       int size
   ) {
+    return getOrdersByCursorInternal(customerId, nextPageToken, size,
+        List.of(OrderStatus.COMPLETED));
+  }
+
+  private CursorPageResponse<OrderResponse> getOrdersByCursorInternal(
+      Long customerId,
+      String nextPageToken,
+      int size,
+      List<OrderStatus> statuses
+  ) {
     LocalDateTime lastCreatedAt = null;
     Long lastOrderId = null;
     Object[] decodedParts = CursorUtil.decode(nextPageToken);
@@ -128,31 +123,38 @@ public class CustomerOrderService {
       try {
         lastCreatedAt = LocalDateTime.parse(decodedParts[0].toString());
         lastOrderId = Long.parseLong(decodedParts[1].toString());
+      } catch (DateTimeParseException e) {
+        log.warn("커서 토큰에서 날짜 파싱 실패", e);
       } catch (NumberFormatException e) {
-        lastCreatedAt = null;
-        lastOrderId = null;
+        log.warn("커서 토큰에서 주문ID 파싱 실패", e);
       }
     }
 
-    List<Order> cursorOrders = orderRepositoryCustom.findOrdersWithStoreByCustomerId(customerId,
-        List.of(OrderStatus.COMPLETED), lastCreatedAt, lastOrderId, size + 1);
+    List<Order> orders;
+    if (statuses == null || statuses.isEmpty()) {
+      orders = orderRepositoryCustom.findOrdersWithStoreByCustomerId(customerId,
+          lastCreatedAt, lastOrderId, size + 1);
+    } else {
+      orders = orderRepositoryCustom.findOrdersWithStoreByCustomerId(customerId,
+          statuses, lastCreatedAt, lastOrderId, size + 1);
+    }
 
-    List<OrderResponse> cursorResponses = cursorOrders.stream()
+    List<OrderResponse> orderResponses = orders.stream()
         .limit(size)
         .map(OrderResponse::from)
         .toList();
 
-    boolean hasNext = cursorOrders.size() > size;
+    boolean hasNext = orders.size() > size;
 
     try {
-      OrderResponse lastResponse = cursorResponses.getLast();
+      OrderResponse lastResponse = orderResponses.getLast();
       return new CursorPageResponse<>(
-          cursorResponses,
+          orderResponses,
           hasNext ? CursorUtil.encode(lastResponse.createdAt(), lastResponse.id()) : null,
           hasNext
       );
     } catch (NoSuchElementException e) {
-      return new CursorPageResponse<>(cursorResponses, null, hasNext);
+      return new CursorPageResponse<>(orderResponses, null, false);
     }
   }
 }
