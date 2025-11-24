@@ -11,13 +11,14 @@ import com.deliveranything.domain.order.event.OrderCreatedEvent;
 import com.deliveranything.domain.order.repository.OrderRepository;
 import com.deliveranything.domain.order.repository.OrderRepositoryCustom;
 import com.deliveranything.domain.product.product.service.ProductService;
+import com.deliveranything.domain.store.store.entity.Store;
 import com.deliveranything.domain.store.store.service.StoreService;
+import com.deliveranything.domain.user.profile.entity.CustomerProfile;
 import com.deliveranything.domain.user.profile.service.CustomerProfileService;
 import com.deliveranything.global.common.CursorPageResponse;
 import com.deliveranything.global.exception.CustomException;
 import com.deliveranything.global.exception.ErrorCode;
 import com.deliveranything.global.util.CursorUtil;
-import com.deliveranything.global.util.PointUtil;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.Collections;
@@ -45,18 +46,10 @@ public class CustomerOrderService {
 
   @Transactional
   public OrderCreateResponse createOrder(Long customerId, OrderCreateRequest orderCreateRequest) {
-    Order order = Order.builder()
-        .customer(customerProfileService.getProfileByProfileId(customerId))
-        .store(storeService.getStoreById(orderCreateRequest.storeId()))
-        .address(orderCreateRequest.address())
-        .destination(PointUtil.createPoint(orderCreateRequest.lat(), orderCreateRequest.lng()))
-        .riderNote(orderCreateRequest.riderNote())
-        .storeNote(orderCreateRequest.storeNote())
-        .totalPrice(orderCreateRequest.totalPrice())
-        .storePrice(orderCreateRequest.storePrice())
-        .deliveryPrice(orderCreateRequest.deliveryPrice())
-        .build();
+    CustomerProfile customerProfile = customerProfileService.getProfileByProfileId(customerId);
+    Store store = storeService.getStoreById(orderCreateRequest.storeId());
 
+    Order order = orderCreateRequest.toEntity(customerProfile, store);
     for (OrderItemRequest orderItemRequest : orderCreateRequest.orderItemRequests()) {
       OrderItem orderItem = OrderItem.builder()
           .product(productService.getProductById(orderItemRequest.productId()))
@@ -68,7 +61,6 @@ public class CustomerOrderService {
     }
 
     Order savedOrder = orderRepository.save(order);
-
     eventPublisher.publishEvent(OrderCreatedEvent.from(savedOrder));
 
     return OrderCreateResponse.from(savedOrder);

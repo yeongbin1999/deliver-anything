@@ -1,5 +1,9 @@
 package com.deliveranything.domain.order.dto;
 
+import com.deliveranything.domain.order.entity.Order;
+import com.deliveranything.domain.store.store.entity.Store;
+import com.deliveranything.domain.user.profile.entity.CustomerProfile;
+import com.deliveranything.global.util.PointUtil;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
@@ -21,4 +25,17 @@ public record OrderCreateRequest(
     @NotNull @Positive Long deliveryPrice
 ) {
 
+  public Order toEntity(CustomerProfile customerProfile, Store store) {
+    return Order.builder()
+        .customer(customerProfile)
+        .store(store)
+        .address(this.address)
+        .destination(PointUtil.createPoint(this.lat, this.lng))
+        .riderNote(this.riderNote)
+        .storeNote(this.storeNote)
+        .totalPrice(this.totalPrice)
+        .storePrice(this.storePrice)
+        .deliveryPrice(this.deliveryPrice)
+        .build();
+  }
 }
