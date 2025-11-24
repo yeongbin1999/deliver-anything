@@ -30,6 +30,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/customer/orders")
 @RestController
 @Tag(name = "고객 주문 API", description = "소비자의 주문처리 관련 API입니다.")
+@PreAuthorize("@profileSecurity.isCustomer(authentication.principal)")
 public class CustomerOrderController {
 
   private final CustomerOrderService customerOrderService;
@@ -37,7 +38,6 @@ public class CustomerOrderController {
 
   @PostMapping
   @Operation(summary = "주문 생성", description = "소비자가 상점에 주문을 요청한 경우")
-  @PreAuthorize("@profileSecurity.isCustomer(#securityUser)")
   public ResponseEntity<ApiResponse<OrderCreateResponse>> create(
       @AuthenticationPrincipal SecurityUser securityUser,
       @Valid @RequestBody OrderCreateRequest orderCreateRequest
@@ -49,7 +49,6 @@ public class CustomerOrderController {
 
   @GetMapping
   @Operation(summary = "주문 내역 조회", description = "소비자가 주문 내역을 요청한 경우")
-  @PreAuthorize("@profileSecurity.isCustomer(#securityUser)")
   public ResponseEntity<ApiResponse<CursorPageResponse<OrderResponse>>> getAll(
       @AuthenticationPrincipal SecurityUser securityUser,
       @RequestParam(required = false) String nextPageToken,
@@ -62,7 +61,6 @@ public class CustomerOrderController {
 
   @GetMapping("/{orderId}")
   @Operation(summary = "주문 단일 조회", description = "소비자가 어떤 주문의 상세 정보를 요청한 경우")
-  @PreAuthorize("@profileSecurity.isCustomer(#securityUser)")
   public ResponseEntity<ApiResponse<OrderResponse>> get(
       @AuthenticationPrincipal SecurityUser securityUser,
       @PathVariable Long orderId
@@ -74,7 +72,6 @@ public class CustomerOrderController {
 
   @GetMapping("/in-progress")
   @Operation(summary = "진행중인 주문 조회", description = "소비자가 진행중인 주문 내역을 요청한 경우")
-  @PreAuthorize("@profileSecurity.isCustomer(#securityUser)")
   public ResponseEntity<ApiResponse<List<OrderResponse>>> getInProgressOrders(
       @AuthenticationPrincipal SecurityUser securityUser
   ) {
@@ -84,7 +81,6 @@ public class CustomerOrderController {
 
   @GetMapping("/completed")
   @Operation(summary = "배달 완료된 주문 조회", description = "소비자가 배달 완료된 주문 내역을 요청한 경우")
-  @PreAuthorize("@profileSecurity.isCustomer(#securityUser)")
   public ResponseEntity<ApiResponse<CursorPageResponse<OrderResponse>>> getCompletedOrders(
       @AuthenticationPrincipal SecurityUser securityUser,
       @RequestParam(required = false) String nextPageToken,
@@ -97,9 +93,7 @@ public class CustomerOrderController {
 
   @PostMapping("/{merchantUid}/pay")
   @Operation(summary = "주문 결제", description = "소비자가 생성한 주문의 결제 시도")
-  @PreAuthorize("@profileSecurity.isCustomer(#securityUser)")
   public ResponseEntity<ApiResponse<String>> pay(
-      @AuthenticationPrincipal SecurityUser securityUser,
       @PathVariable String merchantUid,
       @Valid @RequestBody OrderPayRequest orderPayRequest
   ) {
@@ -109,9 +103,7 @@ public class CustomerOrderController {
 
   @PostMapping("/{orderId}/cancel")
   @Operation(summary = "주문 취소", description = "소비자가 상점에서 주문 수락 전인 주문을 취소하는 경우")
-  @PreAuthorize("@profileSecurity.isCustomer(#securityUser)")
   public ResponseEntity<ApiResponse<String>> cancel(
-      @AuthenticationPrincipal SecurityUser securityUser,
       @PathVariable Long orderId,
       @RequestBody OrderCancelRequest orderCancelRequest
   ) {
