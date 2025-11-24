@@ -84,9 +84,8 @@ public class CustomerOrderService {
 
   @Transactional(readOnly = true)
   public List<OrderResponse> getProgressingOrders(Long customerId) {
-    return orderRepository.findOrdersWithStoreByCustomerIdAndStatuses(customerId, List.of(
-            OrderStatus.PENDING, OrderStatus.PREPARING, OrderStatus.RIDER_ASSIGNED,
-            OrderStatus.DELIVERING)).stream()
+    return orderRepository.findOrdersWithStoreByCustomerIdAndStatuses(customerId,
+            OrderStatus.IN_PROGRESS_STATUSES).stream()
         .map(OrderResponse::from)
         .toList();
   }
@@ -98,7 +97,7 @@ public class CustomerOrderService {
       int size
   ) {
     return getOrdersByCursorInternal(customerId, nextPageToken, size,
-        List.of(OrderStatus.COMPLETED));
+        OrderStatus.COMPLETED_STATUSES);
   }
 
   private CursorPageResponse<OrderResponse> getOrdersByCursorInternal(

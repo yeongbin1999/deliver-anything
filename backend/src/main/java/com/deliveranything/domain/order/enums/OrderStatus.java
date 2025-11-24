@@ -1,5 +1,7 @@
 package com.deliveranything.domain.order.enums;
 
+import java.util.List;
+
 public enum OrderStatus {
   CREATED,
   PENDING,
@@ -12,6 +14,12 @@ public enum OrderStatus {
   CANCELLATION_REQUESTED,
   CANCEL_FAILED,
   PAYMENT_FAILED;
+
+  public static final List<OrderStatus> IN_PROGRESS_STATUSES = List.of(
+      PENDING, PREPARING, RIDER_ASSIGNED, DELIVERING
+  );
+
+  public static final List<OrderStatus> COMPLETED_STATUSES = List.of(COMPLETED);
 
   public boolean canTransitTo(OrderStatus next) {
     return switch (this) {
