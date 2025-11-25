@@ -17,50 +17,56 @@ public class OrderRepositoryCustom {
 
   private final JPAQueryFactory queryFactory;
 
-  public List<Order> findOrdersWithStoreByCustomerId(Long customerId, Long cursor, int size) {
-    QOrder order = QOrder.order;
-    QStore store = QStore.store;
-
-    return queryFactory.selectFrom(order)
-        .join(order.store, store).fetchJoin()
-        .where(
-            order.customer.id.eq(customerId),
-            cursor != null ? order.id.lt(cursor) : null
-        )
-        .orderBy(order.id.desc())
-        .limit(size)
-        .fetch();
+  public List<Order> findOrdersWithStoreByCustomerId(
+      Long customerId,
+      LocalDateTime lastCreatedAt,
+      Long lastOrderId,
+      long size
+  ) {
+    return fetchOrders(
+        size,
+        cursorCondition(lastCreatedAt, lastOrderId),
+        QOrder.order.customer.id.eq(customerId)
+    );
   }
 
-  public List<Order> findOrdersWithStoreByStoreId(Long storeId, List<OrderStatus> statuses,
-      LocalDateTime lastCreatedAt, Long lastOrderId, int size) {
-    QOrder order = QOrder.order;
-    QStore store = QStore.store;
-
-    return queryFactory.selectFrom(order)
-        .join(order.store, store).fetchJoin()
-        .where(
-            order.store.id.eq(storeId),
-            statusIn(statuses),
-            storeCursorCondition(lastCreatedAt, lastOrderId)
-        )
-        .orderBy(order.createdAt.desc(), order.id.desc())
-        .limit(size)
-        .fetch();
+  public List<Order> findOrdersWithStoreByStoreId(
+      Long storeId,
+      List<OrderStatus> statuses,
+      LocalDateTime lastCreatedAt,
+      Long lastOrderId,
+      long size
+  ) {
+    return fetchOrders(
+        size,
+        cursorCondition(lastCreatedAt, lastOrderId),
+        QOrder.order.store.id.eq(storeId),
+        statusIn(statuses)
+    );
   }
 
-  public List<Order> findOrdersWithStoreByCustomerId(Long customerId, List<OrderStatus> statuses,
-      LocalDateTime lastCreatedAt, Long lastOrderId, int size) {
+  public List<Order> findOrdersWithStoreByCustomerId(
+      Long customerId,
+      List<OrderStatus> statuses,
+      LocalDateTime lastCreatedAt,
+      Long lastOrderId,
+      long size
+  ) {
+    return fetchOrders(
+        size,
+        cursorCondition(lastCreatedAt, lastOrderId),
+        QOrder.order.customer.id.eq(customerId),
+        statusIn(statuses)
+    );
+  }
+
+  private List<Order> fetchOrders(long size, BooleanExpression... conditions) {
     QOrder order = QOrder.order;
     QStore store = QStore.store;
 
     return queryFactory.selectFrom(order)
         .join(order.store, store).fetchJoin()
-        .where(
-            order.customer.id.eq(customerId),
-            statusIn(statuses),
-            storeCursorCondition(lastCreatedAt, lastOrderId)
-        )
+        .where(conditions)
         .orderBy(order.createdAt.desc(), order.id.desc())
         .limit(size)
         .fetch();
@@ -71,7 +77,7 @@ public class OrderRepositoryCustom {
   }
 
   // 최신순 커서
-  private BooleanExpression storeCursorCondition(LocalDateTime lastCreatedAt, Long lastOrderId) {
+  private BooleanExpression cursorCondition(LocalDateTime lastCreatedAt, Long lastOrderId) {
     // 첫 페이지 조회 시 커서 조건 없음
     if (lastCreatedAt == null || lastOrderId == null) {
       return null;
@@ -79,7 +85,8 @@ public class OrderRepositoryCustom {
 
     QOrder order = QOrder.order;
 
-    // 1. 생성 시간 비교 2. 주문 ID 비교
+    // 1. 이전에 생성한 레코드 추출
+    // 2. 생성 시각이 같다면 주문 ID 작은 것들 추출
     return order.createdAt.lt(lastCreatedAt)
         .or(order.createdAt.eq(lastCreatedAt).and(order.id.lt(lastOrderId)));
   }

@@ -11,21 +11,26 @@ import com.deliveranything.domain.order.event.OrderCreatedEvent;
 import com.deliveranything.domain.order.repository.OrderRepository;
 import com.deliveranything.domain.order.repository.OrderRepositoryCustom;
 import com.deliveranything.domain.product.product.service.ProductService;
+import com.deliveranything.domain.store.store.entity.Store;
 import com.deliveranything.domain.store.store.service.StoreService;
+import com.deliveranything.domain.user.profile.entity.CustomerProfile;
 import com.deliveranything.domain.user.profile.service.CustomerProfileService;
 import com.deliveranything.global.common.CursorPageResponse;
 import com.deliveranything.global.exception.CustomException;
 import com.deliveranything.global.exception.ErrorCode;
 import com.deliveranything.global.util.CursorUtil;
-import com.deliveranything.global.util.PointUtil;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeParseException;
+import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class CustomerOrderService {
@@ -41,18 +46,10 @@ public class CustomerOrderService {
 
   @Transactional
   public OrderCreateResponse createOrder(Long customerId, OrderCreateRequest orderCreateRequest) {
-    Order order = Order.builder()
-        .customer(customerProfileService.getProfileByProfileId(customerId))
-        .store(storeService.getStoreById(orderCreateRequest.storeId()))
-        .address(orderCreateRequest.address())
-        .destination(PointUtil.createPoint(orderCreateRequest.lat(), orderCreateRequest.lng()))
-        .riderNote(orderCreateRequest.riderNote())
-        .storeNote(orderCreateRequest.storeNote())
-        .totalPrice(orderCreateRequest.totalPrice())
-        .storePrice(orderCreateRequest.storePrice())
-        .deliveryPrice(orderCreateRequest.deliveryPrice())
-        .build();
+    CustomerProfile customerProfile = customerProfileService.getProfileByProfileId(customerId);
+    Store store = storeService.getStoreById(orderCreateRequest.storeId());
 
+    Order order = orderCreateRequest.toEntity(customerProfile, store);
     for (OrderItemRequest orderItemRequest : orderCreateRequest.orderItemRequests()) {
       OrderItem orderItem = OrderItem.builder()
           .product(productService.getProductById(orderItemRequest.productId()))
@@ -64,7 +61,6 @@ public class CustomerOrderService {
     }
 
     Order savedOrder = orderRepository.save(order);
-
     eventPublisher.publishEvent(OrderCreatedEvent.from(savedOrder));
 
     return OrderCreateResponse.from(savedOrder);
@@ -73,11 +69,66 @@ public class CustomerOrderService {
   @Transactional(readOnly = true)
   public CursorPageResponse<OrderResponse> getCustomerOrdersByCursor(
       Long customerId,
-      Long cursor,
-      int size
+      String nextPageToken,
+      long size
   ) {
-    List<Order> orders = orderRepositoryCustom.findOrdersWithStoreByCustomerId(customerId, cursor,
-        size + 1);
+    return getOrdersByCursorInternal(customerId, nextPageToken, size, Collections.emptyList());
+  }
+
+  @Transactional(readOnly = true)
+  public OrderResponse getCustomerOrder(Long orderId, Long customerId) {
+    return OrderResponse.from(
+        orderRepository.findOrderWithStoreByIdAndCustomerId(orderId, customerId)
+            .orElseThrow(() -> new CustomException(ErrorCode.CUSTOMER_ORDER_NOT_FOUND)));
+  }
+
+  @Transactional(readOnly = true)
+  public List<OrderResponse> getProgressingOrders(Long customerId) {
+    return orderRepository.findOrdersWithStoreByCustomerIdAndStatuses(customerId,
+            OrderStatus.IN_PROGRESS_STATUSES).stream()
+        .map(OrderResponse::from)
+        .toList();
+  }
+
+  @Transactional(readOnly = true)
+  public CursorPageResponse<OrderResponse> getCompletedOrdersByCursor(
+      Long customerId,
+      String nextPageToken,
+      long size
+  ) {
+    return getOrdersByCursorInternal(customerId, nextPageToken, size,
+        OrderStatus.COMPLETED_STATUSES);
+  }
+
+  private CursorPageResponse<OrderResponse> getOrdersByCursorInternal(
+      Long customerId,
+      String nextPageToken,
+      long size,
+      List<OrderStatus> statuses
+  ) {
+    LocalDateTime lastCreatedAt = null;
+    Long lastOrderId = null;
+    Object[] decodedParts = CursorUtil.decode(nextPageToken);
+
+    if (decodedParts != null && decodedParts.length == 2) {
+      try {
+        lastCreatedAt = LocalDateTime.parse(decodedParts[0].toString());
+        lastOrderId = Long.parseLong(decodedParts[1].toString());
+      } catch (DateTimeParseException e) {
+        log.warn("커서 토큰에서 날짜 파싱 실패", e);
+      } catch (NumberFormatException e) {
+        log.warn("커서 토큰에서 주문ID 파싱 실패", e);
+      }
+    }
+
+    List<Order> orders;
+    if (statuses == null || statuses.isEmpty()) {
+      orders = orderRepositoryCustom.findOrdersWithStoreByCustomerId(customerId,
+          lastCreatedAt, lastOrderId, size + 1L);
+    } else {
+      orders = orderRepositoryCustom.findOrdersWithStoreByCustomerId(customerId,
+          statuses, lastCreatedAt, lastOrderId, size + 1L);
+    }
 
     List<OrderResponse> orderResponses = orders.stream()
         .limit(size)
@@ -94,65 +145,7 @@ public class CustomerOrderService {
           hasNext
       );
     } catch (NoSuchElementException e) {
-      return new CursorPageResponse<>(orderResponses, null, hasNext);
-    }
-  }
-
-  @Transactional(readOnly = true)
-  public OrderResponse getCustomerOrder(Long orderId, Long customerId) {
-    return OrderResponse.from(
-        orderRepository.findOrderWithStoreByIdAndCustomerId(orderId, customerId)
-            .orElseThrow(() -> new CustomException(ErrorCode.CUSTOMER_ORDER_NOT_FOUND)));
-  }
-
-  @Transactional(readOnly = true)
-  public List<OrderResponse> getProgressingOrders(Long customerId) {
-    return orderRepository.findOrdersWithStoreByCustomerIdAndStatuses(customerId, List.of(
-            OrderStatus.PENDING, OrderStatus.PREPARING, OrderStatus.RIDER_ASSIGNED,
-            OrderStatus.DELIVERING)).stream()
-        .map(OrderResponse::from)
-        .toList();
-  }
-
-  @Transactional(readOnly = true)
-  public CursorPageResponse<OrderResponse> getCompletedOrdersByCursor(
-      Long customerId,
-      String nextPageToken,
-      int size
-  ) {
-    LocalDateTime lastCreatedAt = null;
-    Long lastOrderId = null;
-    Object[] decodedParts = CursorUtil.decode(nextPageToken);
-
-    if (decodedParts != null && decodedParts.length == 2) {
-      try {
-        lastCreatedAt = LocalDateTime.parse(decodedParts[0].toString());
-        lastOrderId = Long.parseLong(decodedParts[1].toString());
-      } catch (NumberFormatException e) {
-        lastCreatedAt = null;
-        lastOrderId = null;
-      }
-    }
-
-    List<Order> cursorOrders = orderRepositoryCustom.findOrdersWithStoreByCustomerId(customerId,
-        List.of(OrderStatus.COMPLETED), lastCreatedAt, lastOrderId, size + 1);
-
-    List<OrderResponse> cursorResponses = cursorOrders.stream()
-        .limit(size)
-        .map(OrderResponse::from)
-        .toList();
-
-    boolean hasNext = cursorOrders.size() > size;
-
-    try {
-      OrderResponse lastResponse = cursorResponses.getLast();
-      return new CursorPageResponse<>(
-          cursorResponses,
-          hasNext ? CursorUtil.encode(lastResponse.createdAt(), lastResponse.id()) : null,
-          hasNext
-      );
-    } catch (NoSuchElementException e) {
-      return new CursorPageResponse<>(cursorResponses, null, hasNext);
+      return new CursorPageResponse<>(orderResponses, null, false);
     }
   }
 }
