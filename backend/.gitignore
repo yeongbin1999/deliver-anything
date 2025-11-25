@@ -45,3 +45,6 @@ src/main/generated
 
 ### Environment Variable ###
 .env
+
+### Gemini ###
+GEMINI.md
