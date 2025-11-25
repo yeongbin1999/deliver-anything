@@ -36,7 +36,7 @@ public class OrderCancelFailedCustomerNotifier implements MessageListener {
       OrderCancelFailedForCustomerEvent event = objectMapper.readValue(message.getBody(),
           OrderCancelFailedForCustomerEvent.class);
       notificationService.sendNotification(
-          event.customerId(),
+          event.customerProfileId(),
           NotificationType.ORDER_CANCEL_FAILED_CUSTOMER,
           NotificationMessage.ORDER_CANCEL_FAILED_CUSTOMER.getMessage(),
           objectMapper.writeValueAsString(event)

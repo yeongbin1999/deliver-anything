@@ -3,7 +3,6 @@ package com.deliveranything.domain.order.repository;
 import com.deliveranything.domain.order.entity.Order;
 import com.deliveranything.domain.order.entity.QOrder;
 import com.deliveranything.domain.order.enums.OrderStatus;
-import com.deliveranything.domain.store.store.entity.QStore;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.time.LocalDateTime;
@@ -16,21 +15,9 @@ import org.springframework.stereotype.Repository;
 public class OrderRepositoryCustom {
 
   private final JPAQueryFactory queryFactory;
+  private final QOrder order = QOrder.order;
 
-  public List<Order> findOrdersWithStoreByCustomerId(
-      Long customerId,
-      LocalDateTime lastCreatedAt,
-      Long lastOrderId,
-      long size
-  ) {
-    return fetchOrders(
-        size,
-        cursorCondition(lastCreatedAt, lastOrderId),
-        QOrder.order.customer.id.eq(customerId)
-    );
-  }
-
-  public List<Order> findOrdersWithStoreByStoreId(
+  public List<Order> findOrdersByStoreIdWithCursor(
       Long storeId,
       List<OrderStatus> statuses,
       LocalDateTime lastCreatedAt,
@@ -40,13 +27,13 @@ public class OrderRepositoryCustom {
     return fetchOrders(
         size,
         cursorCondition(lastCreatedAt, lastOrderId),
-        QOrder.order.store.id.eq(storeId),
+        order.storeId.eq(storeId),
         statusIn(statuses)
     );
   }
 
-  public List<Order> findOrdersWithStoreByCustomerId(
-      Long customerId,
+  public List<Order> findOrdersByCustomerProfileIdWithCursor(
+      Long customerProfileId,
       List<OrderStatus> statuses,
       LocalDateTime lastCreatedAt,
       Long lastOrderId,
@@ -55,17 +42,13 @@ public class OrderRepositoryCustom {
     return fetchOrders(
         size,
         cursorCondition(lastCreatedAt, lastOrderId),
-        QOrder.order.customer.id.eq(customerId),
+        order.customerProfileId.eq(customerProfileId),
         statusIn(statuses)
     );
   }
 
   private List<Order> fetchOrders(long size, BooleanExpression... conditions) {
-    QOrder order = QOrder.order;
-    QStore store = QStore.store;
-
     return queryFactory.selectFrom(order)
-        .join(order.store, store).fetchJoin()
         .where(conditions)
         .orderBy(order.createdAt.desc(), order.id.desc())
         .limit(size)
@@ -73,7 +56,7 @@ public class OrderRepositoryCustom {
   }
 
   private BooleanExpression statusIn(List<OrderStatus> statuses) {
-    return statuses != null && !statuses.isEmpty() ? QOrder.order.status.in(statuses) : null;
+    return statuses != null && !statuses.isEmpty() ? order.status.in(statuses) : null;
   }
 
   // 최신순 커서
@@ -82,8 +65,6 @@ public class OrderRepositoryCustom {
     if (lastCreatedAt == null || lastOrderId == null) {
       return null;
     }
-
-    QOrder order = QOrder.order;
 
     // 1. 이전에 생성한 레코드 추출
     // 2. 생성 시각이 같다면 주문 ID 작은 것들 추출

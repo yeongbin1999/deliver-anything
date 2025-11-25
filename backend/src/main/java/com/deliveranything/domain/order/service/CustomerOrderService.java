@@ -23,7 +23,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.Collections;
 import java.util.List;
-import java.util.NoSuchElementException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -45,8 +44,10 @@ public class CustomerOrderService {
   private final ApplicationEventPublisher eventPublisher;
 
   @Transactional
-  public OrderCreateResponse createOrder(Long customerId, OrderCreateRequest orderCreateRequest) {
-    CustomerProfile customerProfile = customerProfileService.getProfileByProfileId(customerId);
+  public OrderCreateResponse createOrder(Long customerProfileId,
+      OrderCreateRequest orderCreateRequest) {
+    CustomerProfile customerProfile = customerProfileService.getProfileByProfileId(
+        customerProfileId);
     Store store = storeService.getStoreById(orderCreateRequest.storeId());
 
     Order order = orderCreateRequest.toEntity(customerProfile, store);
@@ -68,40 +69,41 @@ public class CustomerOrderService {
 
   @Transactional(readOnly = true)
   public CursorPageResponse<OrderResponse> getCustomerOrdersByCursor(
-      Long customerId,
+      Long customerProfileId,
       String nextPageToken,
       long size
   ) {
-    return getOrdersByCursorInternal(customerId, nextPageToken, size, Collections.emptyList());
+    return getOrdersByCursorInternal(customerProfileId, nextPageToken, size,
+        Collections.emptyList());
   }
 
   @Transactional(readOnly = true)
-  public OrderResponse getCustomerOrder(Long orderId, Long customerId) {
+  public OrderResponse getCustomerOrder(Long orderId, Long customerProfileId) {
     return OrderResponse.from(
-        orderRepository.findOrderWithStoreByIdAndCustomerId(orderId, customerId)
+        orderRepository.findByIdAndCustomerProfileId(orderId, customerProfileId)
             .orElseThrow(() -> new CustomException(ErrorCode.CUSTOMER_ORDER_NOT_FOUND)));
   }
 
   @Transactional(readOnly = true)
-  public List<OrderResponse> getProgressingOrders(Long customerId) {
-    return orderRepository.findOrdersWithStoreByCustomerIdAndStatuses(customerId,
-            OrderStatus.IN_PROGRESS_STATUSES).stream()
+  public List<OrderResponse> getProgressingOrders(Long customerProfileId) {
+    return orderRepository.findByCustomerProfileIdAndStatusInOrderByCreatedAtDesc(
+            customerProfileId, OrderStatus.IN_PROGRESS_STATUSES).stream()
         .map(OrderResponse::from)
         .toList();
   }
 
   @Transactional(readOnly = true)
   public CursorPageResponse<OrderResponse> getCompletedOrdersByCursor(
-      Long customerId,
+      Long customerProfileId,
       String nextPageToken,
       long size
   ) {
-    return getOrdersByCursorInternal(customerId, nextPageToken, size,
+    return getOrdersByCursorInternal(customerProfileId, nextPageToken, size,
         OrderStatus.COMPLETED_STATUSES);
   }
 
   private CursorPageResponse<OrderResponse> getOrdersByCursorInternal(
-      Long customerId,
+      Long customerProfileId,
       String nextPageToken,
       long size,
       List<OrderStatus> statuses
@@ -119,33 +121,26 @@ public class CustomerOrderService {
       } catch (NumberFormatException e) {
         log.warn("커서 토큰에서 주문ID 파싱 실패", e);
       }
+    } else {
+      log.warn("올바르지 않은 커서 토큰");
     }
 
-    List<Order> orders;
-    if (statuses == null || statuses.isEmpty()) {
-      orders = orderRepositoryCustom.findOrdersWithStoreByCustomerId(customerId,
-          lastCreatedAt, lastOrderId, size + 1L);
-    } else {
-      orders = orderRepositoryCustom.findOrdersWithStoreByCustomerId(customerId,
-          statuses, lastCreatedAt, lastOrderId, size + 1L);
-    }
+    List<Order> orders = orderRepositoryCustom.findOrdersByCustomerProfileIdWithCursor(
+        customerProfileId, statuses, lastCreatedAt, lastOrderId, size + 1L);
 
     List<OrderResponse> orderResponses = orders.stream()
         .limit(size)
         .map(OrderResponse::from)
         .toList();
 
-    boolean hasNext = orders.size() > size;
+    boolean hasNext = orders.size() == size + 1L;
+    String responsePageToken = null;
 
-    try {
-      OrderResponse lastResponse = orderResponses.getLast();
-      return new CursorPageResponse<>(
-          orderResponses,
-          hasNext ? CursorUtil.encode(lastResponse.createdAt(), lastResponse.id()) : null,
-          hasNext
-      );
-    } catch (NoSuchElementException e) {
-      return new CursorPageResponse<>(orderResponses, null, false);
+    if (hasNext) {
+      OrderResponse lastElement = orderResponses.getLast();
+      responsePageToken = CursorUtil.encode(lastElement.createdAt(), lastElement.id());
     }
+
+    return new CursorPageResponse<>(orderResponses, responsePageToken, hasNext);
   }
 }

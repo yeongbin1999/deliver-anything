@@ -5,14 +5,14 @@ import com.deliveranything.domain.order.enums.OrderStatus;
 
 public record OrderStatusChangedForCustomerEvent(
     Long orderId,
-    Long customerId,
+    Long customerProfileId,
     OrderStatus orderStatus
 ) {
 
   public static OrderStatusChangedForCustomerEvent fromOrder(Order order) {
     return new OrderStatusChangedForCustomerEvent(
         order.getId(),
-        order.getCustomer().getId(),
+        order.getCustomerProfileId(),
         order.getStatus()
     );
   }

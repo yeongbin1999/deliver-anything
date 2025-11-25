@@ -35,7 +35,7 @@ public class OrderCreatedCustomerNotifier implements MessageListener {
       OrderCreatedForCustomerEvent event = objectMapper.readValue(message.getBody(),
           OrderCreatedForCustomerEvent.class);
       notificationService.sendNotification(
-          event.customerId(),
+          event.customerProfileId(),
           NotificationType.ORDER_CREATED_CUSTOMER,
           NotificationMessage.ORDER_CREATED_CUSTOMER.getMessage(),
           objectMapper.writeValueAsString(event)

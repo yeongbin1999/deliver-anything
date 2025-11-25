@@ -27,7 +27,7 @@ public record OrderResponse(
         order.getOrderItems().stream().map(OrderItemInfo::fromOrderItem).toList(),
         order.getStatus(),
         order.getMerchantId(),
-        order.getStore().getName(),
+        order.getStoreName(),
         order.getAddress(),
         order.getRiderNote(),
         order.getStoreNote(),

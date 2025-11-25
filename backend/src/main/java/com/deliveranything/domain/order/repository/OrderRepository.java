@@ -11,11 +11,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
   Optional<Order> findByMerchantId(String merchantId);
 
-  @Query("SELECT o FROM Order o JOIN FETCH o.store WHERE o.id = :orderId")
-  Optional<Order> findOrderWithStoreById(Long orderId);
-
-  @Query("SELECT o FROM Order o JOIN FETCH o.store WHERE o.id = :orderId AND o.customer.id = :customerId")
-  Optional<Order> findOrderWithStoreByIdAndCustomerId(Long orderId, Long customerId);
+  Optional<Order> findByIdAndCustomerProfileId(Long orderId, Long customerProfileId);
 
   @Query("SELECT o FROM Order o JOIN FETCH o.store WHERE o.merchantId = :merchantId")
   Optional<Order> findOrderWithStoreByMerchantId(String merchantId);
@@ -38,13 +34,8 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
       """)
   List<Order> findOrdersWithStoreByStoreIdAndStatuses(Long storeId, List<OrderStatus> statuses);
 
-  @Query("""
-      SELECT o
-      FROM Order o
-      JOIN FETCH o.store s
-      WHERE s.id = :customerId AND o.status IN :statuses
-      ORDER BY o.createdAt DESC
-      """)
-  List<Order> findOrdersWithStoreByCustomerIdAndStatuses(Long customerId,
-      List<OrderStatus> statuses);
+  List<Order> findByCustomerProfileIdAndStatusInOrderByCreatedAtDesc(
+      Long customerProfileId,
+      List<OrderStatus> statuses
+  );
 }

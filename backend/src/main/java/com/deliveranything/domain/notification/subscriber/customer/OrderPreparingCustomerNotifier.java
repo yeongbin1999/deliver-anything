@@ -35,7 +35,7 @@ public class OrderPreparingCustomerNotifier implements MessageListener {
       OrderPreparingForCustomerEvent event = objectMapper.readValue(message.getBody(),
           OrderPreparingForCustomerEvent.class);
       notificationService.sendNotification(
-          event.customerId(),
+          event.customerProfileId(),
           NotificationType.ORDER_PREPARING_CUSTOMER,
           NotificationMessage.ORDER_PREPARING_CUSTOMER.getMessage(),
           objectMapper.writeValueAsString(event)
