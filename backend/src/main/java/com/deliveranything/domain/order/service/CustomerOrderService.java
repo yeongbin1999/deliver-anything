@@ -9,7 +9,6 @@ import com.deliveranything.domain.order.entity.OrderItem;
 import com.deliveranything.domain.order.enums.OrderStatus;
 import com.deliveranything.domain.order.event.OrderCreatedEvent;
 import com.deliveranything.domain.order.repository.OrderRepository;
-import com.deliveranything.domain.order.repository.OrderRepositoryCustom;
 import com.deliveranything.domain.product.product.service.ProductService;
 import com.deliveranything.domain.store.store.entity.Store;
 import com.deliveranything.domain.store.store.service.StoreService;
@@ -39,8 +38,6 @@ public class CustomerOrderService {
   private final StoreService storeService;
 
   private final OrderRepository orderRepository;
-  private final OrderRepositoryCustom orderRepositoryCustom;
-
   private final ApplicationEventPublisher eventPublisher;
 
   @Transactional
@@ -125,7 +122,7 @@ public class CustomerOrderService {
       log.warn("올바르지 않은 커서 토큰");
     }
 
-    List<Order> orders = orderRepositoryCustom.findOrdersByCustomerProfileIdWithCursor(
+    List<Order> orders = orderRepository.findOrdersByCustomerProfileIdWithCursor(
         customerProfileId, statuses, lastCreatedAt, lastOrderId, size + 1L);
 
     List<OrderResponse> orderResponses = orders.stream()
