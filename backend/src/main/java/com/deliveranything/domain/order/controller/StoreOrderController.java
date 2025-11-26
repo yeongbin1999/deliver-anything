@@ -59,7 +59,7 @@ public class StoreOrderController {
       @PathVariable Long storeId
   ) {
     return ResponseEntity.ok().body(ApiResponse.success("상점의 주문 현황 목록 조회 성공",
-        storeOrderService.getAcceptedOrders(storeId)));
+        storeOrderService.getProgressingOrders(storeId)));
   }
 
   @PatchMapping("/{orderId}/accept")

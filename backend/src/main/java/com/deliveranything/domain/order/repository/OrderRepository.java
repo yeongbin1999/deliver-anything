@@ -5,7 +5,6 @@ import com.deliveranything.domain.order.enums.OrderStatus;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
 
 public interface OrderRepository extends JpaRepository<Order, Long>, OrderRepositoryCustom {
 
@@ -13,23 +12,14 @@ public interface OrderRepository extends JpaRepository<Order, Long>, OrderReposi
 
   Optional<Order> findByIdAndCustomerProfileId(Long orderId, Long customerProfileId);
 
-  @Query("SELECT o FROM Order o JOIN FETCH o.store WHERE o.merchantId = :merchantId")
-  Optional<Order> findOrderWithStoreByMerchantId(String merchantId);
+  Optional<Order> findByDeliveryId(Long deliveryId);
 
-  @Query("SELECT o FROM Order o JOIN FETCH o.store WHERE o.delivery.id = :deliveryId")
-  Optional<Order> findOrderWithStoreByDeliveryId(Long deliveryId);
+  List<Order> findByStoreIdAndStatus(Long storeId, OrderStatus status);
 
-  @Query("SELECT o FROM Order o JOIN FETCH o.store WHERE o.store.id = :storeId AND o.status = :status")
-  List<Order> findOrdersWithStoreByStoreIdAndStatus(Long storeId, OrderStatus status);
-
-  @Query("""
-      SELECT o
-      FROM Order o
-      JOIN FETCH o.store s
-      WHERE s.id = :storeId AND o.status IN :statuses
-      ORDER BY o.createdAt ASC
-      """)
-  List<Order> findOrdersWithStoreByStoreIdAndStatuses(Long storeId, List<OrderStatus> statuses);
+  List<Order> findByStoreIdAndStatusInOrderByCreatedAtAsc(
+      Long storeId,
+      List<OrderStatus> statuses
+  );
 
   List<Order> findByCustomerProfileIdAndStatusInOrderByCreatedAtDesc(
       Long customerProfileId,

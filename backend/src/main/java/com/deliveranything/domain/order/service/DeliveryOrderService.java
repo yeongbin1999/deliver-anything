@@ -17,7 +17,7 @@ public class DeliveryOrderService {
 
   @Transactional(readOnly = true)
   public OrderResponse getOrderByDeliveryId(Long deliveryId) {
-    return OrderResponse.from(orderRepository.findOrderWithStoreByDeliveryId(deliveryId)
+    return OrderResponse.from(orderRepository.findByDeliveryId(deliveryId)
         .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND)));
   }
 

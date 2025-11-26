@@ -86,7 +86,7 @@ public class CustomerOrderService {
   @Transactional(readOnly = true)
   public List<OrderResponse> getProgressingOrders(Long customerProfileId) {
     return orderRepository.findByCustomerProfileIdAndStatusInOrderByCreatedAtDesc(
-            customerProfileId, OrderStatus.IN_PROGRESS_STATUSES).stream()
+            customerProfileId, OrderStatus.CUSTOMER_ORDER_IN_PROGRESS_STATUSES).stream()
         .map(OrderResponse::from)
         .toList();
   }

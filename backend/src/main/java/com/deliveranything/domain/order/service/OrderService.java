@@ -39,7 +39,7 @@ public class OrderService {
 
   @Transactional
   public void processPaymentCompletion(String merchantUid) {
-    Order order = getOrderWithStoreByMerchantId(merchantUid);
+    Order order = getOrderByMerchantId(merchantUid);
     eventPublisher.publishEvent(OrderPaymentSucceededEvent.fromOrder(order));
   }
 
@@ -141,12 +141,6 @@ public class OrderService {
     eventPublisher.publishEvent(OrderCreateFailedForCustomerEvent.fromOrder(order));
 
     log.info("주문 [{}] 취소 처리 완료.", orderId);
-  }
-
-  private Order getOrderWithStoreByMerchantId(String merchantUid) {
-    return orderRepository.findOrderWithStoreByMerchantId(merchantUid)
-        .orElseThrow(() -> new CustomException(
-            ErrorCode.ORDER_NOT_FOUND));
   }
 
   private Order getOrderByMerchantId(String merchantUid) {

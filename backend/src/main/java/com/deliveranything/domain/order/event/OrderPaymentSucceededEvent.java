@@ -13,7 +13,7 @@ public record OrderPaymentSucceededEvent(
   public static OrderPaymentSucceededEvent fromOrder(Order order) {
     return new OrderPaymentSucceededEvent(
         order.getId(),
-        order.getStore().getId(),
+        order.getStoreId(),
         order.getOrderItems().stream().map(OrderItemInfo::fromOrderItem).toList()
     );
   }
