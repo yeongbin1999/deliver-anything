@@ -3,8 +3,6 @@ package com.deliveranything.domain.order.service;
 import com.deliveranything.domain.order.dto.OrderResponse;
 import com.deliveranything.domain.order.entity.Order;
 import com.deliveranything.domain.order.repository.OrderRepository;
-import com.deliveranything.global.exception.CustomException;
-import com.deliveranything.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

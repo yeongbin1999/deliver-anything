@@ -5,8 +5,6 @@ import com.deliveranything.domain.order.enums.Publisher;
 import com.deliveranything.domain.order.event.OrderCancelEvent;
 import com.deliveranything.domain.order.event.OrderPaymentRequestedEvent;
 import com.deliveranything.domain.order.repository.OrderRepository;
-import com.deliveranything.global.exception.CustomException;
-import com.deliveranything.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;

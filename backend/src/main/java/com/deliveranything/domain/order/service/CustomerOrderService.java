@@ -15,8 +15,6 @@ import com.deliveranything.domain.store.store.service.StoreService;
 import com.deliveranything.domain.user.profile.entity.CustomerProfile;
 import com.deliveranything.domain.user.profile.service.CustomerProfileService;
 import com.deliveranything.global.common.CursorPageResponse;
-import com.deliveranything.global.exception.CustomException;
-import com.deliveranything.global.exception.ErrorCode;
 import com.deliveranything.global.util.CursorUtil;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
@@ -76,15 +74,15 @@ public class CustomerOrderService {
         Collections.emptyList());
   }
 
-    @Transactional(readOnly = true)
+  @Transactional(readOnly = true)
 
-    public OrderResponse getCustomerOrder(Long orderId, Long customerProfileId) {
+  public OrderResponse getCustomerOrder(Long orderId, Long customerProfileId) {
 
-      return OrderResponse.from(
+    return OrderResponse.from(
 
-          orderRepository.findByIdAndCustomerProfileIdOrThrow(orderId, customerProfileId));
+        orderRepository.findByIdAndCustomerProfileIdOrThrow(orderId, customerProfileId));
 
-    }
+  }
 
   @Transactional(readOnly = true)
   public List<OrderResponse> getProgressingOrders(Long customerProfileId) {

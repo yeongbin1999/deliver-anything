@@ -8,8 +8,6 @@ import com.deliveranything.domain.order.event.OrderRejectedEvent;
 import com.deliveranything.domain.order.event.OrderStoreAcceptedEvent;
 import com.deliveranything.domain.order.repository.OrderRepository;
 import com.deliveranything.global.common.CursorPageResponse;
-import com.deliveranything.global.exception.CustomException;
-import com.deliveranything.global.exception.ErrorCode;
 import com.deliveranything.global.util.CursorUtil;
 import java.time.LocalDateTime;
 import java.util.List;

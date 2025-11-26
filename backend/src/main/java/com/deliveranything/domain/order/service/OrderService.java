@@ -21,8 +21,6 @@ import com.deliveranything.domain.order.event.sse.seller.OrderPaidForSellerEvent
 import com.deliveranything.domain.order.event.sse.seller.OrderPreparingForSellerEvent;
 import com.deliveranything.domain.order.event.sse.seller.OrderStatusChangedForSellerEvent;
 import com.deliveranything.domain.order.repository.OrderRepository;
-import com.deliveranything.global.exception.CustomException;
-import com.deliveranything.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
