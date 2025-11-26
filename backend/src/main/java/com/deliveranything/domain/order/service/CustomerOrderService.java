@@ -41,11 +41,13 @@ public class CustomerOrderService {
   private final ApplicationEventPublisher eventPublisher;
 
   @Transactional
-  public OrderCreateResponse createOrder(Long customerProfileId,
-      OrderCreateRequest orderCreateRequest) {
+  public OrderCreateResponse createOrder(
+      Long customerProfileId,
+      OrderCreateRequest orderCreateRequest
+  ) {
+    Store store = storeService.getStoreById(orderCreateRequest.storeId());
     CustomerProfile customerProfile = customerProfileService.getProfileByProfileId(
         customerProfileId);
-    Store store = storeService.getStoreById(orderCreateRequest.storeId());
 
     Order order = orderCreateRequest.toEntity(customerProfile, store);
     for (OrderItemRequest orderItemRequest : orderCreateRequest.orderItemRequests()) {
