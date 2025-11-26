@@ -7,7 +7,6 @@ import com.deliveranything.domain.order.enums.Publisher;
 import com.deliveranything.domain.order.event.OrderRejectedEvent;
 import com.deliveranything.domain.order.event.OrderStoreAcceptedEvent;
 import com.deliveranything.domain.order.repository.OrderRepository;
-import com.deliveranything.domain.order.repository.OrderRepositoryCustom;
 import com.deliveranything.global.common.CursorPageResponse;
 import com.deliveranything.global.exception.CustomException;
 import com.deliveranything.global.exception.ErrorCode;
@@ -27,8 +26,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class StoreOrderService {
 
   private final OrderRepository orderRepository;
-  private final OrderRepositoryCustom orderRepositoryCustom;
-
   private final ApplicationEventPublisher eventPublisher;
 
   // 주문 이력 조회
@@ -52,7 +49,7 @@ public class StoreOrderService {
       }
     }
 
-    List<Order> cursorOrders = orderRepositoryCustom.findOrdersByStoreIdWithCursor(storeId,
+    List<Order> cursorOrders = orderRepository.findOrdersByStoreIdWithCursor(storeId,
         List.of(OrderStatus.COMPLETED, OrderStatus.REJECTED), lastCreatedAt, lastOrderId, size + 1);
 
     List<OrderResponse> cursorResponses = cursorOrders.stream()
@@ -77,17 +74,17 @@ public class StoreOrderService {
   // 들어온 주문 중 수락 or 거절 해야하는 목록 조회
   @Transactional(readOnly = true)
   public List<OrderResponse> getPendingOrders(Long storeId) {
-    return orderRepository.findOrdersWithStoreByStoreIdAndStatus(storeId, OrderStatus.PENDING)
+    return orderRepository.findByStoreIdAndStatus(storeId, OrderStatus.PENDING)
         .stream()
         .map(OrderResponse::from)
         .toList();
   }
 
-  // 주문 현황 목록 조회
   @Transactional(readOnly = true)
-  public List<OrderResponse> getAcceptedOrders(Long storeId) {
-    return orderRepository.findOrdersWithStoreByStoreIdAndStatuses(storeId,
-            List.of(OrderStatus.PREPARING, OrderStatus.RIDER_ASSIGNED, OrderStatus.DELIVERING)).stream()
+  public List<OrderResponse> getProgressingOrders(Long storeId) {
+    return orderRepository.findByStoreIdAndStatusInOrderByCreatedAtAsc(storeId,
+            OrderStatus.STORE_ORDER_IN_PROGRESS_STATUSES)
+        .stream()
         .map(OrderResponse::from)
         .toList();
   }

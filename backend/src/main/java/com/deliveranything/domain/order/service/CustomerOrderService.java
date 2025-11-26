@@ -41,11 +41,13 @@ public class CustomerOrderService {
   private final ApplicationEventPublisher eventPublisher;
 
   @Transactional
-  public OrderCreateResponse createOrder(Long customerProfileId,
-      OrderCreateRequest orderCreateRequest) {
+  public OrderCreateResponse createOrder(
+      Long customerProfileId,
+      OrderCreateRequest orderCreateRequest
+  ) {
+    Store store = storeService.getStoreById(orderCreateRequest.storeId());
     CustomerProfile customerProfile = customerProfileService.getProfileByProfileId(
         customerProfileId);
-    Store store = storeService.getStoreById(orderCreateRequest.storeId());
 
     Order order = orderCreateRequest.toEntity(customerProfile, store);
     for (OrderItemRequest orderItemRequest : orderCreateRequest.orderItemRequests()) {
@@ -84,7 +86,7 @@ public class CustomerOrderService {
   @Transactional(readOnly = true)
   public List<OrderResponse> getProgressingOrders(Long customerProfileId) {
     return orderRepository.findByCustomerProfileIdAndStatusInOrderByCreatedAtDesc(
-            customerProfileId, OrderStatus.IN_PROGRESS_STATUSES).stream()
+            customerProfileId, OrderStatus.CUSTOMER_ORDER_IN_PROGRESS_STATUSES).stream()
         .map(OrderResponse::from)
         .toList();
   }

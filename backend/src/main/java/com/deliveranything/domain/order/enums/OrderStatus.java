@@ -15,8 +15,12 @@ public enum OrderStatus {
   CANCEL_FAILED,
   PAYMENT_FAILED;
 
-  public static final List<OrderStatus> IN_PROGRESS_STATUSES = List.of(
+  public static final List<OrderStatus> CUSTOMER_ORDER_IN_PROGRESS_STATUSES = List.of(
       PENDING, PREPARING, RIDER_ASSIGNED, DELIVERING
+  );
+
+  public static final List<OrderStatus> STORE_ORDER_IN_PROGRESS_STATUSES = List.of(
+      PREPARING, RIDER_ASSIGNED, DELIVERING
   );
 
   public static final List<OrderStatus> COMPLETED_STATUSES = List.of(COMPLETED);
