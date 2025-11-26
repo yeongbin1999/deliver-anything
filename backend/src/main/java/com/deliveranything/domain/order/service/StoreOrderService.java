@@ -52,7 +52,7 @@ public class StoreOrderService {
       }
     }
 
-    List<Order> cursorOrders = orderRepositoryCustom.findOrdersWithStoreByStoreId(storeId,
+    List<Order> cursorOrders = orderRepositoryCustom.findOrdersByStoreIdWithCursor(storeId,
         List.of(OrderStatus.COMPLETED, OrderStatus.REJECTED), lastCreatedAt, lastOrderId, size + 1);
 
     List<OrderResponse> cursorResponses = cursorOrders.stream()
@@ -94,7 +94,7 @@ public class StoreOrderService {
 
   @Transactional
   public void acceptOrder(Long orderId) {
-    Order order = getOrderWithStore(orderId);
+    Order order = getOrder(orderId);
 
     log.info("상점이 주문 수락 했을 때 도착지의 latitude 위도 -90~90: {} / longitude 경도 -180~180: {}",
         order.getDestination().getY(), order.getDestination().getX());
@@ -113,11 +113,6 @@ public class StoreOrderService {
 
     eventPublisher.publishEvent(
         OrderRejectedEvent.from(order, STORE_CANCEL_REASON, Publisher.STORE));
-  }
-
-  private Order getOrderWithStore(Long orderId) {
-    return orderRepository.findOrderWithStoreById(orderId)
-        .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND));
   }
 
   private Order getOrder(Long orderId) {

@@ -38,9 +38,15 @@ public class Order extends BaseEntity {
   @JoinColumn(name = "store_id", nullable = false)
   private Store store;
 
+  @Column(name = "store_id", insertable = false, updatable = false)
+  private Long storeId;
+
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "customer_id", nullable = false)
-  private CustomerProfile customer;
+  @JoinColumn(name = "customer_profile_id", nullable = false)
+  private CustomerProfile customerProfile;
+
+  @Column(name = "customer_profile_id", insertable = false, updatable = false)
+  private Long customerProfileId;
 
   @OneToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "delivery_id", unique = true)
@@ -58,6 +64,9 @@ public class Order extends BaseEntity {
 
   @Column(nullable = false, length = 100)
   private String address;
+
+  @Column(nullable = false, length = 120)
+  private String storeName;
 
   @Column(columnDefinition = "geometry", nullable = false)
   private Point destination;
@@ -80,11 +89,13 @@ public class Order extends BaseEntity {
   private String cancellationReason;
 
   @Builder
-  public Order(CustomerProfile customer, Store store, String address, Point destination,
-      String riderNote, String storeNote, Long totalPrice, Long storePrice, Long deliveryPrice) {
-    this.customer = customer;
+  public Order(CustomerProfile customerProfile, Store store, String address, String storeName,
+      Point destination, String riderNote, String storeNote, Long totalPrice, Long storePrice,
+      Long deliveryPrice) {
+    this.customerProfile = customerProfile;
     this.store = store;
     this.address = address;
+    this.storeName = storeName;
     this.destination = destination;
     this.riderNote = riderNote;
     this.storeNote = storeNote;
@@ -102,7 +113,7 @@ public class Order extends BaseEntity {
 
   public void updateStatus(OrderStatus status) {
     if (!this.status.canTransitTo(status)) {
-      log.warn("order status can't be transited at {} to {} ", this.status, status);
+      log.warn("order status can't be transited from {} to {} ", this.status, status);
     }
 
     this.status = status;

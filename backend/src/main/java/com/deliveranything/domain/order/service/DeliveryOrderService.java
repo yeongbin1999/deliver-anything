@@ -35,7 +35,7 @@ public class DeliveryOrderService {
   }
 
   public Long getCustomerIdByOrderId(Long orderId) {
-    return getOrderById(orderId).getCustomer().getId();
+    return getOrderById(orderId).getCustomerProfileId();
   }
 
   public Long getSellerIdByOrderId(Long orderId) {

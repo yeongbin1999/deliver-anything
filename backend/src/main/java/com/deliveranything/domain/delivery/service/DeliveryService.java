@@ -86,7 +86,7 @@ public class DeliveryService {
         .status(com.deliveranything.domain.delivery.enums.DeliveryStatus.RIDER_ASSIGNED)
         .charge(0)  // 추후 배달료 계산 로직으로 추가 예정
         .store(order.getStore())
-        .customer(order.getCustomer())
+        .customer(order.getCustomerProfile())
         .riderProfile(riderProfileService.getRiderProfileById(riderProfileId))
         .build();
   }

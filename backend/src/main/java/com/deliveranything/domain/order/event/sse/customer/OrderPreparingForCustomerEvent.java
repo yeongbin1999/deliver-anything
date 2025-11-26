@@ -8,7 +8,7 @@ import java.util.List;
 
 public record OrderPreparingForCustomerEvent(
     Long orderId,
-    Long customerId,
+    Long customerProfileId,
     List<OrderItemInfo> orderItems,
     OrderStatus status,
     String merchantId,
@@ -25,7 +25,7 @@ public record OrderPreparingForCustomerEvent(
   public static OrderPreparingForCustomerEvent fromOrder(Order order) {
     return new OrderPreparingForCustomerEvent(
         order.getId(),
-        order.getCustomer().getId(),
+        order.getCustomerProfileId(),
         order.getOrderItems().stream().map(OrderItemInfo::fromOrderItem).toList(),
         order.getStatus(),
         order.getMerchantId(),

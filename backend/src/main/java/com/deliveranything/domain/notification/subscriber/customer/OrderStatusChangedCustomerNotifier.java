@@ -35,7 +35,7 @@ public class OrderStatusChangedCustomerNotifier implements MessageListener {
       OrderStatusChangedForCustomerEvent event = objectMapper.readValue(message.getBody(),
           OrderStatusChangedForCustomerEvent.class);
       notificationService.sendNotification(
-          event.customerId(),
+          event.customerProfileId(),
           NotificationType.ORDER_STATUS_CHANGED_CUSTOMER,
           NotificationMessage.getMessageByOrderStatus(event.orderStatus()),
           objectMapper.writeValueAsString(event)

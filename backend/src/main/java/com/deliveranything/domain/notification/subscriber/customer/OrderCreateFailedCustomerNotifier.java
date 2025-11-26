@@ -35,7 +35,7 @@ public class OrderCreateFailedCustomerNotifier implements MessageListener {
       OrderCreateFailedForCustomerEvent event = objectMapper.readValue(message.getBody(),
           OrderCreateFailedForCustomerEvent.class);
       notificationService.sendNotification(
-          event.customerId(),
+          event.customerProfileId(),
           NotificationType.ORDER_CREATED_FAILED_CUSTOMER,
           NotificationMessage.ORDER_CREATED_FAILED_CUSTOMER.getMessage(),
           objectMapper.writeValueAsString(event)
