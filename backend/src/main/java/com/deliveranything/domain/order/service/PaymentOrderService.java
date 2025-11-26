@@ -25,7 +25,7 @@ public class PaymentOrderService {
   public void payOrder(String merchantUid, String paymentKey) {
     log.info("고객의 결제 시도 - 주문 번호: {} & PG 사 결제 키: {}", merchantUid, paymentKey);
 
-    Order order = getOrderByMerchantId(merchantUid);
+    Order order = orderRepository.findByMerchantIdOrThrow(merchantUid);
     order.isPayable();
 
     eventPublisher.publishEvent(
@@ -34,19 +34,9 @@ public class PaymentOrderService {
 
   @Transactional
   public void cancelOrder(Long orderId, String cancelReason) {
-    Order order = getOrderById(orderId);
+    Order order = orderRepository.findByIdOrThrow(orderId);
     order.cancellationRequest(cancelReason);
 
     eventPublisher.publishEvent(OrderCancelEvent.from(order, cancelReason, Publisher.CUSTOMER));
-  }
-
-  private Order getOrderByMerchantId(String merchantId) {
-    return orderRepository.findByMerchantId(merchantId)
-        .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND));
-  }
-
-  private Order getOrderById(Long orderId) {
-    return orderRepository.findById(orderId)
-        .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND));
   }
 }

@@ -91,7 +91,7 @@ public class StoreOrderService {
 
   @Transactional
   public void acceptOrder(Long orderId) {
-    Order order = getOrder(orderId);
+    Order order = orderRepository.findByIdOrThrow(orderId);
 
     log.info("상점이 주문 수락 했을 때 도착지의 latitude 위도 -90~90: {} / longitude 경도 -180~180: {}",
         order.getDestination().getY(), order.getDestination().getX());
@@ -105,15 +105,10 @@ public class StoreOrderService {
   public void rejectOrder(Long orderId) {
     String STORE_CANCEL_REASON = "상점이 주문을 거절했습니다.";
 
-    Order order = getOrder(orderId);
+    Order order = orderRepository.findByIdOrThrow(orderId);
     order.cancellationRequest(STORE_CANCEL_REASON);
 
     eventPublisher.publishEvent(
         OrderRejectedEvent.from(order, STORE_CANCEL_REASON, Publisher.STORE));
-  }
-
-  private Order getOrder(Long orderId) {
-    return orderRepository.findById(orderId)
-        .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND));
   }
 }

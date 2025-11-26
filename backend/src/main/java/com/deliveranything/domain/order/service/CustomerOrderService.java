@@ -76,12 +76,15 @@ public class CustomerOrderService {
         Collections.emptyList());
   }
 
-  @Transactional(readOnly = true)
-  public OrderResponse getCustomerOrder(Long orderId, Long customerProfileId) {
-    return OrderResponse.from(
-        orderRepository.findByIdAndCustomerProfileId(orderId, customerProfileId)
-            .orElseThrow(() -> new CustomException(ErrorCode.CUSTOMER_ORDER_NOT_FOUND)));
-  }
+    @Transactional(readOnly = true)
+
+    public OrderResponse getCustomerOrder(Long orderId, Long customerProfileId) {
+
+      return OrderResponse.from(
+
+          orderRepository.findByIdAndCustomerProfileIdOrThrow(orderId, customerProfileId));
+
+    }
 
   @Transactional(readOnly = true)
   public List<OrderResponse> getProgressingOrders(Long customerProfileId) {

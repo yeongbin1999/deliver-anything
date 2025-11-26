@@ -17,13 +17,11 @@ public class DeliveryOrderService {
 
   @Transactional(readOnly = true)
   public OrderResponse getOrderByDeliveryId(Long deliveryId) {
-    return OrderResponse.from(orderRepository.findByDeliveryId(deliveryId)
-        .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND)));
+    return OrderResponse.from(orderRepository.findByDeliveryIdOrThrow(deliveryId));
   }
 
   public Order getOrderById(Long orderId) {
-    return orderRepository.findById(orderId)
-        .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND));
+    return orderRepository.findByIdOrThrow(orderId);
   }
 
   public Long getCustomerIdByOrderId(Long orderId) {

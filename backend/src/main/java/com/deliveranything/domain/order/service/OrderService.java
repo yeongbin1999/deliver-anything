@@ -39,13 +39,13 @@ public class OrderService {
 
   @Transactional
   public void processPaymentCompletion(String merchantUid) {
-    Order order = getOrderByMerchantId(merchantUid);
+    Order order = orderRepository.findByMerchantIdOrThrow(merchantUid);
     eventPublisher.publishEvent(OrderPaymentSucceededEvent.fromOrder(order));
   }
 
   @Transactional
   public void processStockCommitted(Long orderId) {
-    Order order = getOrderById(orderId);
+    Order order = orderRepository.findByIdOrThrow(orderId);
     order.updateStatus(OrderStatus.PENDING);
 
     eventPublisher.publishEvent(OrderPaidForCustomerEvent.fromOrder(order));
@@ -54,7 +54,7 @@ public class OrderService {
 
   @Transactional
   public void processOrderTransmitted(Long orderId) {
-    Order order = getOrderById(orderId);
+    Order order = orderRepository.findByIdOrThrow(orderId);
     order.updateStatus(OrderStatus.PREPARING);
 
     eventPublisher.publishEvent(OrderPreparingForCustomerEvent.fromOrder(order));
@@ -63,13 +63,13 @@ public class OrderService {
 
   @Transactional
   public void processPaymentFailure(String merchantUid) {
-    Order order = getOrderByMerchantId(merchantUid);
+    Order order = orderRepository.findByMerchantIdOrThrow(merchantUid);
     eventPublisher.publishEvent(OrderPaymentFailedEvent.fromOrder(order));
   }
 
   @Transactional
   public void processStockReleased(Long orderId) {
-    Order order = getOrderById(orderId);
+    Order order = orderRepository.findByIdOrThrow(orderId);
     order.updateStatus(OrderStatus.PAYMENT_FAILED);
 
     eventPublisher.publishEvent(OrderPaymentFailedForCustomerEvent.fromOrder(order));
@@ -77,7 +77,7 @@ public class OrderService {
 
   @Transactional
   public void processPaymentCancelSuccess(String merchantUid, Publisher publisher) {
-    Order order = getOrderByMerchantId(merchantUid);
+    Order order = orderRepository.findByMerchantIdOrThrow(merchantUid);
 
     if (publisher == Publisher.CUSTOMER) {
       order.updateStatus(OrderStatus.CANCELED);
@@ -90,7 +90,7 @@ public class OrderService {
 
   @Transactional
   public void processStockReplenished(Long orderId) {
-    Order order = getOrderById(orderId);
+    Order order = orderRepository.findByIdOrThrow(orderId);
 
     eventPublisher.publishEvent(OrderCanceledForCustomerEvent.fromOrder(order));
     eventPublisher.publishEvent(OrderCanceledForSellerEvent.fromOrder(order));
@@ -98,7 +98,7 @@ public class OrderService {
 
   @Transactional
   public void processPaymentCancelFailed(String merchantUid) {
-    Order order = getOrderByMerchantId(merchantUid);
+    Order order = orderRepository.findByMerchantIdOrThrow(merchantUid);
     order.updateStatus(OrderStatus.CANCEL_FAILED);
 
     eventPublisher.publishEvent(OrderCancelFailedForCustomerEvent.fromOrder(order));
@@ -107,7 +107,7 @@ public class OrderService {
 
   @Transactional
   public void processDeliveryPickedUp(Long orderId) {
-    Order order = getOrderById(orderId);
+    Order order = orderRepository.findByIdOrThrow(orderId);
     order.updateStatus(OrderStatus.DELIVERING);
 
     eventPublisher.publishEvent(OrderStatusChangedForCustomerEvent.fromOrder(order));
@@ -116,7 +116,7 @@ public class OrderService {
 
   @Transactional
   public void processDeliveryCompleted(Long orderId, Long riderId, Long sellerId) {
-    Order order = getOrderById(orderId);
+    Order order = orderRepository.findByIdOrThrow(orderId);
     order.updateStatus(OrderStatus.COMPLETED);
 
     eventPublisher.publishEvent(OrderCompletedEvent.fromOrder(order, riderId, sellerId));
@@ -126,7 +126,7 @@ public class OrderService {
 
   @Transactional(readOnly = true)
   public void processStockReserved(Long orderId) {
-    Order order = getOrderById(orderId);
+    Order order = orderRepository.findByIdOrThrow(orderId);
     log.info("주문 재고 홀드 됨. 클라이언트에게 주문 생성 관련 정보 전달.");
 
     eventPublisher.publishEvent(OrderCreatedForCustomerEvent.fromOrder(order));
@@ -136,20 +136,10 @@ public class OrderService {
   public void processStockReserveFailed(Long orderId, String reason) {
     log.info("주문 [{}] 취소 처리 시작. 사유: 재고 예약 실패 ({})", orderId, reason);
 
-    Order order = getOrderById(orderId);
+    Order order = orderRepository.findByIdOrThrow(orderId);
     order.cancel(reason);
     eventPublisher.publishEvent(OrderCreateFailedForCustomerEvent.fromOrder(order));
 
     log.info("주문 [{}] 취소 처리 완료.", orderId);
-  }
-
-  private Order getOrderByMerchantId(String merchantUid) {
-    return orderRepository.findByMerchantId(merchantUid).orElseThrow(() -> new CustomException(
-        ErrorCode.ORDER_NOT_FOUND));
-  }
-
-  private Order getOrderById(Long orderId) {
-    return orderRepository.findById(orderId).orElseThrow(() -> new CustomException(
-        ErrorCode.ORDER_NOT_FOUND));
   }
 }
