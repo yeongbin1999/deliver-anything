@@ -9,6 +9,7 @@ import com.deliveranything.domain.order.entity.OrderItem;
 import com.deliveranything.domain.order.enums.OrderStatus;
 import com.deliveranything.domain.order.event.OrderCreatedEvent;
 import com.deliveranything.domain.order.repository.OrderRepository;
+import com.deliveranything.domain.order.service.fetcher.OrderFetcher;
 import com.deliveranything.domain.product.product.service.ProductService;
 import com.deliveranything.domain.store.store.entity.Store;
 import com.deliveranything.domain.store.store.service.StoreService;
@@ -37,6 +38,7 @@ public class CustomerOrderService {
 
   private final OrderRepository orderRepository;
   private final ApplicationEventPublisher eventPublisher;
+  private final OrderFetcher orderFetcher;
 
   @Transactional
   public OrderCreateResponse createOrder(
@@ -80,7 +82,7 @@ public class CustomerOrderService {
 
     return OrderResponse.from(
 
-        orderRepository.findByIdAndCustomerProfileIdOrThrow(orderId, customerProfileId));
+        orderFetcher.findByIdAndCustomerProfileIdOrThrow(orderId, customerProfileId));
 
   }
 
