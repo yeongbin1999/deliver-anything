@@ -3,8 +3,6 @@ package com.deliveranything.domain.order.service;
 import com.deliveranything.domain.order.dto.OrderResponse;
 import com.deliveranything.domain.order.entity.Order;
 import com.deliveranything.domain.order.repository.OrderRepository;
-import com.deliveranything.global.exception.CustomException;
-import com.deliveranything.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,13 +15,11 @@ public class DeliveryOrderService {
 
   @Transactional(readOnly = true)
   public OrderResponse getOrderByDeliveryId(Long deliveryId) {
-    return OrderResponse.from(orderRepository.findByDeliveryId(deliveryId)
-        .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND)));
+    return OrderResponse.from(orderRepository.findByDeliveryIdOrThrow(deliveryId));
   }
 
   public Order getOrderById(Long orderId) {
-    return orderRepository.findById(orderId)
-        .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND));
+    return orderRepository.findByIdOrThrow(orderId);
   }
 
   public Long getCustomerIdByOrderId(Long orderId) {

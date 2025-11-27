@@ -6,8 +6,6 @@ import com.deliveranything.domain.order.entity.Order;
 import com.deliveranything.domain.order.enums.OrderStatus;
 import com.deliveranything.domain.order.event.OrderRiderAcceptedEvent;
 import com.deliveranything.domain.order.repository.OrderRepository;
-import com.deliveranything.global.exception.CustomException;
-import com.deliveranything.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -18,7 +16,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class RiderOrderService {
 
   private final OrderRepository orderRepository;
-
   private final ApplicationEventPublisher eventPublisher;
 
   @Transactional
@@ -27,7 +24,7 @@ public class RiderOrderService {
       Long riderId,
       OrderRiderAcceptRequest orderRiderAcceptRequest
   ) {
-    Order order = getOrder(orderId);
+    Order order = orderRepository.findByIdOrThrow(orderId);
     order.updateStatus(OrderStatus.RIDER_ASSIGNED);
 
     eventPublisher.publishEvent(OrderRiderAcceptedEvent.fromOrderAndETA(order, riderId,
@@ -36,13 +33,6 @@ public class RiderOrderService {
 
   @Transactional(readOnly = true)
   public OrderResponse getOrderResponse(Long orderId) {
-    return OrderResponse.from(orderRepository.findById(orderId)
-        .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND)));
-  }
-
-  @Transactional(readOnly = true)
-  public Order getOrder(Long orderId) {
-    return orderRepository.findById(orderId)
-        .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND));
+    return OrderResponse.from(orderRepository.findByIdOrThrow(orderId));
   }
 }
