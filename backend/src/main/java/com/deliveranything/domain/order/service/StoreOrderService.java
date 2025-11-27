@@ -7,7 +7,6 @@ import com.deliveranything.domain.order.enums.Publisher;
 import com.deliveranything.domain.order.event.OrderRejectedEvent;
 import com.deliveranything.domain.order.event.OrderStoreAcceptedEvent;
 import com.deliveranything.domain.order.repository.OrderRepository;
-import com.deliveranything.domain.order.service.fetcher.OrderFetcher;
 import com.deliveranything.global.common.CursorPageResponse;
 import com.deliveranything.global.util.CursorUtil;
 import java.time.LocalDateTime;
@@ -24,9 +23,9 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class StoreOrderService {
 
-  private final OrderRepository orderRepository;
   private final ApplicationEventPublisher eventPublisher;
-  private final OrderFetcher orderFetcher;
+  private final OrderQueryService orderQueryService;
+  private final OrderRepository orderRepository;
 
   // 주문 이력 조회
   @Transactional(readOnly = true)
@@ -91,7 +90,7 @@ public class StoreOrderService {
 
   @Transactional
   public void acceptOrder(Long orderId) {
-    Order order = orderFetcher.findByIdOrThrow(orderId);
+    Order order = orderQueryService.findByIdOrThrow(orderId);
 
     log.info("상점이 주문 수락 했을 때 도착지의 latitude 위도 -90~90: {} / longitude 경도 -180~180: {}",
         order.getDestination().getY(), order.getDestination().getX());
@@ -105,7 +104,7 @@ public class StoreOrderService {
   public void rejectOrder(Long orderId) {
     String STORE_CANCEL_REASON = "상점이 주문을 거절했습니다.";
 
-    Order order = orderFetcher.findByIdOrThrow(orderId);
+    Order order = orderQueryService.findByIdOrThrow(orderId);
     order.cancellationRequest(STORE_CANCEL_REASON);
 
     eventPublisher.publishEvent(

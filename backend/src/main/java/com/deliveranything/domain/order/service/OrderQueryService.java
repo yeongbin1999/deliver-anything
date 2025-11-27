@@ -1,4 +1,4 @@
-package com.deliveranything.domain.order.service.fetcher;
+package com.deliveranything.domain.order.service;
 
 import com.deliveranything.domain.order.entity.Order;
 import com.deliveranything.domain.order.repository.OrderRepository;
@@ -11,7 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
-public class OrderFetcher {
+public class OrderQueryService {
 
   private final OrderRepository orderRepository;
 

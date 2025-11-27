@@ -5,7 +5,6 @@ import com.deliveranything.domain.order.dto.OrderRiderAcceptRequest;
 import com.deliveranything.domain.order.entity.Order;
 import com.deliveranything.domain.order.enums.OrderStatus;
 import com.deliveranything.domain.order.event.OrderRiderAcceptedEvent;
-import com.deliveranything.domain.order.service.fetcher.OrderFetcher;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -16,7 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class RiderOrderService {
 
   private final ApplicationEventPublisher eventPublisher;
-  private final OrderFetcher orderFetcher;
+  private final OrderQueryService orderQueryService;
 
   @Transactional
   public void acceptOrder(
@@ -24,7 +23,7 @@ public class RiderOrderService {
       Long riderId,
       OrderRiderAcceptRequest orderRiderAcceptRequest
   ) {
-    Order order = orderFetcher.findByIdOrThrow(orderId);
+    Order order = orderQueryService.findByIdOrThrow(orderId);
     order.updateStatus(OrderStatus.RIDER_ASSIGNED);
 
     eventPublisher.publishEvent(OrderRiderAcceptedEvent.fromOrderAndETA(order, riderId,
@@ -33,6 +32,6 @@ public class RiderOrderService {
 
   @Transactional(readOnly = true)
   public OrderResponse getOrderResponse(Long orderId) {
-    return OrderResponse.from(orderFetcher.findByIdOrThrow(orderId));
+    return OrderResponse.from(orderQueryService.findByIdOrThrow(orderId));
   }
 }
