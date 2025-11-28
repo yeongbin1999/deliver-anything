@@ -2,7 +2,6 @@ package com.deliveranything.domain.order.service;
 
 import com.deliveranything.domain.order.dto.OrderResponse;
 import com.deliveranything.domain.order.entity.Order;
-import com.deliveranything.domain.order.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -11,15 +10,15 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class DeliveryOrderService {
 
-  private final OrderRepository orderRepository;
+  private final OrderQueryService orderQueryService;
 
   @Transactional(readOnly = true)
   public OrderResponse getOrderByDeliveryId(Long deliveryId) {
-    return OrderResponse.from(orderRepository.findByDeliveryIdOrThrow(deliveryId));
+    return OrderResponse.from(orderQueryService.findByDeliveryIdOrThrow(deliveryId));
   }
 
   public Order getOrderById(Long orderId) {
-    return orderRepository.findByIdOrThrow(orderId);
+    return orderQueryService.findByIdOrThrow(orderId);
   }
 
   public Long getCustomerIdByOrderId(Long orderId) {

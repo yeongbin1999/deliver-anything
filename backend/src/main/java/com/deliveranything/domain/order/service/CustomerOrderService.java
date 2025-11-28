@@ -35,8 +35,9 @@ public class CustomerOrderService {
   private final ProductService productService;
   private final StoreService storeService;
 
-  private final OrderRepository orderRepository;
   private final ApplicationEventPublisher eventPublisher;
+  private final OrderQueryService orderQueryService;
+  private final OrderRepository orderRepository;
 
   @Transactional
   public OrderCreateResponse createOrder(
@@ -75,13 +76,9 @@ public class CustomerOrderService {
   }
 
   @Transactional(readOnly = true)
-
   public OrderResponse getCustomerOrder(Long orderId, Long customerProfileId) {
-
     return OrderResponse.from(
-
-        orderRepository.findByIdAndCustomerProfileIdOrThrow(orderId, customerProfileId));
-
+        orderQueryService.findByIdAndCustomerProfileIdOrThrow(orderId, customerProfileId));
   }
 
   @Transactional(readOnly = true)
