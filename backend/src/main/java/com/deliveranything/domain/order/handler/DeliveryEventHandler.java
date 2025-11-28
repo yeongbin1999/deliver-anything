@@ -39,7 +39,7 @@ public class DeliveryEventHandler implements RedisEventHandler {
                 event.sellerProfileId());
           }
         }
-        default -> log.warn("Unhandled delivery event topic: {}", topic);
+        default -> log.warn("Unhandled delivery event topic in order: {}", topic);
       }
     } catch (Exception e) {
       log.error("Failed to process delivery event in order [{}]: {}", topic, e.getMessage(), e);

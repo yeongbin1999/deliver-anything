@@ -42,7 +42,7 @@ public class PaymentEventHandler implements RedisEventHandler {
               PaymentCancelFailedEvent.class);
           orderService.processPaymentCancelFailed(event.merchantId());
         }
-        default -> log.warn("Unhandled payment event topic: {}", topic);
+        default -> log.warn("Unhandled payment event topic in order: {}", topic);
       }
     } catch (Exception e) {
       log.error("Failed to process payment event in order [{}]: {}", topic, e.getMessage(), e);

@@ -46,7 +46,7 @@ public class StockEventHandler implements RedisEventHandler {
           StockReplenishedEvent event = objectMapper.readValue(json, StockReplenishedEvent.class);
           orderService.processStockReplenished(event.orderId());
         }
-        default -> log.warn("Unhandled stock event topic: {}", topic);
+        default -> log.warn("Unhandled stock event topic in order: {}", topic);
       }
     } catch (Exception e) {
       log.error("Failed to process stock event in order [{}]: {}", topic, e.getMessage(), e);
