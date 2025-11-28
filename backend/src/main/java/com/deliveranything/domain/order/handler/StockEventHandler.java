@@ -7,6 +7,7 @@ import com.deliveranything.domain.product.stock.event.StockReplenishedEvent;
 import com.deliveranything.domain.product.stock.event.StockReserveFailedEvent;
 import com.deliveranything.domain.product.stock.event.StockReservedEvent;
 import com.deliveranything.global.enums.RedisTopic;
+import com.deliveranything.global.event.RedisEventHandler;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

@@ -1,4 +1,4 @@
-package com.deliveranything.domain.order.handler;
+package com.deliveranything.global.event;
 
 import com.deliveranything.global.enums.RedisTopic;
 

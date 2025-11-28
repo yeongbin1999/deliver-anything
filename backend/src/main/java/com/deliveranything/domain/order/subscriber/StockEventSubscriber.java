@@ -1,8 +1,9 @@
 package com.deliveranything.domain.order.subscriber;
 
-import com.deliveranything.domain.order.handler.RedisEventHandler;
 import com.deliveranything.domain.order.handler.StockEventHandler;
 import com.deliveranything.global.enums.RedisTopicPattern;
+import com.deliveranything.global.event.AbstractRedisEventSubscriber;
+import com.deliveranything.global.event.RedisEventHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

@@ -6,6 +6,7 @@ import com.deliveranything.domain.payment.event.PaymentCancelSuccessEvent;
 import com.deliveranything.domain.payment.event.PaymentFailedEvent;
 import com.deliveranything.domain.payment.event.PaymentSuccessEvent;
 import com.deliveranything.global.enums.RedisTopic;
+import com.deliveranything.global.event.RedisEventHandler;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

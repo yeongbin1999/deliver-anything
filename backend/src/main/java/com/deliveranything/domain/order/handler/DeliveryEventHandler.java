@@ -5,6 +5,7 @@ import com.deliveranything.domain.delivery.event.dto.DeliveryOfferedToRidersEven
 import com.deliveranything.domain.delivery.event.dto.DeliveryStatusEvent;
 import com.deliveranything.domain.order.service.OrderService;
 import com.deliveranything.global.enums.RedisTopic;
+import com.deliveranything.global.event.RedisEventHandler;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
