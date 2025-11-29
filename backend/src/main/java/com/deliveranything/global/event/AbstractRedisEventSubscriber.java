@@ -1,6 +1,5 @@
-package com.deliveranything.domain.order.subscriber;
+package com.deliveranything.global.event;
 
-import com.deliveranything.domain.order.handler.RedisEventHandler;
 import com.deliveranything.global.enums.RedisTopic;
 import com.deliveranything.global.enums.RedisTopicPattern;
 import jakarta.annotation.PostConstruct;

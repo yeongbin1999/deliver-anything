@@ -6,6 +6,7 @@ import com.deliveranything.domain.payment.event.PaymentCancelSuccessEvent;
 import com.deliveranything.domain.payment.event.PaymentFailedEvent;
 import com.deliveranything.domain.payment.event.PaymentSuccessEvent;
 import com.deliveranything.global.enums.RedisTopic;
+import com.deliveranything.global.event.RedisEventHandler;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -41,7 +42,7 @@ public class PaymentEventHandler implements RedisEventHandler {
               PaymentCancelFailedEvent.class);
           orderService.processPaymentCancelFailed(event.merchantId());
         }
-        default -> log.warn("Unhandled payment event topic: {}", topic);
+        default -> log.warn("Unhandled payment event topic in order: {}", topic);
       }
     } catch (Exception e) {
       log.error("Failed to process payment event in order [{}]: {}", topic, e.getMessage(), e);

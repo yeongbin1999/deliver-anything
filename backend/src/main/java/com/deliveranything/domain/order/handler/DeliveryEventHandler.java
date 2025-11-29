@@ -5,6 +5,7 @@ import com.deliveranything.domain.delivery.event.dto.DeliveryOfferedToRidersEven
 import com.deliveranything.domain.delivery.event.dto.DeliveryStatusEvent;
 import com.deliveranything.domain.order.service.OrderService;
 import com.deliveranything.global.enums.RedisTopic;
+import com.deliveranything.global.event.RedisEventHandler;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,7 +39,7 @@ public class DeliveryEventHandler implements RedisEventHandler {
                 event.sellerProfileId());
           }
         }
-        default -> log.warn("Unhandled delivery event topic: {}", topic);
+        default -> log.warn("Unhandled delivery event topic in order: {}", topic);
       }
     } catch (Exception e) {
       log.error("Failed to process delivery event in order [{}]: {}", topic, e.getMessage(), e);

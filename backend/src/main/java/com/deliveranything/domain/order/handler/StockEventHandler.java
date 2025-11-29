@@ -7,6 +7,7 @@ import com.deliveranything.domain.product.stock.event.StockReplenishedEvent;
 import com.deliveranything.domain.product.stock.event.StockReserveFailedEvent;
 import com.deliveranything.domain.product.stock.event.StockReservedEvent;
 import com.deliveranything.global.enums.RedisTopic;
+import com.deliveranything.global.event.RedisEventHandler;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -45,7 +46,7 @@ public class StockEventHandler implements RedisEventHandler {
           StockReplenishedEvent event = objectMapper.readValue(json, StockReplenishedEvent.class);
           orderService.processStockReplenished(event.orderId());
         }
-        default -> log.warn("Unhandled stock event topic: {}", topic);
+        default -> log.warn("Unhandled stock event topic in order: {}", topic);
       }
     } catch (Exception e) {
       log.error("Failed to process stock event in order [{}]: {}", topic, e.getMessage(), e);
