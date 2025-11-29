@@ -23,13 +23,14 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/stores/{storeId}/orders")
 @RestController
 @Tag(name = "상점 주문 API", description = "판매자의 주문처리 관련 API입니다.")
+@PreAuthorize("@profileSecurity.isSeller(authentication.principal)")
 public class StoreOrderController {
 
   private final StoreOrderService storeOrderService;
 
   @GetMapping("/history")
   @Operation(summary = "주문 내역 조회", description = "판매자가 주문 이력을 요청한 경우")
-  @PreAuthorize("@profileSecurity.isSeller(#securityUser) and @storeSecurity.isOwner(#storeId,#securityUser)")
+  @PreAuthorize("@storeSecurity.isOwner(#storeId,#securityUser)")
   public ResponseEntity<ApiResponse<CursorPageResponse<OrderResponse>>> getOrdersHistory(
       @AuthenticationPrincipal SecurityUser securityUser,
       @PathVariable Long storeId,
@@ -42,7 +43,7 @@ public class StoreOrderController {
 
   @GetMapping("/pending")
   @Operation(summary = "주문 수락 대기 목록 조회", description = "판매자가 상점의 주문 수락 대기 목록을 요청한 경우")
-  @PreAuthorize("@profileSecurity.isSeller(#securityUser) and @storeSecurity.isOwner(#storeId,#securityUser)")
+  @PreAuthorize("@storeSecurity.isOwner(#storeId,#securityUser)")
   public ResponseEntity<ApiResponse<List<OrderResponse>>> getPendingOrders(
       @AuthenticationPrincipal SecurityUser securityUser,
       @PathVariable Long storeId
@@ -51,10 +52,10 @@ public class StoreOrderController {
         storeOrderService.getPendingOrders(storeId)));
   }
 
-  @GetMapping("/accepted")
+  @GetMapping("/progressing")
   @Operation(summary = "주문 현황 목록 조회", description = "판매자가 상점의 주문 처리 중인 목록을 요청한 경우")
-  @PreAuthorize("@profileSecurity.isSeller(#securityUser) and @storeSecurity.isOwner(#storeId,#securityUser)")
-  public ResponseEntity<ApiResponse<List<OrderResponse>>> getAcceptedOrders(
+  @PreAuthorize("@storeSecurity.isOwner(#storeId,#securityUser)")
+  public ResponseEntity<ApiResponse<List<OrderResponse>>> getProgressingOrders(
       @AuthenticationPrincipal SecurityUser securityUser,
       @PathVariable Long storeId
   ) {
@@ -64,7 +65,7 @@ public class StoreOrderController {
 
   @PatchMapping("/{orderId}/accept")
   @Operation(summary = "주문 수락", description = "판매자가 상점의 주문을 수락한 경우")
-  @PreAuthorize("@profileSecurity.isSeller(#securityUser) and @storeSecurity.isOwner(#storeId,#securityUser)")
+  @PreAuthorize("@storeSecurity.isOwner(#storeId,#securityUser)")
   public ResponseEntity<ApiResponse<String>> acceptOrder(
       @AuthenticationPrincipal SecurityUser securityUser,
       @PathVariable Long storeId,
@@ -76,7 +77,7 @@ public class StoreOrderController {
 
   @PatchMapping("/{orderId}/reject")
   @Operation(summary = "주문 거절", description = "판매자가 상점의 주문을 거절한 경우")
-  @PreAuthorize("@profileSecurity.isSeller(#securityUser) and @storeSecurity.isOwner(#storeId,#securityUser)")
+  @PreAuthorize("@storeSecurity.isOwner(#storeId,#securityUser)")
   public ResponseEntity<ApiResponse<String>> rejectOrder(
       @AuthenticationPrincipal SecurityUser securityUser,
       @PathVariable Long storeId,

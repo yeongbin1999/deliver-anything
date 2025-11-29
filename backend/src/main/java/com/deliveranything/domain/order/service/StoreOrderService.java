@@ -73,7 +73,8 @@ public class StoreOrderService {
   // 들어온 주문 중 수락 or 거절 해야하는 목록 조회
   @Transactional(readOnly = true)
   public List<OrderResponse> getPendingOrders(Long storeId) {
-    return orderRepository.findByStoreIdAndStatus(storeId, OrderStatus.PENDING)
+    return orderRepository.findByStoreIdAndStatusInOrderByCreatedAtAsc(storeId,
+            List.of(OrderStatus.PENDING))
         .stream()
         .map(OrderResponse::from)
         .toList();
