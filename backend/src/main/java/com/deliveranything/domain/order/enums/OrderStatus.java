@@ -23,6 +23,10 @@ public enum OrderStatus {
       PREPARING, RIDER_ASSIGNED, DELIVERING
   );
 
+  public static final List<OrderStatus> STORE_ORDER_FINALIZED_STATUSES = List.of(
+      COMPLETED, REJECTED
+  );
+
   public static final List<OrderStatus> COMPLETED_STATUSES = List.of(COMPLETED);
 
   public boolean canTransitTo(OrderStatus next) {

@@ -2,6 +2,7 @@ package com.deliveranything.domain.order.service;
 
 import com.deliveranything.domain.order.dto.OrderCreateRequest;
 import com.deliveranything.domain.order.dto.OrderCreateResponse;
+import com.deliveranything.domain.order.dto.OrderCursor;
 import com.deliveranything.domain.order.dto.OrderItemRequest;
 import com.deliveranything.domain.order.dto.OrderResponse;
 import com.deliveranything.domain.order.entity.Order;
@@ -14,10 +15,10 @@ import com.deliveranything.domain.store.store.entity.Store;
 import com.deliveranything.domain.store.store.service.StoreService;
 import com.deliveranything.domain.user.profile.entity.CustomerProfile;
 import com.deliveranything.domain.user.profile.service.CustomerProfileService;
+import com.deliveranything.global.common.CursorFactory;
 import com.deliveranything.global.common.CursorPageResponse;
 import com.deliveranything.global.util.CursorUtil;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeParseException;
 import java.util.Collections;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -105,39 +106,11 @@ public class CustomerOrderService {
       long size,
       List<OrderStatus> statuses
   ) {
-    LocalDateTime lastCreatedAt = null;
-    Long lastOrderId = null;
-    Object[] decodedParts = CursorUtil.decode(nextPageToken);
-
-    if (decodedParts != null && decodedParts.length == 2) {
-      try {
-        lastCreatedAt = LocalDateTime.parse(decodedParts[0].toString());
-        lastOrderId = Long.parseLong(decodedParts[1].toString());
-      } catch (DateTimeParseException e) {
-        log.warn("커서 토큰에서 날짜 파싱 실패", e);
-      } catch (NumberFormatException e) {
-        log.warn("커서 토큰에서 주문ID 파싱 실패", e);
-      }
-    } else {
-      log.warn("올바르지 않은 커서 토큰");
-    }
+    OrderCursor cursor = OrderCursor.fromToken(nextPageToken);
 
     List<Order> orders = orderRepository.findOrdersByCustomerProfileIdWithCursor(
-        customerProfileId, statuses, lastCreatedAt, lastOrderId, size + 1L);
+        customerProfileId, statuses, cursor.createdAt(), cursor.orderId(), size + 1L);
 
-    List<OrderResponse> orderResponses = orders.stream()
-        .limit(size)
-        .map(OrderResponse::from)
-        .toList();
-
-    boolean hasNext = orders.size() == size + 1L;
-    String responsePageToken = null;
-
-    if (hasNext) {
-      OrderResponse lastElement = orderResponses.getLast();
-      responsePageToken = CursorUtil.encode(lastElement.createdAt(), lastElement.id());
-    }
-
-    return new CursorPageResponse<>(orderResponses, responsePageToken, hasNext);
+    return CursorFactory.create(orders, size, OrderResponse::from, OrderCursor::from);
   }
 }

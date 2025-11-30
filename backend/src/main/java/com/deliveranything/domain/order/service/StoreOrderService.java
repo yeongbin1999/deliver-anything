@@ -1,5 +1,6 @@
 package com.deliveranything.domain.order.service;
 
+import com.deliveranything.domain.order.dto.OrderCursor;
 import com.deliveranything.domain.order.dto.OrderResponse;
 import com.deliveranything.domain.order.entity.Order;
 import com.deliveranything.domain.order.enums.OrderStatus;
@@ -7,11 +8,11 @@ import com.deliveranything.domain.order.enums.Publisher;
 import com.deliveranything.domain.order.event.OrderRejectedEvent;
 import com.deliveranything.domain.order.event.OrderStoreAcceptedEvent;
 import com.deliveranything.domain.order.repository.OrderRepository;
+import com.deliveranything.global.common.CursorFactory;
 import com.deliveranything.global.common.CursorPageResponse;
 import com.deliveranything.global.util.CursorUtil;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.NoSuchElementException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -34,40 +35,12 @@ public class StoreOrderService {
       String nextPageToken,
       int size
   ) {
-    LocalDateTime lastCreatedAt = null;
-    Long lastOrderId = null;
-    Object[] decodedParts = CursorUtil.decode(nextPageToken);
-
-    if (decodedParts != null && decodedParts.length == 2) {
-      try {
-        lastCreatedAt = LocalDateTime.parse(decodedParts[0].toString());
-        lastOrderId = Long.parseLong(decodedParts[1].toString());
-      } catch (NumberFormatException e) {
-        lastCreatedAt = null;
-        lastOrderId = null;
-      }
-    }
+    OrderCursor cursor = OrderCursor.fromToken(nextPageToken);
 
     List<Order> cursorOrders = orderRepository.findOrdersByStoreIdWithCursor(storeId,
-        List.of(OrderStatus.COMPLETED, OrderStatus.REJECTED), lastCreatedAt, lastOrderId, size + 1);
+        OrderStatus.STORE_ORDER_FINALIZED_STATUSES, cursor.createdAt(), cursor.orderId(), size + 1);
 
-    List<OrderResponse> cursorResponses = cursorOrders.stream()
-        .limit(size)
-        .map(OrderResponse::from)
-        .toList();
-
-    boolean hasNext = cursorOrders.size() > size;
-
-    try {
-      OrderResponse lastResponse = cursorResponses.getLast();
-      return new CursorPageResponse<>(
-          cursorResponses,
-          hasNext ? CursorUtil.encode(lastResponse.createdAt(), lastResponse.id()) : null,
-          hasNext
-      );
-    } catch (NoSuchElementException e) {
-      return new CursorPageResponse<>(cursorResponses, null, hasNext);
-    }
+    return CursorFactory.create(cursorOrders, size, OrderResponse::from, OrderCursor::from);
   }
 
   // 들어온 주문 중 수락 or 거절 해야하는 목록 조회

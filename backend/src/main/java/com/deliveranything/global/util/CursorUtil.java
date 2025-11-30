@@ -5,17 +5,17 @@ import com.deliveranything.global.exception.ErrorCode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.util.Base64;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
 
 @Slf4j
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class CursorUtil {
 
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper().registerModule(
       new JavaTimeModule());
-
-  private CursorUtil() {
-  }
 
   public static String encode(Object cursorObj) {
     if (cursorObj == null) {
