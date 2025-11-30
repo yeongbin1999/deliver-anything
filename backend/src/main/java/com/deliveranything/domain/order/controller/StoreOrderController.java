@@ -35,7 +35,7 @@ public class StoreOrderController {
       @AuthenticationPrincipal SecurityUser securityUser,
       @PathVariable Long storeId,
       @RequestParam(required = false) String nextPageToken,
-      @RequestParam(defaultValue = "10") int size
+      @RequestParam(defaultValue = "10") long size
   ) {
     return ResponseEntity.ok().body(ApiResponse.success("상점의 전체 주문 내역 조회 성공",
         storeOrderService.getStoreOrdersByCursor(storeId, nextPageToken, size)));

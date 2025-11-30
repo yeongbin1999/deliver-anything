@@ -17,8 +17,6 @@ import com.deliveranything.domain.user.profile.entity.CustomerProfile;
 import com.deliveranything.domain.user.profile.service.CustomerProfileService;
 import com.deliveranything.global.common.CursorFactory;
 import com.deliveranything.global.common.CursorPageResponse;
-import com.deliveranything.global.util.CursorUtil;
-import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -108,9 +106,9 @@ public class CustomerOrderService {
   ) {
     OrderCursor cursor = OrderCursor.fromToken(nextPageToken);
 
-    List<Order> orders = orderRepository.findOrdersByCustomerProfileIdWithCursor(
+    List<Order> cursorOrders = orderRepository.findOrdersByCustomerProfileIdWithCursor(
         customerProfileId, statuses, cursor.createdAt(), cursor.orderId(), size + 1L);
 
-    return CursorFactory.create(orders, size, OrderResponse::from, OrderCursor::from);
+    return CursorFactory.create(cursorOrders, size, OrderResponse::from, OrderCursor::from);
   }
 }

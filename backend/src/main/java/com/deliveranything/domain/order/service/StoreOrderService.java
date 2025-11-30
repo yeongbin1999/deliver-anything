@@ -10,8 +10,6 @@ import com.deliveranything.domain.order.event.OrderStoreAcceptedEvent;
 import com.deliveranything.domain.order.repository.OrderRepository;
 import com.deliveranything.global.common.CursorFactory;
 import com.deliveranything.global.common.CursorPageResponse;
-import com.deliveranything.global.util.CursorUtil;
-import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,7 +31,7 @@ public class StoreOrderService {
   public CursorPageResponse<OrderResponse> getStoreOrdersByCursor(
       Long storeId,
       String nextPageToken,
-      int size
+      long size
   ) {
     OrderCursor cursor = OrderCursor.fromToken(nextPageToken);
 
