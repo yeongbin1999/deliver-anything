@@ -103,6 +103,10 @@ public enum ErrorCode {
   // WebClient 관련 오류
   WEBCLIENT_FAILED(HttpStatus.SERVICE_UNAVAILABLE, "WEBCLIENT-503", "외부 서비스 요청에 실패했습니다."),
 
+  // Cursor 관련 오류
+  CURSOR_ENCODE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "CURSOR-500", "커서 생성에 실패했습니다."),
+  CURSOR_DECODE_FAILED(HttpStatus.BAD_REQUEST, "CURSOR-400", "유효하지 않은 커서 토큰입니다."),
+
   // 공통 오류
   INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "SERVER-500", "서버 내부 오류가 발생하였습니다."),
   ;
