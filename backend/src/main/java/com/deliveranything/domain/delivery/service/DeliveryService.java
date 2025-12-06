@@ -13,9 +13,8 @@ import com.deliveranything.domain.delivery.entity.Delivery;
 import com.deliveranything.domain.delivery.enums.DeliveryStatus;
 import com.deliveranything.domain.delivery.event.dto.DeliveryStatusEvent;
 import com.deliveranything.domain.delivery.repository.DeliveryRepository;
-import com.deliveranything.domain.order.dto.OrderResponse;
 import com.deliveranything.domain.order.entity.Order;
-import com.deliveranything.domain.order.service.DeliveryOrderService;
+import com.deliveranything.domain.order.service.OrderQueryService;
 import com.deliveranything.domain.settlement.service.SettlementDetailService;
 import com.deliveranything.domain.store.store.entity.Store;
 import com.deliveranything.domain.user.profile.entity.CustomerProfile;
@@ -43,7 +42,7 @@ public class DeliveryService {
 
   private final RiderProfileService riderProfileService;
   private final DeliveryRepository deliveryRepository;
-  private final DeliveryOrderService deliveryOrderService;
+  private final OrderQueryService orderQueryService;
   private final SellerProfileService sellerProfileService;
   private final ApplicationEventPublisher eventPublisher;
   private final CustomerProfileService customerProfileService;
@@ -113,13 +112,12 @@ public class DeliveryService {
 
     return currentDeliveries.stream()
         .map(delivery -> {
-          OrderResponse currentOrder = deliveryOrderService.getOrderByDeliveryId(
-              delivery.getId());  // 이미 JOIN FETCH로 가져옴
+          Order currentOrder = orderQueryService.findByDeliveryIdOrThrow(delivery.getId());
           return CurrentDeliveringResponseDto.builder()
               .orderId(delivery.getId())
               .deliveryId(delivery.getId())
               .storeName(delivery.getStore().getName())  // 이미 JOIN FETCH로 가져옴
-              .customerAddress(currentOrder.address())
+              .customerAddress(currentOrder.getAddress())
               .remainingTime(getRemainingTime(delivery))
               .build();
         })
@@ -131,7 +129,7 @@ public class DeliveryService {
     Delivery currentDelivery = deliveryRepository.findById(deliveryId)
         .orElseThrow(() -> new CustomException(ErrorCode.DELIVERY_NOT_FOUND));
 
-    OrderResponse currentOrder = deliveryOrderService.getOrderByDeliveryId(currentDelivery.getId());
+    Order currentOrder = orderQueryService.findByDeliveryIdOrThrow(deliveryId);
     Store currentStore = currentDelivery.getStore();
     SellerProfile sellerProfile = sellerProfileService.getSellerProfileById(
         currentStore.getSellerProfileId());
@@ -141,7 +139,7 @@ public class DeliveryService {
         .orderId(currentDelivery.getId())
         .storeDetails(
             DeliveringStoreDetailsDto.builder()
-                .storeName(currentOrder.storeName())
+                .storeName(currentOrder.getStoreName())
                 .storeRoadAddress(currentStore.getRoadAddr())
                 .sellerBusinessPhoneNumber(sellerProfile.getBusinessPhoneNumber())
                 .build()
@@ -151,7 +149,7 @@ public class DeliveryService {
                 .customerNickname(customerProfile.getNickname())
                 .customerAddress(getCustomerDefaultAddress(customerProfile.getId()))
                 .customerPhoneNumber(customerProfile.getCustomerPhoneNumber())
-                .riderNote(currentOrder.riderNote())
+                .riderNote(currentOrder.getRiderNote())
                 .build()
         )
         .remainingTime(getRemainingTime(currentDelivery))
@@ -250,13 +248,13 @@ public class DeliveryService {
     // DTO 변환 (이미 JOIN FETCH로 Store와 Order를 가져왔으므로 추가 쿼리 없음)
     List<DeliveredDetailsDto> deliveredDetailsList = pageDeliveries.stream()
         .map(delivery -> {
-          OrderResponse order = deliveryOrderService.getOrderByDeliveryId(delivery.getId());
+          Order order = orderQueryService.findByDeliveryIdOrThrow(delivery.getId());
           return DeliveredDetailsDto.builder()
-              .orderId(order.id())
+              .orderId(order.getId())
               .storeName(delivery.getStore().getName())
               .completedAt(delivery.getCompletedAt())
-              .customerAddress(order.address())
-              .settlementStatus(getCompletedDeliverySettlementStatus(order.id(), riderProfileId))
+              .customerAddress(order.getAddress())
+              .settlementStatus(getCompletedDeliverySettlementStatus(order.getId(), riderProfileId))
               .deliveryCharge(delivery.getCharge())
               .build();
         })
