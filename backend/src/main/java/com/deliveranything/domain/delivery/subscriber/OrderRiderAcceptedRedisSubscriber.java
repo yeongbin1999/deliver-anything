@@ -5,8 +5,9 @@ import com.deliveranything.domain.delivery.repository.DeliveryRepository;
 import com.deliveranything.domain.delivery.service.DeliveryService;
 import com.deliveranything.domain.notification.subscriber.delivery.OrderRiderDecisionNotifier;
 import com.deliveranything.domain.order.entity.Order;
+import com.deliveranything.domain.order.enums.OrderStatus;
 import com.deliveranything.domain.order.event.OrderRiderAcceptedEvent;
-import com.deliveranything.domain.order.service.DeliveryOrderService;
+import com.deliveranything.domain.order.service.OrderQueryService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
@@ -24,7 +25,7 @@ public class OrderRiderAcceptedRedisSubscriber implements MessageListener {
 
   private final ObjectMapper objectMapper;
   private final RedisMessageListenerContainer container;
-  private final DeliveryOrderService deliveryOrderService;
+  private final OrderQueryService orderQueryService;
   private final DeliveryRepository deliveryRepository;
   private final DeliveryService deliveryService;
   private final OrderRiderDecisionNotifier orderRiderDecisionNotifier;
@@ -53,12 +54,12 @@ public class OrderRiderAcceptedRedisSubscriber implements MessageListener {
 
   // 상태 변경 처리
   private void handleStatusChange(OrderRiderAcceptedEvent event) {
-    Order order = deliveryOrderService.getOrderById(event.orderId());
+    Order order = orderQueryService.findByIdOrThrow(event.orderId());
 
     // TODO: Delivery Customer, Store 다 객체가 아닌 Id로 저장하게끔
     //  (객체 자체를 갖고와서 타 객체 생성에 넣게 되면 결합도가 증가함)
     // 라이더 수락 시 Delivery 생성
-    if (event.status().name().equals("RIDER_ASSIGNED")) {
+    if (event.status() == OrderStatus.RIDER_ASSIGNED) {
       Delivery delivery = deliveryService.createDelivery(order, event.riderId(), event.eta());
       deliveryRepository.save(delivery);
     }
@@ -70,24 +71,9 @@ public class OrderRiderAcceptedRedisSubscriber implements MessageListener {
     orderRiderDecisionNotifier.publish(event.riderId(), event);
 
     // 2) 관련 주문자에게 전송
-    Long customerId = getCustomerIdByOrderId(event.orderId());
-    if (customerId != null) {
-      orderRiderDecisionNotifier.publish(customerId, event);
-    }
+    orderRiderDecisionNotifier.publish(event.customerProfileId(), event);
 
     // 3) 관련 상점에게 전송
-    Long sellerId = getStoreIdByOrderId(event.orderId());
-    if (sellerId != null) {
-      orderRiderDecisionNotifier.publish(sellerId, event);
-    }
-  }
-
-  // 주문자/스토어 조회는 서비스 호출이나 캐시 활용
-  private Long getCustomerIdByOrderId(Long orderId) {
-    return deliveryOrderService.getCustomerIdByOrderId(orderId);
-  }
-
-  private Long getStoreIdByOrderId(Long orderId) {
-    return deliveryOrderService.getSellerIdByOrderId(orderId);
+    orderRiderDecisionNotifier.publish(event.sellerProfileId(), event);
   }
 }
