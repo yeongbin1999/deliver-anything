@@ -23,13 +23,13 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/rider/orders")
 @RestController
 @Tag(name = "배달원 주문 API", description = "라이더의 주문처리 관련 API입니다.")
+@PreAuthorize("@profileSecurity.isRider(authentication.principal)")
 public class RiderOrderController {
 
   private final RiderOrderService riderOrderService;
 
   @GetMapping("/{orderId}")
   @Operation(summary = "주문 단일 조회", description = "라이더가 어떤 주문의 상세 정보를 요청한 경우")
-  @PreAuthorize("@profileSecurity.isRider(#securityUser)")
   public ResponseEntity<ApiResponse<OrderResponse>> getOrder(
       @AuthenticationPrincipal SecurityUser securityUser,
       @PathVariable Long orderId
@@ -40,7 +40,6 @@ public class RiderOrderController {
 
   @PatchMapping("/{orderId}/accept")
   @Operation(summary = "주문 수락", description = "라이더가 제안된 주문을 수락한 경우")
-  @PreAuthorize("@profileSecurity.isRider(#securityUser)")
   public ResponseEntity<ApiResponse<String>> acceptOrder(
       @AuthenticationPrincipal SecurityUser securityUser,
       @PathVariable Long orderId,
